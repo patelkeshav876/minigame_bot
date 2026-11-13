@@ -582,37 +582,107 @@
   document.getElementById("btnRefreshLive").addEventListener("click", refreshLiveRooms);
   document.getElementById("btnRefreshProfile").addEventListener("click", refreshProfileAndHistory);
 
+  // Theme toggle (3D Clay Pastel <-> Dark Esports)
+  function applyTheme(theme) {
+    state.theme = theme;
+    document.documentElement.setAttribute("data-theme", theme);
+    try { localStorage.setItem("clay_theme", theme); } catch (_) {}
+    const btn = document.getElementById("btnThemeToggle");
+    if (btn) btn.textContent = theme === "clay" ? "🌙" : "✨";
+  }
+  const savedTheme = (() => {
+    try { return localStorage.getItem("clay_theme") || "clay"; } catch (_) { return "clay"; }
+  })();
+  applyTheme(savedTheme);
+
+  document.getElementById("btnThemeToggle")?.addEventListener("click", () => {
+    haptic("light");
+    applyTheme(state.theme === "clay" ? "dark" : "clay");
+  });
+
+  // Category & search filtering for 50+ HTML5 games
+  function classifyGameCategory(g) {
+    const t = `${g.title} ${g.description}`.toLowerCase();
+    if (/puzzle|wordle|sudoku|minesweeper|2048|crossword|nonogram|hanoi|flood|matrix|memory|hextris|15 puzzle/.test(t)) return "puzzle";
+    if (/arcade|pac-man|pacman|dino|flappy|jump|tower|breakout|invaders|asteroids|snake|pinball|duck|mole|geometry|fruit|knife|pong|slither|paper|helix/.test(t)) return "arcade";
+    if (/solitaire|card|mahjong|checkers|reversi|othello|backgammon|domino|yahtzee|hearts|spades|rummy|cribbage|freecell/.test(t)) return "cards";
+    return "casual";
+  }
+
+  function renderFilteredGames() {
+    const el = document.getElementById("customGamesGrid");
+    if (!el) return;
+    const cat = state.gameFilterCat || "all";
+    const q = (state.gameSearchQuery || "").toLowerCase().trim();
+
+    const filtered = (state.allCustomGames || []).filter((g) => {
+      const matchCat = cat === "all" || classifyGameCategory(g) === cat;
+      const matchQ = !q || g.title.toLowerCase().includes(q) || (g.description && g.description.toLowerCase().includes(q));
+      return matchCat && matchQ;
+    });
+
+    const countEl = document.getElementById("totalGamesCount");
+    if (countEl) countEl.textContent = `${state.allCustomGames.length}`;
+
+    if (!filtered.length) {
+      el.innerHTML = `
+        <div class="empty-games-hint">
+          No games found matching "${q}". Try another search keyword!
+        </div>`;
+      return;
+    }
+
+    el.innerHTML = filtered
+      .map(
+        (g) => `
+      <button class="custom-game-card" data-url="${encodeURI(g.url)}" data-title="${g.title}" data-icon="${g.icon}">
+        <div class="cgc-top">
+          <div class="cgc-icon">${g.icon || "🎮"}</div>
+          <span class="cgc-play-badge">PLAY</span>
+        </div>
+        <div class="cgc-body">
+          <div class="cgc-title">${g.title}</div>
+          <div class="cgc-desc">${g.description || "Tap to play instantly"}</div>
+        </div>
+      </button>`
+      )
+      .join("");
+
+    el.querySelectorAll(".custom-game-card").forEach((card) => {
+      card.addEventListener("click", () => {
+        haptic("medium");
+        launchWebGame(card.dataset.title, card.dataset.url, card.dataset.icon);
+      });
+    });
+  }
+
+  const searchInput = document.getElementById("inputGameSearch");
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      state.gameSearchQuery = e.target.value;
+      renderFilteredGames();
+    });
+  }
+
+  document.querySelectorAll(".cat-pill").forEach((pill) => {
+    pill.addEventListener("click", () => {
+      haptic("light");
+      document.querySelectorAll(".cat-pill").forEach((p) => p.classList.remove("active"));
+      pill.classList.add("active");
+      state.gameFilterCat = pill.dataset.cat || "all";
+      renderFilteredGames();
+    });
+  });
+
   async function loadCustomGames() {
     const el = document.getElementById("customGamesGrid");
     try {
       const res = await fetch("/api/custom-games");
       const data = await res.json();
-      if (!data.games.length) {
-        el.innerHTML = `
-          <div style="grid-column: 1 / -1; color: var(--muted); font-size: 0.8rem; padding: 6px 0;">
-            No web games added yet.${state.isAdmin ? " Tap <strong>⚙️ Add Game</strong> above to add one!" : ""}
-          </div>`;
-        return;
-      }
-      el.innerHTML = data.games
-        .map(
-          (g) => `
-        <button class="custom-game-card" data-url="${encodeURI(g.url)}" data-title="${g.title}" data-icon="${g.icon}">
-          <div class="cgc-icon">${g.icon || "🎮"}</div>
-          <div class="cgc-title">${g.title}</div>
-          <div class="cgc-desc">${g.description || "Tap to play web game"}</div>
-        </button>`
-        )
-        .join("");
-
-      el.querySelectorAll(".custom-game-card").forEach((card) => {
-        card.addEventListener("click", () => {
-          haptic("medium");
-          launchWebGame(card.dataset.title, card.dataset.url, card.dataset.icon);
-        });
-      });
+      state.allCustomGames = data.games || [];
+      renderFilteredGames();
     } catch (_) {
-      el.textContent = "Could not load web games.";
+      if (el) el.textContent = "Could not load web games.";
     }
   }
 

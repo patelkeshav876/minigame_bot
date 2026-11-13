@@ -207,7 +207,12 @@ def render_chess(state: dict[str, Any], match_id: str) -> tuple[str, InlineKeybo
             lines.append(f"\n🏆 *{win_name}* wins! ({state.get('reason', 'Game over')})")
     else:
         check_note = " — ⚠️ *CHECK!*" if board.is_check() else ""
-        if active_player:
+        if selected:
+            sel_sq = chess.parse_square(selected)
+            sel_p = board.piece_at(sel_sq)
+            sel_sym = PIECE_SYMBOLS.get(sel_p.symbol(), "") if sel_p else ""
+            lines.append(f"\n✨ Selected: *{selected.upper()}* {sel_sym} — tap 🟢/💥 to move")
+        elif active_player:
             lines.append(f"\n👉 Turn: *{active_player['name']}* ({turn_label}){check_note}")
         else:
             lines.append(f"\n👉 Tap any Black piece to join as *{turn_label}*!")
@@ -222,13 +227,16 @@ def render_chess(state: dict[str, Any], match_id: str) -> tuple[str, InlineKeybo
             is_dark = (rank + file_idx) % 2 == 0
 
             if sq_name == selected and piece:
-                label = f"[{PIECE_SYMBOLS[piece.symbol()]}]"
+                # Keep 1-char width so the column never widens or deforms
+                label = f"✨"
             elif sq in targets:
-                label = f"🎯{PIECE_SYMBOLS[piece.symbol()]}" if piece else "🟢"
+                # Keep strictly 1-char width for all target squares
+                label = "💥" if piece else "🟢"
             elif piece:
                 label = PIECE_SYMBOLS[piece.symbol()]
             else:
-                label = "▪️" if is_dark else "▫️"
+                # Uniform single-character markers for empty squares
+                label = "·" if is_dark else "·"
 
             cb = f"ch:{match_id}:{sq_name}" if not state["game_over"] else "noop"
             row_btns.append(InlineKeyboardButton(label, callback_data=cb))

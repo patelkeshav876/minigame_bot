@@ -43,6 +43,68 @@ def compute_level(xp: int) -> tuple[int, int, int]:
     return lvl, rem, xp_for_level(lvl)
 
 
+DEFAULT_HTML5_GAMES: list[tuple[str, str, str, str]] = [
+    # 🧩 Puzzle & Logic
+    ("2048 Classic", "https://play2048.co/", "🔢", "Slide tiles & reach the 2048 number!"),
+    ("Hextris", "https://hextris.io/", "🔷", "Fast-paced hexagonal puzzle game"),
+    ("Daily Wordle", "https://wordlegame.org/", "🟩", "Guess the secret 5-letter word in 6 tries"),
+    ("Sudoku Master", "https://sudoku.com/", "🧩", "Classic number placement logic puzzles"),
+    ("Minesweeper Retro", "https://minesweeper.online/", "💣", "Clear the minefield without detonating bombs"),
+    ("15 Puzzle", "https://15puzzle.netlify.app/", "🔲", "Classic sliding numbered block puzzle"),
+    ("Color Flood", "https://colorflood.netlify.app/", "🎨", "Flood-fill the board with one color"),
+    ("Tower of Hanoi", "https://www.mathsisfun.com/games/towerofhanoi.html", "🗼", "Legendary mathematical disk stack puzzle"),
+    ("Nonogram Picross", "https://nonograms.org/", "⬛", "Japanese picture logic number puzzles"),
+    ("Daily Crossword", "https://www.boatloadpuzzles.com/playcrossword", "📰", "Solve daily word clues and crossword grid"),
+    ("Flappy 2048", "https://hczhcz.github.io/Flappy-2048/", "🪽", "Flappy bird meets 2048 tile merging"),
+    ("Memory Matrix", "https://funhtml5games.com/memory/", "🧠", "Flip and match pairs of hidden cards"),
+
+    # 🕹️ Arcade & Action
+    ("Pac-Man Web", "https://pacman.platzh1rsch.ch/", "🟡", "Eat dots and dodge ghosts in retro maze"),
+    ("Chrome Dino Run", "https://chromedino.com/", "🦖", "The famous endless runner obstacle jump"),
+    ("Flappy Bird", "https://flappybird.io/", "🐦", "Tap to flap and dodge green pipe obstacles"),
+    ("Tower Building", "https://iamkun.github.io/tower_game/", "🏢", "Stack tower floors as high as you can"),
+    ("Doodle Jump", "https://doodlejump.io/", "🦘", "Bounce up continuously on platforms"),
+    ("Breakout DX", "https://funhtml5games.com/breakout/", "🧱", "Smash all bricks with the bouncing ball"),
+    ("Space Invaders", "https://funhtml5games.com/spaceinvaders/", "👾", "Defend earth from descending alien invaders"),
+    ("Asteroids Retro", "https://funhtml5games.com/asteroids/", "🚀", "Blast through space asteroids and flying saucers"),
+    ("Snake Retro", "https://playsnake.org/", "🐍", "Eat apples and grow without hitting the wall"),
+    ("Pinball Canvas", "https://funhtml5games.com/pinball/", "🪩", "Flip bumpers and rack up high scores"),
+    ("Helix Jump", "https://helixjump2.com/", "🌀", "Bouncing ball through the twisting helix tower"),
+    ("Duck Hunt", "https://duckhuntjs.com/", "🦆", "Aim and tap flying ducks in retro 8-bit style"),
+    ("Whack-a-Mole", "https://funhtml5games.com/whack-a-mole/", "🔨", "Test your reaction time whacking moles"),
+    ("Geometry Neon", "https://geometrylite.io/", "⚡", "Rhythm-based platformer jumping obstacles"),
+    ("Fruit Ninja Slice", "https://fruitninjafree.com/", "🍉", "Slice flying fruits with swift finger swipes"),
+    ("Knife Hit", "https://html5.gamedistribution.com/rvvASMiM/5b35c0cf3b1b4bcfaeaeb527c1d7bbcb/", "🗡️", "Throw knives into rotating targets"),
+    ("Pong Classic", "https://pong-2.com/", "🏓", "The iconic two-player table tennis game"),
+    ("Slither Arena", "https://slither.io/", "🐉", "Multiplayer glowing snake eat-and-grow arena"),
+    ("Paper.io", "https://paper-io.com/", "📄", "Claim territorial space by drawing loops"),
+
+    # 🃏 Cards & Board Classics
+    ("Klondike Solitaire", "https://cardgames.io/solitaire/", "🃏", "World's most popular single-player card game"),
+    ("Spider Solitaire", "https://cardgames.io/spidersolitaire/", "🕷️", "Arrange cards in descending suits to win"),
+    ("FreeCell Classic", "https://cardgames.io/freecell/", "♠️", "Strategic solitaire with 4 open free cells"),
+    ("Mahjong Solitaire", "https://cardgames.io/mahjong/", "🀄", "Match open pairs of identical Chinese tiles"),
+    ("Checkers Online", "https://cardgames.io/checkers/", "🔴", "Jump and capture opponent pieces to king"),
+    ("Reversi Othello", "https://cardgames.io/reversi/", "⚪", "Flip enemy discs and control the board"),
+    ("Backgammon", "https://cardgames.io/backgammon/", "🎲", "Ancient roll-and-move strategic board game"),
+    ("Dominoes Classic", "https://cardgames.io/dominoes/", "🁢", "Match tile ends and be first to empty hand"),
+    ("Yahtzee Dice", "https://cardgames.io/yahtzee/", "🎯", "Roll 5 dice to score full houses and yahtzees"),
+    ("Hearts", "https://cardgames.io/hearts/", "♥️", "Avoid taking hearts and the Queen of Spades"),
+    ("Spades", "https://cardgames.io/spades/", "♣️", "Bid tricks and cooperate with your partner"),
+    ("Gin Rummy", "https://cardgames.io/ginrummy/", "♦️", "Meld sets and runs before your opponent knocks"),
+    ("Cribbage", "https://cardgames.io/cribbage/", "📌", "Score points on pegboard with combinations"),
+
+    # ⚡ Casual & Quickies
+    ("Speed Typing Test", "https://monkeytype.com/", "⌨️", "Test and improve your words-per-minute typing"),
+    ("Cookie Clicker", "https://orteil.dashnet.org/cookieclicker/", "🍪", "The legendary idle tap cookie empire"),
+    ("Simon Says Memory", "https://simon-game-web.netlify.app/", "🔔", "Repeat the growing sequence of colored lights"),
+    ("Tic-Tac-Toe Neon", "https://playtictactoe.org/", "❌", "Fast 3x3 grid with neon glowing marks"),
+    ("Connect 4 Web", "https://connect4.games/", "🟡", "Drop chips to align four in a row"),
+    ("8-Ball Billiards", "https://canvaspool.com/", "🎱", "Pocket the balls with realistic pool physics"),
+    ("Tetris Web", "https://tetris.com/play-tetris", "🧱", "Clear full lines of falling tetrominoes"),
+]
+
+
 class GameStorage:
     """Thread-safe SQLite store shared by Telegram bot handlers and the Mini App API."""
 
@@ -131,7 +193,23 @@ class GameStorage:
             }
             if "xp" not in cols:
                 conn.execute("ALTER TABLE players ADD COLUMN xp INTEGER NOT NULL DEFAULT 0")
+
+            count = conn.execute("SELECT COUNT(*) AS c FROM custom_games").fetchone()["c"]
+            if count == 0:
+                self._seed_default_custom_games(conn)
+
             conn.commit()
+
+    def _seed_default_custom_games(self, conn: sqlite3.Connection) -> None:
+        now = time.time()
+        for title, url, icon, desc in DEFAULT_HTML5_GAMES:
+            conn.execute(
+                """
+                INSERT INTO custom_games (title, url, icon, description, is_active, created_at)
+                VALUES (?, ?, ?, ?, 1, ?)
+                """,
+                (title, url, icon, desc, now),
+            )
 
     def _enrich_player(self, conn: sqlite3.Connection, row: sqlite3.Row) -> dict[str, Any]:
         data = dict(row)
@@ -514,6 +592,10 @@ class GameStorage:
                 query += " WHERE is_active = 1"
             query += " ORDER BY id DESC"
             rows = conn.execute(query).fetchall()
+            if not rows:
+                self._seed_default_custom_games(conn)
+                conn.commit()
+                rows = conn.execute(query).fetchall()
             return [dict(r) for r in rows]
 
     def delete_custom_game(self, game_id: int | str) -> bool:

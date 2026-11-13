@@ -11,10 +11,13 @@
   <div class="app">
     <header class="topbar">
       <div class="brand">
-        <span class="brand-glow">⚔️</span>
-        <span>BATTLE ARENA</span>
+        <span class="brand-glow">✨</span>
+        <span class="brand-text">CLAY ARENA</span>
       </div>
-      <div class="profile-pill" id="profilePill">Loading...</div>
+      <div class="topbar-right">
+        <button id="btnThemeToggle" class="theme-toggle-btn" title="Toggle Theme">🎨</button>
+        <div class="profile-pill" id="profilePill">Loading...</div>
+      </div>
     </header>
 
     <!-- HOME VIEW -->
@@ -64,11 +67,28 @@
         </button>
       </div>
 
-      <div class="card">
+      <div class="card clay-vault-card">
         <div class="card-head">
-          <h3>🌐 Web Games / Arcade</h3>
+          <div class="vault-title-row">
+            <span class="vault-badge">50+ GAMES</span>
+            <h3>🎮 Arcade & HTML5 Vault</h3>
+          </div>
           <button id="btnOpenAddGameModal" class="btn small primary hidden">⚙️ Add Game</button>
         </div>
+
+        <div class="game-search-box">
+          <span class="search-icon">🔍</span>
+          <input id="inputGameSearch" type="text" placeholder="Search 50+ games (2048, Dino, Solitaire, Pacman...)" />
+        </div>
+
+        <div class="category-pills" id="gameCategories">
+          <button class="cat-pill active" data-cat="all">🌟 All (<span id="totalGamesCount">50+</span>)</button>
+          <button class="cat-pill" data-cat="puzzle">🧩 Puzzle</button>
+          <button class="cat-pill" data-cat="arcade">🕹️ Arcade</button>
+          <button class="cat-pill" data-cat="cards">🃏 Cards & Board</button>
+          <button class="cat-pill" data-cat="casual">⚡ Casual</button>
+        </div>
+
         <div id="customGamesGrid" class="custom-games-grid">Loading web games...</div>
       </div>
 
