@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Battle Arena • MiniGame Bot</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-glow">⚔️</span>
+        <span>BATTLE ARENA</span>
+      </div>
+      <div class="profile-pill" id="profilePill">Loading...</div>
+    </header>
+
+    <!-- HOME VIEW -->
+    <section id="view-home" class="view active">
+      <div class="hero-card">
+        <div class="hero-top">
+          <div class="rank-emblem" id="homeTierIcon">🥉</div>
+          <div class="hero-info">
+            <div class="hero-name" id="homePlayerName">Challenger</div>
+            <div class="hero-sub">
+              <span class="tier-badge" id="homeTierName">Bronze</span>
+              <span>•</span>
+              <span id="homeGlobalElo">1200 ELO</span>
+              <span>•</span>
+              <span id="homeWinRate">0% WR</span>
+            </div>
+          </div>
+          <div class="lvl-pill" id="homeLevelPill">LVL 1</div>
+        </div>
+        <div class="xp-bar-wrap">
+          <div class="xp-bar-fill" id="homeXpFill" style="width: 0%"></div>
+        </div>
+        <div class="xp-label" id="homeXpLabel">0 / 100 XP</div>
+      </div>
+
+      <div class="section-title">🎯 Competitive Games</div>
+      <div class="home-games-grid" id="homeGamesGrid">
+        <button class="arena-game-card" data-game="chess">
+          <div class="gc-icon">♟️</div>
+          <div class="gc-title">Blitz Chess</div>
+          <div class="gc-meta">3:00 • <span data-elo="chess">1200 ELO</span></div>
+        </button>
+        <button class="arena-game-card" data-game="othello">
+          <div class="gc-icon">⚫</div>
+          <div class="gc-title">Reversi / Othello</div>
+          <div class="gc-meta">2:00 • <span data-elo="othello">1200 ELO</span></div>
+        </button>
+        <button class="arena-game-card" data-game="connect4">
+          <div class="gc-icon">🔴</div>
+          <div class="gc-title">Connect 4</div>
+          <div class="gc-meta">1:30 • <span data-elo="connect4">1200 ELO</span></div>
+        </button>
+        <button class="arena-game-card" data-game="tictactoe">
+          <div class="gc-icon">❌</div>
+          <div class="gc-title">Tic-Tac-Toe Blitz</div>
+          <div class="gc-meta">0:45 • <span data-elo="tictactoe">1200 ELO</span></div>
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>🌐 Web Games / Arcade</h3>
+          <button id="btnOpenAddGameModal" class="btn small primary hidden">⚙️ Add Game</button>
+        </div>
+        <div id="customGamesGrid" class="custom-games-grid">Loading web games...</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>👁️ Live Matches to Spectate</h3>
+          <button id="btnRefreshLive" class="btn small">🔄</button>
+        </div>
+        <div id="liveRoomsList" class="live-list">No active PvP matches right now.</div>
+      </div>
+    </section>
+
+    <!-- BATTLE LOBBY VIEW -->
+    <section id="view-battle" class="view">
+      <div class="card">
+        <h2>Select Arena Mode</h2>
+        <div class="game-pills" id="gameSelector">
+          <button class="game-pill selected" data-game="chess">♟️ Chess</button>
+          <button class="game-pill" data-game="othello">⚫ Othello</button>
+          <button class="game-pill" data-game="connect4">🔴 Connect 4</button>
+          <button class="game-pill" data-game="tictactoe">❌ XO Blitz</button>
+        </div>
+
+        <div class="battle-actions">
+          <button id="btnQuickMatch" class="btn primary full">⚡ Quick Match (Ranked PvP)</button>
+          <div class="actions-2col">
+            <button id="btnVsAi" class="btn accent-outline">🤖 Practice vs AI</button>
+            <button id="btnCreateRoom" class="btn secondary">🔗 Invite Friend</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Join or Spectate by Room Code</h3>
+        <div class="join-row">
+          <input id="roomCodeInput" type="text" maxlength="10" placeholder="CODE (E.G. A1B2C3)" />
+          <button id="btnJoinRoom" class="btn primary">Enter</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACTIVE MATCH VIEW -->
+    <section id="view-match" class="view">
+      <div class="match-header">
+        <button id="btnLeaveRoom" class="btn small">⬅️ Back</button>
+        <div class="room-badge" id="roomBadge">Room: ----</div>
+        <div class="match-header-right">
+          <span class="spec-pill" id="specPill">👁️ 0</span>
+          <button id="btnCopyInvite" class="btn small">📤 Invite</button>
+        </div>
+      </div>
+
+      <div class="player-card" id="opponentCard">
+        <div class="p-name">Waiting for opponent...</div>
+        <div class="p-meta"><span class="p-elo">-- ELO</span> <span class="p-clock">0:00</span></div>
+      </div>
+
+      <div id="statusBanner" class="status-banner">Waiting for opponent to join...</div>
+
+      <div id="boardContainer" class="board-container"></div>
+
+      <div class="player-card self" id="selfCard">
+        <div class="p-name">You</div>
+        <div class="p-meta"><span class="p-elo">1200 ELO</span> <span class="p-clock">0:00</span></div>
+      </div>
+
+      <div class="match-controls" id="matchControls">
+        <button id="btnResign" class="btn danger">🏳️ Resign</button>
+        <button id="btnRematch" class="btn primary hidden">🔄 Rematch</button>
+      </div>
+    </section>
+
+    <!-- LEADERBOARD VIEW -->
+    <section id="view-ranks" class="view">
+      <div class="card">
+        <div class="card-head">
+          <h2>🏆 ELO Rankings</h2>
+          <button id="btnRefreshLb" class="btn small">🔄</button>
+        </div>
+        <div class="filter-pills" id="lbFilters">
+          <button class="filter-pill active" data-game="overall">Overall</button>
+          <button class="filter-pill" data-game="chess">Chess</button>
+          <button class="filter-pill" data-game="othello">Othello</button>
+          <button class="filter-pill" data-game="connect4">Connect 4</button>
+          <button class="filter-pill" data-game="tictactoe">Tic-Tac-Toe</button>
+        </div>
+        <div id="leaderboardList" class="lb-list">Loading...</div>
+      </div>
+    </section>
+
+    <!-- PROFILE VIEW -->
+    <section id="view-profile" class="view">
+      <div class="card">
+        <h2>👤 Player Ratings</h2>
+        <div id="profileRatingsGrid" class="ratings-grid">Loading...</div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h3>📜 Recent Match History</h3>
+          <button id="btnRefreshProfile" class="btn small">🔄</button>
+        </div>
+        <div id="matchHistoryList" class="history-list">No matches played yet.</div>
+      </div>
+    </section>
+
+    <!-- IN-APP WEB GAME PLAYER VIEW -->
+    <section id="view-player" class="view">
+      <div class="game-player-bar">
+        <button id="btnCloseGamePlayer" class="btn small">⬅️ Exit</button>
+        <div id="gamePlayerTitle" class="game-player-title">Custom Game</div>
+        <button id="btnOpenExternal" class="btn small">🔗 Browser</button>
+      </div>
+      <div class="game-frame-container">
+        <iframe id="customGameIframe" src="" allowfullscreen allow="autoplay; fullscreen; gamepad"></iframe>
+      </div>
+    </section>
+
+    <!-- ADMIN MODAL: MANAGE / ADD WEB GAMES -->
+    <div id="modalAddGame" class="modal hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>⚙️ Manage Web Games</h3>
+          <button id="btnCloseModal" class="btn small">✖</button>
+        </div>
+        <form id="formAddGame" class="modal-form">
+          <label>Game Title</label>
+          <input id="inputGameTitle" type="text" placeholder="e.g. Space Shooter" required />
+          
+          <label>Game Website Link (HTTPS)</label>
+          <input id="inputGameUrl" type="url" placeholder="https://yourgame.com" required />
+          
+          <div class="form-row-2">
+            <div>
+              <label>Icon / Emoji</label>
+              <input id="inputGameIcon" type="text" placeholder="🚀" maxlength="4" value="🎮" />
+            </div>
+            <div>
+              <label>Admin Secret (optional)</label>
+              <input id="inputAdminSecret" type="password" placeholder="admin secret" />
+            </div>
+          </div>
+
+          <label>Short Description</label>
+          <input id="inputGameDesc" type="text" placeholder="e.g. Fast-paced arcade shooter" />
+
+          <button type="submit" class="btn primary full">🚀 Add Game to Mini App</button>
+        </form>
+
+        <div class="modal-divider"></div>
+        <h4>Existing Web Games</h4>
+        <div id="adminGamesList" class="admin-games-list">Loading...</div>
+      </div>
+    </div>
+
+    <!-- BOTTOM NAVIGATION -->
+    <nav class="bottom-nav" id="bottomNav">
+      <button class="nav-item active" data-view="home">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-lbl">Home</span>
+      </button>
+      <button class="nav-item" data-view="battle">
+        <span class="nav-icon">⚔️</span>
+        <span class="nav-lbl">Battle</span>
+      </button>
+      <button class="nav-item" data-view="ranks">
+        <span class="nav-icon">🏆</span>
+        <span class="nav-lbl">Ranks</span>
+      </button>
+      <button class="nav-item" data-view="profile">
+        <span class="nav-icon">👤</span>
+        <span class="nav-lbl">Profile</span>
+      </button>
+    </nav>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
