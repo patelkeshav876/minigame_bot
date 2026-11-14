@@ -742,13 +742,33 @@
     else window.open(state.currentGameUrl, "_blank");
   });
 
-  document.getElementById("btnOpenAddGameModal").addEventListener("click", () => {
-    document.getElementById("modalAddGame").classList.remove("hidden");
+  const modalAddGame = document.getElementById("modalAddGame");
+  const btnOpenAddGameModal = document.getElementById("btnOpenAddGameModal");
+  const btnCloseModal = document.getElementById("btnCloseModal");
+
+  function closeModal() {
+    if (modalAddGame) modalAddGame.classList.add("hidden");
+  }
+
+  btnOpenAddGameModal?.addEventListener("click", () => {
+    modalAddGame?.classList.remove("hidden");
     loadAdminGamesList();
   });
 
-  document.getElementById("btnCloseModal").addEventListener("click", () => {
-    document.getElementById("modalAddGame").classList.add("hidden");
+  btnCloseModal?.addEventListener("click", closeModal);
+
+  // Close when clicking outside the modal content (on the backdrop)
+  modalAddGame?.addEventListener("click", (e) => {
+    if (e.target === modalAddGame) {
+      closeModal();
+    }
+  });
+
+  // Close on Escape key press
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeModal();
+    }
   });
 
   document.getElementById("formAddGame").addEventListener("submit", async (e) => {
