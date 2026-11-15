@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>8-Ball Pool</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:#090d16;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
+#cvs{background:#065f46;border:10px solid #78350f;border-radius:18px;box-shadow:0 0 25px rgba(0,0,0,0.6);width:100%;max-width:360px;aspect-ratio:3/4;touch-action:none;}
+</style>
+</head>
+<body>
+<div style="font-weight:900;color:#10b981;margin-bottom:6px;">🎱 8-BALL BILLIARDS</div>
+<canvas id="cvs" width="340" height="460"></canvas>
+<div style="color:#94a3b8;font-size:0.8rem;margin-top:6px;">Drag back cue to aim & shoot!</div>
+<script>
+const cvs = document.getElementById('cvs'), ctx = cvs.getContext('2d');
+let balls = [
+  {x: 170, y: 350, vx: 0, vy: 0, r: 9, color: '#fff', cue: true},
+  {x: 170, y: 150, vx: 0, vy: 0, r: 9, color: '#ef4444'},
+  {x: 160, y: 135, vx: 0, vy: 0, r: 9, color: '#facc15'},
+  {x: 180, y: 135, vx: 0, vy: 0, r: 9, color: '#38bdf8'},
+  {x: 150, y: 120, vx: 0, vy: 0, r: 9, color: '#10b981'},
+  {x: 170, y: 120, vx: 0, vy: 0, r: 9, color: '#000'},
+  {x: 190, y: 120, vx: 0, vy: 0, r: 9, color: '#a855f7'}
+];
+let aiming = false, startP = {x:0, y:0}, curP = {x:0, y:0};
+cvs.addEventListener('pointerdown', e => {
+  let rect = cvs.getBoundingClientRect();
+  startP = {x: (e.clientX - rect.left)*(340/rect.width), y: (e.clientY - rect.top)*(460/rect.height)};
+  curP = {...startP}; aiming = true;
+});
+cvs.addEventListener('pointermove', e => {
+  if (!aiming) return;
+  let rect = cvs.getBoundingClientRect();
+  curP = {x: (e.clientX - rect.left)*(340/rect.width), y: (e.clientY - rect.top)*(460/rect.height)};
+});
+cvs.addEventListener('pointerup', () => {
+  if (!aiming) return;
+  aiming = false;
+  let dx = startP.x - curP.x, dy = startP.y - curP.y;
+  let cue = balls[0];
+  cue.vx = dx * 0.12; cue.vy = dy * 0.12;
+});
+function update() {
+  balls.forEach(b => {
+    b.x += b.vx; b.y += b.vy;
+    b.vx *= 0.985; b.vy *= 0.985;
+    if (b.x < b.r || b.x > 340 - b.r) b.vx = -b.vx;
+    if (b.y < b.r || b.y > 460 - b.r) b.vy = -b.vy;
+  });
+  // Collision
+  for(let i=0; i<balls.length; i++) {
+    for(let j=i+1; j<balls.length; j++) {
+      let b1 = balls[i], b2 = balls[j];
+      let dx = b2.x - b1.x, dy = b2.y - b1.y, dist = Math.hypot(dx, dy);
+      if (dist < b1.r + b2.r && dist > 0) {
+        let nx = dx/dist, ny = dy/dist;
+        let kx = b1.vx - b2.vx, ky = b1.vy - b2.vy;
+        let p = 2 * (nx * kx + ny * ky) / 2;
+        b1.vx -= p * nx; b1.vy -= p * ny;
+        b2.vx += p * nx; b2.vy += p * ny;
+      }
+    }
+  }
+}
+function draw() {
+  ctx.clearRect(0,0,340,460);
+  // Pockets
+  ctx.fillStyle = '#000';
+  [[12,12],[328,12],[12,230],[328,230],[12,448],[328,448]].forEach(([x,y])=>{
+    ctx.beginPath(); ctx.arc(x,y,14,0,Math.PI*2); ctx.fill();
+  });
+  // Balls
+  balls.forEach(b => {
+    ctx.fillStyle = b.color; ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 4;
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
+  });
+  // Aim Line
+  if (aiming) {
+    let cue = balls[0];
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(cue.x, cue.y);
+    ctx.lineTo(cue.x + (startP.x - curP.x)*2, cue.y + (startP.y - curP.y)*2);
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+}
+function loop() { update(); draw(); requestAnimationFrame(loop); }
+loop();
+</script>
+</body>
+</html>

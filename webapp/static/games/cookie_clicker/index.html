@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Ghost Clicker</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:#0b0f19;color:#f8fafc;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;padding:16px;min-height:100vh;}
+.title{font-size:1.8rem;font-weight:900;color:#f59e0b;margin-bottom:6px;}
+.counter{font-size:2.2rem;font-weight:900;color:#38bdf8;margin-bottom:14px;}
+.ghost-btn{font-size:5.5rem;background:transparent;border:none;cursor:pointer;transition:transform 0.08s cubic-bezier(0.34,1.56,0.64,1);filter:drop-shadow(0 0 25px rgba(56,189,248,0.5));}
+.ghost-btn:active{transform:scale(0.88);}
+.upgrades{width:100%;max-width:340px;margin-top:20px;display:flex;flex-direction:column;gap:8px;}
+.upg{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.upg:hover{border-color:#38bdf8;}
+.upg:active{transform:scale(0.98);}
+.upg-name{font-weight:800;font-size:0.95rem;}
+.upg-cost{color:#f59e0b;font-weight:700;font-size:0.85rem;}
+</style>
+</head>
+<body>
+<div class="title">👻 GHOST CLICKER</div>
+<div class="counter" id="count">0 GHOSTS</div>
+<button class="ghost-btn" id="clicker">👻</button>
+<div style="color:#94a3b8;font-size:0.85rem;margin-top:10px;"><span id="gps">0</span> ghosts / sec</div>
+<div class="upgrades">
+  <div class="upg" onclick="buy(0)">
+    <div><div class="upg-name">⚡ Auto-Tap (<span id="c0">0</span>)</div><div style="font-size:0.75rem;color:#94a3b8;">+1 ghost/sec</div></div>
+    <div class="upg-cost"><span id="p0">15</span> 👻</div>
+  </div>
+  <div class="upg" onclick="buy(1)">
+    <div><div class="upg-name">🏭 Ghost Lab (<span id="c1">0</span>)</div><div style="font-size:0.75rem;color:#94a3b8;">+8 ghosts/sec</div></div>
+    <div class="upg-cost"><span id="p1">100</span> 👻</div>
+  </div>
+  <div class="upg" onclick="buy(2)">
+    <div><div class="upg-name">🌌 Portal (<span id="c2">0</span>)</div><div style="font-size:0.75rem;color:#94a3b8;">+45 ghosts/sec</div></div>
+    <div class="upg-cost"><span id="p2">1100</span> 👻</div>
+  </div>
+</div>
+<script>
+let ghosts = 0, items = [{count:0,cost:15,rate:1},{count:0,cost:100,rate:8},{count:0,cost:1100,rate:45}];
+document.getElementById('clicker').addEventListener('pointerdown', () => {
+  ghosts++; render();
+});
+function buy(id) {
+  let it = items[id];
+  if (ghosts >= it.cost) {
+    ghosts -= it.cost; it.count++; it.cost = Math.floor(it.cost*1.15);
+    render();
+  }
+}
+function render() {
+  document.getElementById('count').textContent = Math.floor(ghosts).toLocaleString() + ' GHOSTS';
+  let totalRate = items.reduce((s,i)=>s+i.count*i.rate, 0);
+  document.getElementById('gps').textContent = totalRate;
+  items.forEach((it,i) => {
+    document.getElementById('c'+i).textContent = it.count;
+    document.getElementById('p'+i).textContent = it.cost.toLocaleString();
+  });
+}
+setInterval(()=>{
+  let rate = items.reduce((s,i)=>s+i.count*i.rate, 0);
+  ghosts += rate/10; render();
+}, 100);
+</script>
+</body>
+</html>

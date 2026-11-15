@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Helix Drop</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:#090d16;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
+#cvs{background:#111827;border:3px solid #f43f5e;border-radius:18px;box-shadow:0 0 25px rgba(244,63,94,0.3);width:100%;max-width:340px;aspect-ratio:3/4;touch-action:none;}
+</style>
+</head>
+<body>
+<div style="font-weight:900;color:#f43f5e;margin-bottom:6px;">🌀 HELIX DROP JUMP</div>
+<canvas id="cvs" width="340" height="460"></canvas>
+<div style="color:#94a3b8;font-size:0.8rem;margin-top:6px;">Drag left/right to rotate tower!</div>
+<script>
+const cvs = document.getElementById('cvs'), ctx = cvs.getContext('2d');
+let ball = {x: 170, y: 150, vy: 0, r: 8}, angle = 0, score = 0, over = false;
+let rings = [];
+for(let i=0; i<8; i++) rings.push({y: 200 + i*90, gapAngle: Math.random()*Math.PI*2, gapSize: 1.1});
+let lastX = 0, dragging = false;
+cvs.addEventListener('pointerdown', e => { dragging = true; lastX = e.clientX; });
+window.addEventListener('pointermove', e => {
+  if (!dragging) return;
+  angle += (e.clientX - lastX) * 0.015; lastX = e.clientX;
+});
+window.addEventListener('pointerup', () => { dragging = false; });
+function update() {
+  if (over) return;
+  ball.vy += 0.28; ball.y += ball.vy;
+  rings.forEach(r => {
+    if (ball.y + ball.r >= r.y && ball.y - ball.r <= r.y + 10 && ball.vy > 0) {
+      let curA = (angle % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
+      let diff = Math.abs(curA - r.gapAngle);
+      if (diff > Math.PI) diff = Math.PI*2 - diff;
+      if (diff < r.gapSize/2) {
+        score += 5; // Pass gap!
+      } else {
+        ball.vy = -6.5; // Bounce!
+      }
+    }
+  });
+  if (ball.y > 440) {
+    rings.forEach(r => r.y -= 120);
+    rings = rings.filter(r => r.y > -50);
+    while(rings.length < 8) rings.push({y: rings[rings.length-1].y + 90, gapAngle: Math.random()*Math.PI*2, gapSize: 1.1});
+    ball.y -= 120;
+  }
+}
+function draw() {
+  ctx.clearRect(0,0,340,460);
+  ctx.font = 'bold 22px sans-serif'; ctx.fillStyle = '#fff'; ctx.textAlign='center';
+  ctx.fillText('SCORE: ' + score, 170, 35);
+  // Center Pillar
+  ctx.fillStyle = '#1e293b'; ctx.fillRect(160, 0, 20, 460);
+  // Rings
+  rings.forEach(r => {
+    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 14;
+    ctx.beginPath();
+    ctx.arc(170, r.y, 80, angle - r.gapAngle + r.gapSize/2, angle - r.gapAngle + Math.PI*2 - r.gapSize/2);
+    ctx.stroke();
+  });
+  // Ball
+  ctx.fillStyle = '#f43f5e'; ctx.shadowColor = '#f43f5e'; ctx.shadowBlur = 12;
+  ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2); ctx.fill();
+}
+function loop() { update(); draw(); requestAnimationFrame(loop); }
+loop();
+</script>
+</body>
+</html>

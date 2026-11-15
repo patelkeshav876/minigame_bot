@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Color Flood</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:#090d16;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
+.title{font-size:1.6rem;font-weight:900;color:#f59e0b;margin-bottom:8px;}
+.grid{display:grid;grid-template-columns:repeat(12,24px);grid-template-rows:repeat(12,24px);gap:2px;background:#1e293b;padding:8px;border-radius:14px;}
+.cell{border-radius:4px;}
+.palette{display:flex;gap:10px;margin-top:14px;}
+.color-btn{width:42px;height:42px;border-radius:50%;border:3px solid #fff;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="title">🎨 COLOR FLOOD</div>
+<div style="margin-bottom:10px;font-weight:800;color:#38bdf8;">Steps Left: <span id="steps">25</span></div>
+<div class="grid" id="grid"></div>
+<div class="palette" id="pal"></div>
+<script>
+const COLORS = ['#ef4444','#f97316','#facc15','#10b981','#38bdf8','#a855f7'];
+const SIZE = 12;
+let grid = [], steps = 25;
+function init() {
+  grid = Array(SIZE).fill().map(()=>Array(SIZE).fill().map(()=>Math.floor(Math.random()*COLORS.length)));
+  steps = 25; document.getElementById('steps').textContent = steps;
+  render();
+}
+function render() {
+  const g = document.getElementById('grid'); g.innerHTML = '';
+  for(let r=0; r<SIZE; r++) {
+    for(let c=0; c<SIZE; c++) {
+      let d = document.createElement('div');
+      d.className = 'cell'; d.style.background = COLORS[grid[r][c]];
+      g.appendChild(d);
+    }
+  }
+}
+function flood(newCol) {
+  let oldCol = grid[0][0];
+  if (oldCol === newCol) return;
+  steps--; document.getElementById('steps').textContent = steps;
+  let q = [[0,0]], visited = new Set(['0,0']);
+  while(q.length) {
+    let [r, c] = q.shift();
+    grid[r][c] = newCol;
+    for(let [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+      let nr=r+dr, nc=c+dc;
+      if (nr>=0&&nr<SIZE&&nc>=0&&nc<SIZE&&!visited.has(nr+','+nc)&&grid[nr][nc]===oldCol) {
+        visited.add(nr+','+nc); q.push([nr, nc]);
+      }
+    }
+  }
+  render();
+  let won = grid.every(row => row.every(v => v === newCol));
+  if (won) setTimeout(()=>alert('You Won! 🎉'), 100);
+  else if (steps <= 0) setTimeout(()=>alert('Game Over!'), 100);
+}
+const pal = document.getElementById('pal');
+COLORS.forEach((c, idx) => {
+  let b = document.createElement('div'); b.className = 'color-btn'; b.style.background = c;
+  b.onclick = () => flood(idx);
+  pal.appendChild(b);
+});
+init();
+</script>
+</body>
+</html>

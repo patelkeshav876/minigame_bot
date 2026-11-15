@@ -84,6 +84,29 @@
     document.getElementById("homeXpFill").style.width = `${pct}%`;
     document.getElementById("homeXpLabel").textContent = `${profile.xp_progress || 0} / ${profile.xp_next || 100} XP`;
 
+    // Redesigned Gamer Profile Hero & Records
+    const pName = document.getElementById("profPlayerName");
+    if (pName) pName.textContent = profile.display_name || "Player";
+    const pTier = document.getElementById("profTierBadge");
+    if (pTier) pTier.textContent = `${profile.tier?.icon || "🥉"} ${profile.tier?.name || "Bronze"}`;
+    const pElo = document.getElementById("profGlobalElo");
+    if (pElo) pElo.textContent = `${Math.round(profile.elo || 1200)} ELO`;
+    const pLvl = document.getElementById("profLevelBadge");
+    if (pLvl) pLvl.textContent = `LEVEL ${profile.level || 1}`;
+    const pXpTxt = document.getElementById("profXpText");
+    if (pXpTxt) pXpTxt.textContent = `${profile.xp_progress || 0} / ${profile.xp_next || 100} XP`;
+    const pXpFill = document.getElementById("profXpFill");
+    if (pXpFill) pXpFill.style.width = `${pct}%`;
+
+    const sMatches = document.getElementById("statMatches");
+    if (sMatches) sMatches.textContent = (profile.wins || 0) + (profile.losses || 0) + (profile.draws || 0);
+    const sWins = document.getElementById("statWins");
+    if (sWins) sWins.textContent = profile.wins || 0;
+    const sWr = document.getElementById("statWinRate");
+    if (sWr) sWr.textContent = `${wr}%`;
+    const sStreak = document.getElementById("statStreak");
+    if (sStreak) sStreak.textContent = profile.wins > 0 ? `${profile.wins}` : "0";
+
     const gr = profile.game_ratings || {};
     ["chess", "othello", "connect4", "tictactoe"].forEach((g) => {
       const span = document.querySelector(`[data-elo="${g}"]`);
@@ -103,22 +126,33 @@
 
     const ratingsEl = document.getElementById("profileRatingsGrid");
     const games = ["chess", "othello", "connect4", "tictactoe", "dots_and_boxes", "rps"];
+    const gameIcons = {
+      chess: "♟️",
+      othello: "⚫",
+      connect4: "🔴",
+      tictactoe: "❌",
+      dots_and_boxes: "📦",
+      rps: "✂️"
+    };
     const gr = data.profile.game_ratings || {};
     ratingsEl.innerHTML = games
       .map((g) => {
         const item = gr[g] || { elo: 1200, wins: 0, losses: 0, draws: 0, tier: { icon: "🥉", name: "Bronze" } };
+        const icon = gameIcons[g] || "🎮";
+        const gName = g.replaceAll("_", " ").toUpperCase();
         return `
-          <div class="rating-tile">
-            <div class="rt-game">${g.replaceAll("_", " ")}</div>
-            <div class="rt-elo">${item.tier?.icon || "🥉"} ${Math.round(item.elo)}</div>
-            <div class="rt-rec">${item.wins}W / ${item.losses}L / ${item.draws}D</div>
+          <div class="rating-box">
+            <div class="rb-icon">${icon}</div>
+            <div class="rb-title">${gName}</div>
+            <div class="rb-elo">${item.tier?.icon || "🥉"} ${Math.round(item.elo)}</div>
+            <div class="rb-record">${item.wins}W • ${item.losses}L • ${item.draws}D</div>
           </div>`;
       })
       .join("");
 
     const histEl = document.getElementById("matchHistoryList");
     if (!data.history.length) {
-      histEl.textContent = "No ranked PvP matches played yet.";
+      histEl.innerHTML = `<div style="text-align:center;color:var(--muted);padding:14px;font-size:0.85rem;">No ranked PvP matches played yet.<br>Jump into the <strong>Battle</strong> tab to play!</div>`;
       return;
     }
     histEl.innerHTML = data.history
@@ -126,12 +160,21 @@
         const isP1 = m.player1_id === state.userId;
         const opp = isP1 ? m.player2_name : m.player1_name;
         const delta = isP1 ? m.p1_elo_delta : m.p2_elo_delta;
-        const resTag = !m.winner_id ? "🤝 Draw" : m.winner_id === state.userId ? "🏆 Win" : "❌ Loss";
+        const isWin = m.winner_id === state.userId;
+        const isDraw = !m.winner_id;
+        const resTag = isDraw ? "DRAW" : isWin ? "WIN" : "LOSS";
+        const resClass = isDraw ? "draw" : isWin ? "win" : "loss";
         const deltaStr = delta >= 0 ? `+${delta}` : `${delta}`;
         return `
-          <div class="history-row">
-            <span><strong>${resTag}</strong> vs ${opp} (${m.game_type})</span>
-            <span>${deltaStr} ELO</span>
+          <div class="history-item ${resClass}">
+            <div class="hi-left">
+              <span class="hi-badge ${resClass}">${resTag}</span>
+              <div class="hi-info">
+                <div class="hi-opp">vs ${opp}</div>
+                <div class="hi-game">${(m.game_type || "pvp").toUpperCase()}</div>
+              </div>
+            </div>
+            <div class="hi-delta ${delta >= 0 ? 'pos' : 'neg'}">${deltaStr} ELO</div>
           </div>`;
       })
       .join("");

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Tower Stack</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:#090d16;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
+#cvs{background:#111827;border:3px solid #38bdf8;border-radius:18px;box-shadow:0 0 25px rgba(56,189,248,0.25);width:100%;max-width:340px;aspect-ratio:3/4;cursor:pointer;}
+</style>
+</head>
+<body>
+<div style="font-weight:900;color:#38bdf8;margin-bottom:8px;">🏢 TOWER STACK SLICE</div>
+<canvas id="cvs" width="340" height="460"></canvas>
+<div style="color:#94a3b8;font-size:0.8rem;margin-top:6px;">Tap to drop and slice blocks!</div>
+<script>
+const cvs = document.getElementById('cvs'), ctx = cvs.getContext('2d');
+let stack = [{x: 85, y: 410, w: 170, color: '#f59e0b'}];
+let cur = {x: 0, y: 380, w: 170, vx: 3.5, color: '#38bdf8'};
+let score = 0, over = false;
+const colors = ['#38bdf8','#f59e0b','#10b981','#ec4899','#8b5cf6','#f43f5e'];
+function drop() {
+  if (over) { reset(); return; }
+  let top = stack[stack.length - 1];
+  let diff = cur.x - top.x;
+  if (Math.abs(diff) >= cur.w) {
+    over = true; return;
+  }
+  let newW = cur.w - Math.abs(diff);
+  let newX = diff > 0 ? cur.x : top.x;
+  stack.push({x: newX, y: cur.y, w: newW, color: cur.color});
+  score++;
+  if (stack.length > 12) stack.forEach(b => b.y += 30);
+  cur = {x: 0, y: (stack[stack.length-1].y - 30), w: newW, vx: 3.5 + score*0.1, color: colors[score % colors.length]};
+}
+function reset() {
+  stack = [{x: 85, y: 410, w: 170, color: '#f59e0b'}];
+  cur = {x: 0, y: 380, w: 170, vx: 3.5, color: '#38bdf8'};
+  score = 0; over = false;
+}
+cvs.addEventListener('pointerdown', drop);
+function update() {
+  if (over) return;
+  cur.x += cur.vx;
+  if (cur.x < 0 || cur.x + cur.w > 340) cur.vx = -cur.vx;
+}
+function draw() {
+  ctx.clearRect(0,0,340,460);
+  ctx.font = 'bold 24px sans-serif'; ctx.fillStyle = '#fff'; ctx.textAlign='center';
+  ctx.fillText('SCORE: ' + score, 170, 40);
+  stack.forEach(b => {
+    ctx.fillStyle = b.color; ctx.shadowColor = b.color; ctx.shadowBlur = 6;
+    ctx.beginPath(); ctx.roundRect(b.x, b.y, b.w, 26, 4); ctx.fill();
+  });
+  if (!over) {
+    ctx.fillStyle = cur.color; ctx.shadowColor = cur.color; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.roundRect(cur.x, cur.y, cur.w, 26, 4); ctx.fill();
+  } else {
+    ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(0,0,340,460);
+    ctx.fillStyle = '#ef4444'; ctx.font = 'bold 26px sans-serif'; ctx.fillText('GAME OVER', 170, 220);
+    ctx.fillStyle = '#fff'; ctx.font = '16px sans-serif'; ctx.fillText('Tap to Play Again', 170, 260);
+  }
+}
+function loop() { update(); draw(); requestAnimationFrame(loop); }
+loop();
+</script>
+</body>
+</html>

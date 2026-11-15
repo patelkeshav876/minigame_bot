@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Neon Pong</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:#030712;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
+#cvs{background:#0b0f19;border:3px solid #38bdf8;border-radius:18px;box-shadow:0 0 25px rgba(56,189,248,0.25);width:100%;max-width:360px;aspect-ratio:3/4;touch-action:none;}
+</style>
+</head>
+<body>
+<canvas id="cvs" width="360" height="480"></canvas>
+<script>
+const cvs = document.getElementById('cvs'), ctx = cvs.getContext('2d');
+let p1 = {x: 140, y: 450, w: 80, h: 12, score: 0};
+let p2 = {x: 140, y: 20, w: 80, h: 12, score: 0};
+let ball = {x: 180, y: 240, vx: 3, vy: 4, r: 8};
+function resetBall() { ball.x = 180; ball.y = 240; ball.vy = (Math.random() > 0.5 ? 4 : -4); ball.vx = (Math.random()-0.5)*5; }
+cvs.addEventListener('pointermove', e => {
+  let rect = cvs.getBoundingClientRect();
+  p1.x = (e.clientX - rect.left) * (360/rect.width) - p1.w/2;
+});
+function update() {
+  ball.x += ball.vx; ball.y += ball.vy;
+  if (ball.x < ball.r || ball.x > 360 - ball.r) ball.vx = -ball.vx;
+  // AI
+  let target = ball.x - p2.w/2;
+  p2.x += (target - p2.x) * 0.085;
+  // P1 hit
+  if (ball.y + ball.r >= p1.y && ball.x >= p1.x && ball.x <= p1.x + p1.w && ball.vy > 0) {
+    ball.vy = -Math.abs(ball.vy)*1.05;
+    ball.vx = ((ball.x - (p1.x + p1.w/2))/(p1.w/2)) * 6;
+  }
+  // P2 hit
+  if (ball.y - ball.r <= p2.y + p2.h && ball.x >= p2.x && ball.x <= p2.x + p2.w && ball.vy < 0) {
+    ball.vy = Math.abs(ball.vy)*1.05;
+    ball.vx = ((ball.x - (p2.x + p2.w/2))/(p2.w/2)) * 6;
+  }
+  if (ball.y > 480) { p2.score++; resetBall(); }
+  if (ball.y < 0) { p1.score++; resetBall(); }
+}
+function draw() {
+  ctx.clearRect(0,0,360,480);
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.setLineDash([6,6]);
+  ctx.beginPath(); ctx.moveTo(0,240); ctx.lineTo(360,240); ctx.stroke();
+  ctx.font = 'bold 32px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.textAlign='center';
+  ctx.fillText(p2.score, 180, 210); ctx.fillText(p1.score, 180, 290);
+  // Paddles
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#ef4444'; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 12;
+  ctx.beginPath(); ctx.roundRect(p2.x, p2.y, p2.w, p2.h, 6); ctx.fill();
+  ctx.fillStyle = '#38bdf8'; ctx.shadowColor = '#38bdf8';
+  ctx.beginPath(); ctx.roundRect(p1.x, p1.y, p1.w, p1.h, 6); ctx.fill();
+  // Ball
+  ctx.fillStyle = '#facc15'; ctx.shadowColor = '#facc15'; ctx.shadowBlur = 15;
+  ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2); ctx.fill();
+}
+function loop() { update(); draw(); requestAnimationFrame(loop); }
+loop();
+</script>
+</body>
+</html>

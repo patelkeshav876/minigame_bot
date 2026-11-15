@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Memory Match</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:#090d16;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
+.title{font-size:1.6rem;font-weight:900;color:#10b981;margin-bottom:12px;}
+.grid{display:grid;grid-template-columns:repeat(4,70px);grid-template-rows:repeat(4,70px);gap:8px;}
+.card{background:#1e293b;border:2px solid #334155;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:2rem;cursor:pointer;transition:transform 0.2s;}
+.card.flipped{background:#0f172a;border-color:#10b981;}
+</style>
+</head>
+<body>
+<div class="title">🧠 EMOJI MEMORY</div>
+<div class="grid" id="grid"></div>
+<script>
+const emojis = ['🚀','🎮','👑','💎','🔥','⚡','🎯','🦄'];
+let cards = [...emojis, ...emojis].sort(()=>Math.random()-0.5);
+let flipped = [], matched = new Set();
+const g = document.getElementById('grid');
+function render() {
+  g.innerHTML = '';
+  cards.forEach((em, i) => {
+    let d = document.createElement('div');
+    let isFlipped = flipped.includes(i) || matched.has(i);
+    d.className = 'card ' + (isFlipped ? 'flipped' : '');
+    d.textContent = isFlipped ? em : '❓';
+    d.onclick = () => tap(i);
+    g.appendChild(d);
+  });
+}
+function tap(i) {
+  if (flipped.length >= 2 || flipped.includes(i) || matched.has(i)) return;
+  flipped.push(i); render();
+  if (flipped.length === 2) {
+    let [a, b] = flipped;
+    if (cards[a] === cards[b]) {
+      matched.add(a); matched.add(b); flipped = [];
+      if (matched.size === cards.length) setTimeout(()=>alert('Victory! 🎉'), 200);
+    } else {
+      setTimeout(()=>{ flipped = []; render(); }, 800);
+    }
+  }
+}
+render();
+</script>
+</body>
+</html>

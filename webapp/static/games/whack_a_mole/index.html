@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Whack-a-Ghost</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:#0a0e1a;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:10px;}
+.top{width:100%;max-width:340px;display:flex;justify-content:space-between;font-weight:900;font-size:1.1rem;margin-bottom:12px;}
+.grid{display:grid;grid-template-columns:repeat(3,100px);grid-template-rows:repeat(3,100px);gap:12px;}
+.hole{background:#1e293b;border:3px solid #334155;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:3.5rem;cursor:pointer;box-shadow:inset 0 4px 8px rgba(0,0,0,0.4);}
+.hole:active{transform:scale(0.95);}
+</style>
+</head>
+<body>
+<div class="top"><span style="color:#38bdf8;">🔨 WHACK GHOST</span><span style="color:#f59e0b;">SCORE: <span id="sc">0</span></span></div>
+<div class="grid" id="grid"></div>
+<script>
+let score = 0, activeHole = -1;
+const g = document.getElementById('grid');
+for(let i=0; i<9; i++) {
+  let h = document.createElement('div'); h.className = 'hole';
+  h.addEventListener('pointerdown', () => {
+    if (i === activeHole) { score += 10; document.getElementById('sc').textContent = score; activeHole = -1; render(); }
+  });
+  g.appendChild(h);
+}
+function render() {
+  document.querySelectorAll('.hole').forEach((h, idx) => {
+    h.textContent = idx === activeHole ? '👻' : '';
+  });
+}
+setInterval(() => {
+  activeHole = Math.random() < 0.25 ? -1 : Math.floor(Math.random()*9);
+  render();
+}, 650);
+</script>
+</body>
+</html>

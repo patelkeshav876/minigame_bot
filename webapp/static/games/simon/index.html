@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Simon Says</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:#090d16;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
+.title{font-size:1.6rem;font-weight:900;color:#facc15;margin-bottom:12px;}
+.board{display:grid;grid-template-columns:repeat(2,130px);grid-template-rows:repeat(2,130px);gap:14px;}
+.pad{border-radius:24px;cursor:pointer;opacity:0.65;transition:all 0.15s ease;}
+.pad.active{opacity:1;filter:brightness(1.5) drop-shadow(0 0 25px currentColor);transform:scale(1.05);}
+.p-0{background:#ef4444;color:#ef4444;}
+.p-1{background:#38bdf8;color:#38bdf8;}
+.p-2{background:#10b981;color:#10b981;}
+.p-3{background:#facc15;color:#facc15;}
+.status{margin-top:16px;font-size:1.1rem;font-weight:800;color:#38bdf8;}
+</style>
+</head>
+<body>
+<div class="title">🔔 SIMON MEMORY</div>
+<div class="board">
+  <div class="pad p-0" id="pad-0" onclick="tap(0)"></div>
+  <div class="pad p-1" id="pad-1" onclick="tap(1)"></div>
+  <div class="pad p-2" id="pad-2" onclick="tap(2)"></div>
+  <div class="pad p-3" id="pad-3" onclick="tap(3)"></div>
+</div>
+<div class="status" id="st">Level: 1</div>
+<script>
+let seq = [], step = 0, accepting = false;
+function flash(id) {
+  let el = document.getElementById('pad-'+id);
+  el.classList.add('active');
+  setTimeout(()=>el.classList.remove('active'), 320);
+}
+function nextRound() {
+  accepting = false; step = 0;
+  seq.push(Math.floor(Math.random()*4));
+  document.getElementById('st').textContent = 'Level: ' + seq.length + ' • Watch closely!';
+  let i = 0;
+  let interval = setInterval(() => {
+    flash(seq[i]); i++;
+    if (i >= seq.length) {
+      clearInterval(interval);
+      setTimeout(()=>{ accepting = true; document.getElementById('st').textContent = 'Your turn!'; }, 400);
+    }
+  }, 600);
+}
+function tap(id) {
+  if (!accepting) return;
+  flash(id);
+  if (id === seq[step]) {
+    step++;
+    if (step >= seq.length) {
+      document.getElementById('st').textContent = 'Correct! Next round...';
+      setTimeout(nextRound, 800);
+    }
+  } else {
+    document.getElementById('st').textContent = 'Game Over! Level reached: ' + seq.length;
+    seq = []; setTimeout(nextRound, 1500);
+  }
+}
+nextRound();
+</script>
+</body>
+</html>

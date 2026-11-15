@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Battle Arena • MiniGame Bot</title>
+  <title>Ghost Plays • Mini App</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
@@ -11,8 +11,8 @@
   <div class="app">
     <header class="topbar">
       <div class="brand">
-        <span class="brand-glow">✨</span>
-        <span class="brand-text">CLAY ARENA</span>
+        <span class="brand-glow">👻</span>
+        <span class="brand-text">GHOST PLAYS</span>
       </div>
       <div class="topbar-right">
         <button id="btnThemeToggle" class="theme-toggle-btn" title="Toggle Theme">🎨</button>
@@ -70,26 +70,26 @@
       <div class="card clay-vault-card">
         <div class="card-head">
           <div class="vault-title-row">
-            <span class="vault-badge">50+ GAMES</span>
-            <h3>🎮 Arcade & HTML5 Vault</h3>
+            <span class="vault-badge">🕹️ 30+ ARCADE</span>
+            <h3>🕹️ Arcade Games</h3>
           </div>
           <button id="btnOpenAddGameModal" class="btn small primary hidden">⚙️ Add Game</button>
         </div>
 
         <div class="game-search-box">
           <span class="search-icon">🔍</span>
-          <input id="inputGameSearch" type="text" placeholder="Search 50+ games (2048, Dino, Solitaire, Pacman...)" />
+          <input id="inputGameSearch" type="text" placeholder="Search arcade (Snake, Flappy, 2048, Dino, Tetris...)" />
         </div>
 
         <div class="category-pills" id="gameCategories">
-          <button class="cat-pill active" data-cat="all">🌟 All (<span id="totalGamesCount">50+</span>)</button>
-          <button class="cat-pill" data-cat="puzzle">🧩 Puzzle</button>
+          <button class="cat-pill active" data-cat="all">🌟 All (<span id="totalGamesCount">30+</span>)</button>
           <button class="cat-pill" data-cat="arcade">🕹️ Arcade</button>
+          <button class="cat-pill" data-cat="puzzle">🧩 Puzzle</button>
           <button class="cat-pill" data-cat="cards">🃏 Cards & Board</button>
-          <button class="cat-pill" data-cat="casual">⚡ Casual</button>
+          <button class="cat-pill" data-cat="casual">⚡ Fast Action</button>
         </div>
 
-        <div id="customGamesGrid" class="custom-games-grid">Loading web games...</div>
+        <div id="customGamesGrid" class="custom-games-grid">Loading arcade games...</div>
       </div>
 
       <div class="card">
@@ -179,12 +179,100 @@
       </div>
     </section>
 
-    <!-- PROFILE VIEW -->
+    <!-- PROFILE VIEW (Redesigned Esports Gamer Card & Trophy Room) -->
     <section id="view-profile" class="view">
+      <div class="card profile-hero-card">
+        <div class="prof-hero-top">
+          <div class="avatar-ring">
+            <img src="/static/bot_avatar.jpg" class="prof-avatar-img" alt="Avatar" />
+            <span class="avatar-status-dot"></span>
+          </div>
+          <div class="prof-hero-details">
+            <div class="prof-username-row">
+              <span id="profPlayerName" class="prof-player-name">Player</span>
+              <span class="prof-verified-badge">⚡ VIP</span>
+            </div>
+            <div class="prof-rank-row">
+              <span class="prof-tier-pill" id="profTierBadge">🥉 Bronze</span>
+              <span class="prof-global-elo" id="profGlobalElo">1200 ELO</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="prof-level-box">
+          <div class="prof-level-head">
+            <span id="profLevelBadge" class="badge-accent">LEVEL 1</span>
+            <span id="profXpText" class="prof-xp-text">0 / 100 XP</span>
+          </div>
+          <div class="xp-bar-wrap">
+            <div class="xp-bar-fill" id="profXpFill" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Combat Records 4-Grid -->
       <div class="card">
-        <h2>👤 Player Ratings</h2>
+        <div class="card-head">
+          <h3>📊 Battle Records</h3>
+        </div>
+        <div class="combat-stats-grid">
+          <div class="combat-stat-tile">
+            <div class="cs-icon">⚔️</div>
+            <div class="cs-val" id="statMatches">0</div>
+            <div class="cs-lbl">Matches</div>
+          </div>
+          <div class="combat-stat-tile">
+            <div class="cs-icon">🏆</div>
+            <div class="cs-val" id="statWins">0</div>
+            <div class="cs-lbl">Victories</div>
+          </div>
+          <div class="combat-stat-tile">
+            <div class="cs-icon">🎯</div>
+            <div class="cs-val" id="statWinRate">0%</div>
+            <div class="cs-lbl">Win Rate</div>
+          </div>
+          <div class="combat-stat-tile">
+            <div class="cs-icon">🔥</div>
+            <div class="cs-val" id="statStreak">0</div>
+            <div class="cs-lbl">Streak</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trophy Badges Showcase -->
+      <div class="card">
+        <div class="card-head">
+          <h3>🏅 Badges & Trophies</h3>
+        </div>
+        <div class="trophy-row">
+          <div class="trophy-badge" title="First Victory">
+            <div class="tb-icon">🗡️</div>
+            <div class="tb-name">First Blood</div>
+          </div>
+          <div class="trophy-badge" title="Tactician">
+            <div class="tb-icon">♟️</div>
+            <div class="tb-name">Chess Ace</div>
+          </div>
+          <div class="trophy-badge" title="Champion">
+            <div class="tb-icon">👑</div>
+            <div class="tb-name">Arena King</div>
+          </div>
+          <div class="trophy-badge" title="Fast Reflexes">
+            <div class="tb-icon">⚡</div>
+            <div class="tb-name">Speedster</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Per-Game Ratings -->
+      <div class="card">
+        <div class="card-head">
+          <h3>🎮 Arena Ratings</h3>
+        </div>
         <div id="profileRatingsGrid" class="ratings-grid">Loading...</div>
       </div>
+
+      <!-- Match History -->
       <div class="card">
         <div class="card-head">
           <h3>📜 Recent Match History</h3>

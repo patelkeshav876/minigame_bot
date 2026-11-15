@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Tetris</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:#090d16;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
+.top{width:100%;max-width:300px;display:flex;justify-content:space-between;margin-bottom:8px;font-weight:800;}
+#cvs{background:#111827;border:3px solid #8b5cf6;border-radius:14px;box-shadow:0 0 25px rgba(139,92,246,0.3);}
+.ctrls{margin-top:10px;display:flex;gap:10px;}
+.c-btn{background:#1e293b;border:1px solid #334155;color:#fff;padding:12px 18px;border-radius:12px;font-size:1.2rem;cursor:pointer;}
+.c-btn:active{background:#8b5cf6;}
+</style>
+</head>
+<body>
+<div class="top"><span>TETRIS</span><span>SCORE: <span id="sc">0</span></span></div>
+<canvas id="cvs" width="240" height="440"></canvas>
+<div class="ctrls">
+  <button class="c-btn" onclick="move(-1)">⬅️</button>
+  <button class="c-btn" onclick="rotate()">🔄</button>
+  <button class="c-btn" onclick="move(1)">➡️</button>
+  <button class="c-btn" onclick="drop()">⬇️</button>
+</div>
+<script>
+const cvs = document.getElementById('cvs'), ctx = cvs.getContext('2d');
+const COLS = 10, ROWS = 20, BLOCK = 22, X_OFF = 10, Y_OFF = 0;
+let grid = Array(ROWS).fill().map(()=>Array(COLS).fill(0)), score = 0;
+const SHAPES = [
+  [[1,1,1,1]], // I
+  [[1,1],[1,1]], // O
+  [[0,1,0],[1,1,1]], // T
+  [[1,0,0],[1,1,1]], // L
+  [[0,0,1],[1,1,1]], // J
+  [[0,1,1],[1,1,0]], // S
+  [[1,1,0],[0,1,1]]  // Z
+];
+const COLORS = ['','#06b6d4','#facc15','#a855f7','#f97316','#3b82f6','#10b981','#ef4444'];
+let cur = {shape: [], color: 1, x: 3, y: 0};
+function spawn() {
+  let id = Math.floor(Math.random()*SHAPES.length);
+  cur.shape = SHAPES[id]; cur.color = id+1; cur.x = 3; cur.y = 0;
+  if (collide(cur.x, cur.y, cur.shape)) { grid = Array(ROWS).fill().map(()=>Array(COLS).fill(0)); score = 0; }
+}
+function collide(px, py, shape) {
+  for(let r=0; r<shape.length; r++) {
+    for(let c=0; c<shape[r].length; c++) {
+      if (shape[r][c]) {
+        let nx = px + c, ny = py + r;
+        if (nx < 0 || nx >= COLS || ny >= ROWS || (ny >= 0 && grid[ny][nx])) return true;
+      }
+    }
+  }
+  return false;
+}
+function merge() {
+  cur.shape.forEach((row, r) => row.forEach((v, c) => { if(v) grid[cur.y+r][cur.x+c] = cur.color; }));
+  for(let r=ROWS-1; r>=0; r--) {
+    if (grid[r].every(v => v)) { grid.splice(r, 1); grid.unshift(Array(COLS).fill(0)); score += 100; r++; }
+  }
+  document.getElementById('sc').textContent = score;
+  spawn();
+}
+function move(dx) { if (!collide(cur.x + dx, cur.y, cur.shape)) cur.x += dx; }
+function drop() { if (!collide(cur.x, cur.y + 1, cur.shape)) cur.y++; else merge(); }
+function rotate() {
+  let rotated = cur.shape[0].map((_, i) => cur.shape.map(row => row[i]).reverse());
+  if (!collide(cur.x, cur.y, rotated)) cur.shape = rotated;
+}
+window.addEventListener('keydown', e => {
+  if (e.key==='ArrowLeft'||e.key==='a') move(-1);
+  if (e.key==='ArrowRight'||e.key==='d') move(1);
+  if (e.key==='ArrowDown'||e.key==='s') drop();
+  if (e.key==='ArrowUp'||e.key==='w') rotate();
+});
+setInterval(drop, 450);
+function draw() {
+  ctx.clearRect(0,0,240,440);
+  for(let r=0; r<ROWS; r++) {
+    for(let c=0; c<COLS; c++) {
+      let v = grid[r][c];
+      if (v) { ctx.fillStyle = COLORS[v]; ctx.beginPath(); ctx.roundRect(X_OFF+c*BLOCK, Y_OFF+r*BLOCK, BLOCK-2, BLOCK-2, 4); ctx.fill(); }
+    }
+  }
+  cur.shape.forEach((row, r) => row.forEach((v, c) => {
+    if (v) { ctx.fillStyle = COLORS[cur.color]; ctx.shadowBlur = 8; ctx.shadowColor = COLORS[cur.color]; ctx.beginPath(); ctx.roundRect(X_OFF+(cur.x+c)*BLOCK, Y_OFF+(cur.y+r)*BLOCK, BLOCK-2, BLOCK-2, 4); ctx.fill(); }
+  }));
+  requestAnimationFrame(draw);
+}
+spawn(); draw();
+</script>
+</body>
+</html>

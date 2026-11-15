@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Wordle</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:#090d16;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:12px;}
+.title{font-size:1.6rem;font-weight:900;color:#10b981;margin-bottom:12px;}
+.grid{display:grid;grid-template-rows:repeat(6,50px);gap:6px;margin-bottom:14px;}
+.row{display:grid;grid-template-columns:repeat(5,50px);gap:6px;}
+.cell{border:2px solid #334155;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:900;text-transform:uppercase;}
+.cell.correct{background:#10b981;border-color:#10b981;}
+.cell.present{background:#f59e0b;border-color:#f59e0b;}
+.cell.absent{background:#334155;border-color:#334155;}
+.kb{display:flex;flex-direction:column;gap:5px;width:100%;max-width:340px;}
+.kb-row{display:flex;justify-content:center;gap:4px;}
+.key{background:#1e293b;border-radius:6px;padding:10px 8px;min-width:28px;text-align:center;font-weight:800;font-size:0.85rem;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="title">🟩 WORDLE GUESS</div>
+<div class="grid" id="grid"></div>
+<div class="kb" id="kb"></div>
+<script>
+const WORDS = ['GHOST','ARENA','CYBER','BLAST','GAMES','PILOT','MAGIC','NINJA','SWORD','SOLAR','VIPER'];
+let target = WORDS[Math.floor(Math.random()*WORDS.length)];
+let guesses = [], cur = '';
+function render() {
+  const g = document.getElementById('grid'); g.innerHTML = '';
+  for(let r=0; r<6; r++) {
+    let row = document.createElement('div'); row.className = 'row';
+    let word = guesses[r] || (r === guesses.length ? cur : '');
+    for(let c=0; c<5; c++) {
+      let d = document.createElement('div'); d.className = 'cell';
+      let ch = word[c] || '';
+      d.textContent = ch;
+      if (r < guesses.length) {
+        if (ch === target[c]) d.classList.add('correct');
+        else if (target.includes(ch)) d.classList.add('present');
+        else d.classList.add('absent');
+      }
+      row.appendChild(d);
+    }
+    g.appendChild(row);
+  }
+}
+function keyPress(k) {
+  if (k === 'ENTER') {
+    if (cur.length === 5) {
+      guesses.push(cur);
+      if (cur === target) setTimeout(()=>alert('Splendid! You guessed it! 🎉'), 100);
+      else if (guesses.length >= 6) setTimeout(()=>alert('Word was: ' + target), 100);
+      cur = ''; render();
+    }
+  } else if (k === '⌫') {
+    cur = cur.slice(0, -1); render();
+  } else if (cur.length < 5 && /^[A-Z]$/.test(k)) {
+    cur += k; render();
+  }
+}
+const keys = [['Q','W','E','R','T','Y','U','I','O','P'],['A','S','D','F','G','H','J','K','L'],['ENTER','Z','X','C','V','B','N','M','⌫']];
+const kb = document.getElementById('kb');
+keys.forEach(row => {
+  let d = document.createElement('div'); d.className = 'kb-row';
+  row.forEach(k => {
+    let btn = document.createElement('div'); btn.className = 'key'; btn.textContent = k;
+    btn.onclick = () => keyPress(k); d.appendChild(btn);
+  });
+  kb.appendChild(d);
+});
+render();
+</script>
+</body>
+</html>

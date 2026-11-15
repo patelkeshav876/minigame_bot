@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Fruit Blade</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:#090d16;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
+#cvs{background:#111827;border:3px solid #10b981;border-radius:18px;box-shadow:0 0 25px rgba(16,185,129,0.3);width:100%;max-width:360px;aspect-ratio:3/4;touch-action:none;cursor:crosshair;}
+</style>
+</head>
+<body>
+<div style="font-weight:900;color:#10b981;margin-bottom:6px;">🍉 FRUIT SLICE BLADE</div>
+<canvas id="cvs" width="360" height="480"></canvas>
+<script>
+const cvs = document.getElementById('cvs'), ctx = cvs.getContext('2d');
+let fruits = [], trail = [], score = 0;
+const ICONS = ['🍉','🍊','🍎','🍓','🍍'];
+function spawnFruit() {
+  fruits.push({
+    x: 60 + Math.random()*240, y: 480,
+    vx: (Math.random()-0.5)*4, vy: -12 - Math.random()*4,
+    icon: ICONS[Math.floor(Math.random()*ICONS.length)],
+    sliced: false
+  });
+}
+cvs.addEventListener('pointermove', e => {
+  let rect = cvs.getBoundingClientRect();
+  let x = (e.clientX - rect.left) * (360/rect.width);
+  let y = (e.clientY - rect.top) * (480/rect.height);
+  trail.push({x, y, life: 10});
+  fruits.forEach(f => {
+    if (!f.sliced && Math.hypot(x - f.x, y - f.y) < 32) {
+      f.sliced = true; score += 10;
+    }
+  });
+});
+function update() {
+  if (Math.random() < 0.04) spawnFruit();
+  fruits.forEach(f => { f.x += f.vx; f.y += f.vy; f.vy += 0.35; });
+  fruits = fruits.filter(f => f.y < 520);
+  trail.forEach(t => t.life--);
+  trail = trail.filter(t => t.life > 0);
+}
+function draw() {
+  ctx.clearRect(0,0,360,480);
+  ctx.font = 'bold 24px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText('SCORE: ' + score, 20, 40);
+  fruits.forEach(f => {
+    ctx.font = f.sliced ? '22px sans-serif' : '36px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(f.sliced ? '💥' : f.icon, f.x, f.y);
+  });
+  // Blade trail
+  if (trail.length > 1) {
+    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 4; ctx.beginPath();
+    ctx.moveTo(trail[0].x, trail[0].y);
+    for(let i=1; i<trail.length; i++) ctx.lineTo(trail[i].x, trail[i].y);
+    ctx.stroke();
+  }
+}
+function loop() { update(); draw(); requestAnimationFrame(loop); }
+loop();
+</script>
+</body>
+</html>

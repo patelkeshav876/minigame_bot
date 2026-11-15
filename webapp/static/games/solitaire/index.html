@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Klondike Solitaire</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:#064e3b;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
+.title{font-size:1.6rem;font-weight:900;color:#facc15;margin-bottom:8px;}
+#cvs{background:#047857;border:4px solid #065f46;border-radius:18px;box-shadow:0 0 25px rgba(0,0,0,0.5);width:100%;max-width:360px;aspect-ratio:3/4;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="title">🃏 KLONDIKE SOLITAIRE</div>
+<canvas id="cvs" width="360" height="480"></canvas>
+<script>
+const cvs = document.getElementById('cvs'), ctx = cvs.getContext('2d');
+ctx.font = 'bold 20px sans-serif'; ctx.fillStyle = '#fef08a'; ctx.textAlign='center';
+ctx.fillText('SOLITAIRE ACTIVE', 180, 200);
+ctx.font = '15px sans-serif'; ctx.fillText('Tap to Deal Cards', 180, 240);
+let score = 0;
+cvs.addEventListener('pointerdown', () => {
+  score += 10;
+  ctx.clearRect(0,0,360,480);
+  ctx.fillStyle = '#fef08a'; ctx.font = 'bold 20px sans-serif';
+  ctx.fillText('DEAL #' + score, 180, 200);
+  // Draw cards
+  ['♠️ A','♥️ K','♦️ Q','♣️ J'].forEach((c, i) => {
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(40 + i*75, 260, 60, 90, 8); ctx.fill();
+    ctx.fillStyle = i%2===0 ? '#000' : '#ef4444'; ctx.font = 'bold 16px sans-serif';
+    ctx.fillText(c, 70 + i*75, 310);
+  });
+});
+</script>
+</body>
+</html>

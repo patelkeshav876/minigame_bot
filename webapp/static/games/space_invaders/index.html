@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Space Blaster</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:#040711;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
+#cvs{background:#000;border:3px solid #10b981;border-radius:18px;box-shadow:0 0 25px rgba(16,185,129,0.25);width:100%;max-width:340px;aspect-ratio:3/4;}
+.ctrls{display:flex;gap:12px;margin-top:10px;}
+.btn{background:#1e293b;border:1px solid #10b981;color:#10b981;font-weight:900;padding:12px 20px;border-radius:12px;font-size:1.2rem;cursor:pointer;}
+</style>
+</head>
+<body>
+<div style="font-weight:900;color:#10b981;margin-bottom:6px;">👾 RETRO SPACE INVADERS</div>
+<canvas id="cvs" width="340" height="460"></canvas>
+<div class="ctrls">
+  <button class="btn" onclick="p.x=Math.max(20,p.x-30)">⬅️</button>
+  <button class="btn" onclick="shoot()">💥 FIRE</button>
+  <button class="btn" onclick="p.x=Math.min(300,p.x+30)">➡️</button>
+</div>
+<script>
+const cvs = document.getElementById('cvs'), ctx = cvs.getContext('2d');
+let p = {x: 155, y: 410, w: 30, h: 18};
+let bullets = [], aliens = [], score = 0, alienDir = 1;
+for(let r=0; r<4; r++) {
+  for(let c=0; c<6; c++) aliens.push({x: 35 + c*46, y: 45 + r*32, alive: true});
+}
+function shoot() { bullets.push({x: p.x + p.w/2, y: p.y, vy: -7}); }
+window.addEventListener('keydown', e => {
+  if (e.key==='ArrowLeft'||e.key==='a') p.x = Math.max(20, p.x - 20);
+  if (e.key==='ArrowRight'||e.key==='d') p.x = Math.min(290, p.x + 20);
+  if (e.code==='Space') shoot();
+});
+function update() {
+  bullets.forEach(b => { b.y += b.vy; });
+  bullets = bullets.filter(b => b.y > 0);
+  let hitWall = false;
+  aliens.forEach(a => {
+    if (!a.alive) return;
+    a.x += alienDir * 0.9;
+    if (a.x < 15 || a.x > 300) hitWall = true;
+    bullets.forEach(b => {
+      if (b.x > a.x && b.x < a.x + 26 && b.y > a.y && b.y < a.y + 20) {
+        a.alive = false; b.y = -10; score += 20;
+      }
+    });
+  });
+  if (hitWall) { alienDir = -alienDir; aliens.forEach(a => a.y += 12); }
+}
+function draw() {
+  ctx.clearRect(0,0,340,460);
+  ctx.font = 'bold 20px sans-serif'; ctx.fillStyle = '#fff';
+  ctx.fillText('SCORE: ' + score, 15, 30);
+  // Ship
+  ctx.fillStyle = '#10b981';
+  ctx.beginPath(); ctx.moveTo(p.x+15, p.y); ctx.lineTo(p.x, p.y+18); ctx.lineTo(p.x+30, p.y+18); ctx.fill();
+  // Bullets
+  ctx.fillStyle = '#facc15';
+  bullets.forEach(b => ctx.fillRect(b.x-2, b.y, 4, 10));
+  // Aliens
+  aliens.forEach(a => {
+    if (a.alive) {
+      ctx.font = '22px sans-serif'; ctx.textAlign='center';
+      ctx.fillText('👾', a.x + 13, a.y + 18);
+    }
+  });
+}
+function loop() { update(); draw(); requestAnimationFrame(loop); }
+loop();
+</script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Knife Hit</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:#090d16;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
+#cvs{background:#111827;border:3px solid #f59e0b;border-radius:18px;box-shadow:0 0 25px rgba(245,158,11,0.3);width:100%;max-width:360px;aspect-ratio:3/4;cursor:pointer;}
+</style>
+</head>
+<body>
+<div style="font-weight:900;color:#f59e0b;margin-bottom:6px;">🗡️ KNIFE MASTER</div>
+<canvas id="cvs" width="360" height="480"></canvas>
+<script>
+const cvs = document.getElementById('cvs'), ctx = cvs.getContext('2d');
+let targetAngle = 0, knives = [], flyingKnife = null, score = 0, stage = 1;
+function throwKnife() {
+  if (flyingKnife) return;
+  flyingKnife = {y: 430, vy: -18};
+}
+cvs.addEventListener('pointerdown', throwKnife);
+function update() {
+  targetAngle += 0.035;
+  if (flyingKnife) {
+    flyingKnife.y += flyingKnife.vy;
+    if (flyingKnife.y <= 190) {
+      // Hit target wheel
+      let hitAngle = -targetAngle + Math.PI/2;
+      // Check collision with existing knives
+      let collision = knives.some(a => {
+        let diff = Math.abs((a - hitAngle) % (Math.PI*2));
+        if (diff > Math.PI) diff = Math.PI*2 - diff;
+        return diff < 0.22;
+      });
+      if (collision) {
+        alert('Defeat! Score: ' + score); score = 0; knives = [];
+      } else {
+        knives.push(hitAngle); score++;
+        if (knives.length >= 7) { knives = []; stage++; }
+      }
+      flyingKnife = null;
+    }
+  }
+}
+function draw() {
+  ctx.clearRect(0,0,360,480);
+  ctx.font = 'bold 24px sans-serif'; ctx.fillStyle = '#fff'; ctx.textAlign='center';
+  ctx.fillText('SCORE: ' + score, 180, 40);
+  // Target Log
+  ctx.save();
+  ctx.translate(180, 140);
+  ctx.rotate(targetAngle);
+  ctx.fillStyle = '#78350f'; ctx.beginPath(); ctx.arc(0,0, 52, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#d97706'; ctx.lineWidth = 4; ctx.stroke();
+  knives.forEach(a => {
+    ctx.save(); ctx.rotate(a);
+    ctx.fillStyle = '#e2e8f0'; ctx.fillRect(-3, 52, 6, 32);
+    ctx.restore();
+  });
+  ctx.restore();
+  // Flying knife
+  if (flyingKnife) {
+    ctx.fillStyle = '#e2e8f0'; ctx.fillRect(177, flyingKnife.y, 6, 36);
+  } else {
+    ctx.fillStyle = '#e2e8f0'; ctx.fillRect(177, 430, 6, 36);
+  }
+}
+function loop() { update(); draw(); requestAnimationFrame(loop); }
+loop();
+</script>
+</body>
+</html>

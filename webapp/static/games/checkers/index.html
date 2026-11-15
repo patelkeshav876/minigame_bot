@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Checkers</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:#090d16;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
+.title{font-size:1.6rem;font-weight:900;color:#ef4444;margin-bottom:8px;}
+.board{background:#78350f;padding:8px;border-radius:18px;display:grid;grid-template-columns:repeat(8,38px);grid-template-rows:repeat(8,38px);border:4px solid #b45309;}
+.sq{display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.sq.light{background:#fef3c7;}
+.sq.dark{background:#92400e;}
+.sq.sel{background:#38bdf8!important;}
+.piece{width:30px;height:30px;border-radius:50%;box-shadow:0 3px 5px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-weight:900;}
+.p-w{background:#f8fafc;color:#1e293b;}
+.p-b{background:#ef4444;color:#fff;}
+</style>
+</head>
+<body>
+<div class="title">🔴 CHECKERS CLASSIC ⚪</div>
+<div class="board" id="board"></div>
+<script>
+let board = Array(8).fill().map(()=>Array(8).fill(null)), sel = null;
+function init() {
+  for(let r=0; r<8; r++) {
+    for(let c=0; c<8; c++) {
+      if ((r+c)%2===1) {
+        if (r<3) board[r][c] = {color:'w', king:false};
+        else if (r>4) board[r][c] = {color:'b', king:false};
+      }
+    }
+  }
+  render();
+}
+function render() {
+  const b = document.getElementById('board'); b.innerHTML = '';
+  for(let r=0; r<8; r++) {
+    for(let c=0; c<8; c++) {
+      let sq = document.createElement('div');
+      sq.className = 'sq ' + ((r+c)%2===0 ? 'light' : 'dark');
+      if (sel && sel.r===r && sel.c===c) sq.classList.add('sel');
+      let p = board[r][c];
+      if (p) {
+        let pc = document.createElement('div');
+        pc.className = 'piece p-' + p.color;
+        if (p.king) pc.textContent = '👑';
+        sq.appendChild(pc);
+      }
+      sq.onclick = () => tap(r, c);
+      b.appendChild(sq);
+    }
+  }
+}
+function tap(r, c) {
+  let p = board[r][c];
+  if (p && p.color === 'b') { sel = {r, c}; render(); return; }
+  if (sel && !p && (r+c)%2===1) {
+    let dr = r - sel.r, dc = Math.abs(c - sel.c);
+    if (dr === -1 && dc === 1) { // Normal move
+      board[r][c] = board[sel.r][sel.c]; board[sel.r][sel.c] = null;
+      if (r === 0) board[r][c].king = true;
+      sel = null; render();
+    } else if (dr === -2 && dc === 2) { // Jump capture
+      let mr = (r + sel.r)/2, mc = (c + sel.c)/2;
+      if (board[mr][mc] && board[mr][mc].color === 'w') {
+        board[r][c] = board[sel.r][sel.c]; board[sel.r][sel.c] = null;
+        board[mr][mc] = null;
+        if (r === 0) board[r][c].king = true;
+        sel = null; render();
+      }
+    }
+  }
+}
+init();
+</script>
+</body>
+</html>

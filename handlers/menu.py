@@ -31,10 +31,10 @@ def _main_menu_markup(is_private_chat: bool = True) -> InlineKeyboardMarkup:
     ]
     if WEBAPP_URL and is_private_chat:
         rows.append(
-            [InlineKeyboardButton("⚔️ Battle Arena (Mini App)", web_app=WebAppInfo(url=WEBAPP_URL))]
+            [InlineKeyboardButton("👻 Ghost Plays (Mini App)", web_app=WebAppInfo(url=WEBAPP_URL))]
         )
     else:
-        rows.append([InlineKeyboardButton("⚔️ Battle Arena (Mini App)", callback_data="menu:arena")])
+        rows.append([InlineKeyboardButton("👻 Ghost Plays (Mini App)", callback_data="menu:arena")])
     rows.append([InlineKeyboardButton("🏆 Leaderboard", callback_data="menu:leaderboard")])
     return InlineKeyboardMarkup(rows)
 
@@ -103,10 +103,10 @@ async def play_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     is_private = bool(update.effective_chat and update.effective_chat.type == "private")
     text = (
-        "🎮 *MiniGame & Battle Arena Bot*\n\n"
+        "👻 *Ghost Plays • Gaming Hub*\n\n"
         "• Play casual games directly in chat\n"
         "• Type `@" + (context.bot.username or "yourbot") + "` in any DM/group for Inline games\n"
-        "• Enter the *Mini App Arena* for real-time timed battles & ELO!"
+        "• Open *Ghost Plays Mini App* for 30+ arcade games & ranked battles!"
     )
     markup = _main_menu_markup(is_private_chat=is_private)
     if update.message:
@@ -123,10 +123,10 @@ async def arena_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     is_private = bool(update.effective_chat and update.effective_chat.type == "private")
     if WEBAPP_URL and is_private:
         await update.message.reply_text(
-            "⚔️ *Live Competitive Battle Arena*\n\n"
-            "Challenge opponents in real-time Chess (with clocks), Connect 4, and Blitz Tic-Tac-Toe!",
+            "👻 *Ghost Plays Mini App*\n\n"
+            "Jump into 30+ arcade games, real-time ranked battles, and ELO leaderboards!",
             reply_markup=InlineKeyboardMarkup(
-                [[InlineKeyboardButton("🚀 Open Battle Arena", web_app=WebAppInfo(url=WEBAPP_URL))]]
+                [[InlineKeyboardButton("🚀 Launch Ghost Plays", web_app=WebAppInfo(url=WEBAPP_URL))]]
             ),
             parse_mode="Markdown",
         )

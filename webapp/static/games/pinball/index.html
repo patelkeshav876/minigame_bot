@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Pinball</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:#090d16;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
+#cvs{background:#0f172a;border:3px solid #ec4899;border-radius:18px;box-shadow:0 0 25px rgba(236,72,153,0.3);width:100%;max-width:340px;aspect-ratio:3/4;cursor:pointer;}
+</style>
+</head>
+<body>
+<div style="font-weight:900;color:#ec4899;margin-bottom:6px;">🪩 NEON PINBALL</div>
+<canvas id="cvs" width="340" height="460"></canvas>
+<div style="color:#94a3b8;font-size:0.8rem;margin-top:6px;">Tap anywhere to flip!</div>
+<script>
+const cvs = document.getElementById('cvs'), ctx = cvs.getContext('2d');
+let ball = {x: 170, y: 100, vx: 2, vy: 3, r: 8}, score = 0, flip = false;
+let bumpers = [{x: 100, y: 150, r: 24, c: '#38bdf8'}, {x: 240, y: 150, r: 24, c: '#facc15'}, {x: 170, y: 220, r: 26, c: '#ec4899'}];
+cvs.addEventListener('pointerdown', () => { flip = true; setTimeout(()=>flip=false, 150); });
+function update() {
+  ball.vy += 0.22; ball.x += ball.vx; ball.y += ball.vy;
+  if (ball.x < ball.r || ball.x > 340 - ball.r) ball.vx = -ball.vx;
+  if (ball.y < ball.r) ball.vy = -ball.vy;
+  bumpers.forEach(b => {
+    let dist = Math.hypot(ball.x - b.x, ball.y - b.y);
+    if (dist < ball.r + b.r) {
+      let nx = (ball.x - b.x)/dist, ny = (ball.y - b.y)/dist;
+      ball.vx = nx * 7; ball.vy = ny * 7; score += 50;
+    }
+  });
+  // Flipper hit
+  if (ball.y > 400 && ball.y < 430 && flip) { ball.vy = -9; ball.vx = (ball.x - 170)*0.08; }
+  if (ball.y > 480) { ball.x = 170; ball.y = 80; ball.vx = 2; ball.vy = 3; score = Math.max(0, score-100); }
+}
+function draw() {
+  ctx.clearRect(0,0,340,460);
+  ctx.font = 'bold 20px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText('SCORE: ' + score, 15, 30);
+  bumpers.forEach(b => {
+    ctx.fillStyle = b.c; ctx.shadowColor = b.c; ctx.shadowBlur = 15;
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
+  });
+  // Flippers
+  ctx.fillStyle = flip ? '#10b981' : '#ec4899'; ctx.shadowBlur = 10;
+  ctx.beginPath(); ctx.roundRect(80, 410, 180, 16, 8); ctx.fill();
+  // Ball
+  ctx.fillStyle = '#fff'; ctx.shadowColor = '#fff'; ctx.shadowBlur = 10;
+  ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2); ctx.fill();
+}
+function loop() { update(); draw(); requestAnimationFrame(loop); }
+loop();
+</script>
+</body>
+</html>

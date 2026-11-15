@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Asteroids</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:#040711;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
+#cvs{background:#000;border:3px solid #38bdf8;border-radius:18px;box-shadow:0 0 25px rgba(56,189,248,0.25);width:100%;max-width:360px;aspect-ratio:1;}
+.ctrls{display:flex;gap:12px;margin-top:12px;}
+.btn{background:#1e293b;border:1px solid #38bdf8;color:#38bdf8;font-weight:900;padding:10px 18px;border-radius:12px;font-size:1.1rem;cursor:pointer;}
+.btn:active{background:#38bdf8;color:#000;}
+</style>
+</head>
+<body>
+<div style="font-weight:900;color:#38bdf8;margin-bottom:8px;">🚀 ASTEROID BLASTER</div>
+<canvas id="cvs" width="360" height="360"></canvas>
+<div class="ctrls">
+  <button class="btn" onclick="ship.angle-=0.3">↺</button>
+  <button class="btn" onclick="thrust()">🚀</button>
+  <button class="btn" onclick="shoot()">💥</button>
+  <button class="btn" onclick="ship.angle+=0.3">↻</button>
+</div>
+<script>
+const cvs = document.getElementById('cvs'), ctx = cvs.getContext('2d');
+let ship = {x: 180, y: 180, vx: 0, vy: 0, angle: 0};
+let bullets = [], rocks = [], score = 0;
+function spawnRock() {
+  rocks.push({x: Math.random()*360, y: Math.random() < 0.5 ? 0 : 360, vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2, r: 18});
+}
+for(let i=0; i<4; i++) spawnRock();
+function thrust() { ship.vx += Math.cos(ship.angle)*1.5; ship.vy += Math.sin(ship.angle)*1.5; }
+function shoot() { bullets.push({x: ship.x, y: ship.y, vx: Math.cos(ship.angle)*6, vy: Math.sin(ship.angle)*6, life: 60}); }
+window.addEventListener('keydown', e => {
+  if (e.key==='ArrowLeft'||e.key==='a') ship.angle -= 0.2;
+  if (e.key==='ArrowRight'||e.key==='d') ship.angle += 0.2;
+  if (e.key==='ArrowUp'||e.key==='w') thrust();
+  if (e.code==='Space') shoot();
+});
+function update() {
+  ship.x = (ship.x + ship.vx + 360) % 360; ship.y = (ship.y + ship.vy + 360) % 360;
+  ship.vx *= 0.98; ship.vy *= 0.98;
+  bullets.forEach(b => { b.x += b.vx; b.y += b.vy; b.life--; });
+  bullets = bullets.filter(b => b.life > 0);
+  rocks.forEach(r => {
+    r.x = (r.x + r.vx + 360) % 360; r.y = (r.y + r.vy + 360) % 360;
+    bullets.forEach((b, bi) => {
+      if (Math.hypot(b.x - r.x, b.y - r.y) < r.r) {
+        bullets.splice(bi, 1); r.dead = true; score += 20;
+      }
+    });
+  });
+  rocks = rocks.filter(r => !r.dead);
+  if (rocks.length < 4) spawnRock();
+}
+function draw() {
+  ctx.clearRect(0,0,360,360);
+  // Ship
+  ctx.save(); ctx.translate(ship.x, ship.y); ctx.rotate(ship.angle);
+  ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(14,0); ctx.lineTo(-10,-8); ctx.lineTo(-6,0); ctx.lineTo(-10,8); ctx.closePath(); ctx.stroke();
+  ctx.restore();
+  // Bullets
+  ctx.fillStyle = '#facc15';
+  bullets.forEach(b => { ctx.beginPath(); ctx.arc(b.x, b.y, 2.5, 0, Math.PI*2); ctx.fill(); });
+  // Rocks
+  ctx.strokeStyle = '#94a3b8';
+  rocks.forEach(r => { ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI*2); ctx.stroke(); });
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('SCORE: ' + score, 15, 25);
+}
+function loop() { update(); draw(); requestAnimationFrame(loop); }
+loop();
+</script>
+</body>
+</html>

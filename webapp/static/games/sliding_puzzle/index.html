@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>15-Puzzle</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:#090d16;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
+.title{font-size:1.6rem;font-weight:900;color:#f59e0b;margin-bottom:12px;}
+.grid{display:grid;grid-template-columns:repeat(4,68px);grid-template-rows:repeat(4,68px);gap:8px;background:#1e293b;padding:10px;border-radius:18px;}
+.tile{background:#334155;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:900;cursor:pointer;color:#38bdf8;}
+.tile.empty{background:transparent;cursor:default;}
+.btn{margin-top:14px;background:#f59e0b;color:#451a03;border:none;padding:10px 20px;border-radius:999px;font-weight:800;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="title">🔲 15-SLIDING PUZZLE</div>
+<div class="grid" id="grid"></div>
+<button class="btn" onclick="init()">🔄 Shuffle</button>
+<script>
+let tiles = [];
+function init() {
+  tiles = [...Array(15).keys()].map(x => x+1); tiles.push(0);
+  // Shuffle solvably
+  for(let i=0; i<150; i++) {
+    let emptyIdx = tiles.indexOf(0);
+    let r = Math.floor(emptyIdx/4), c = emptyIdx%4;
+    let n = [];
+    if (r>0) n.push(emptyIdx-4); if (r<3) n.push(emptyIdx+4);
+    if (c>0) n.push(emptyIdx-1); if (c<3) n.push(emptyIdx+1);
+    let pick = n[Math.floor(Math.random()*n.length)];
+    tiles[emptyIdx] = tiles[pick]; tiles[pick] = 0;
+  }
+  render();
+}
+function render() {
+  const g = document.getElementById('grid'); g.innerHTML = '';
+  tiles.forEach((v, idx) => {
+    let d = document.createElement('div');
+    d.className = 'tile ' + (v===0 ? 'empty' : '');
+    d.textContent = v===0 ? '' : v;
+    d.onclick = () => tap(idx);
+    g.appendChild(d);
+  });
+}
+function tap(idx) {
+  let emptyIdx = tiles.indexOf(0);
+  let r1 = Math.floor(idx/4), c1 = idx%4, r2 = Math.floor(emptyIdx/4), c2 = emptyIdx%4;
+  if (Math.abs(r1-r2) + Math.abs(c1-c2) === 1) {
+    tiles[emptyIdx] = tiles[idx]; tiles[idx] = 0;
+    render();
+    if (tiles.slice(0,15).every((v,i)=>v===i+1)) setTimeout(()=>alert('Solved! 🎉'), 100);
+  }
+}
+init();
+</script>
+</body>
+</html>

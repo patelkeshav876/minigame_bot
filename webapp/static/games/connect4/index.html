@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Connect 4</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:#090d16;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
+.title{font-size:1.6rem;font-weight:900;color:#38bdf8;margin-bottom:8px;}
+.board{background:#1d4ed8;padding:10px;border-radius:18px;display:grid;grid-template-columns:repeat(7,40px);grid-template-rows:repeat(6,40px);gap:6px;box-shadow:0 0 25px rgba(29,78,216,0.3);}
+.cell{background:#0f172a;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.disc{width:100%;height:100%;border-radius:50%;box-shadow:inset 0 3px 5px rgba(255,255,255,0.4),0 2px 4px rgba(0,0,0,0.5);}
+.disc.R{background:#ef4444;}
+.disc.Y{background:#facc15;}
+.status{margin-top:12px;font-weight:800;color:#facc15;}
+</style>
+</head>
+<body>
+<div class="title">🔴 CONNECT 4 🟡</div>
+<div class="board" id="board"></div>
+<div class="status" id="st">Your Turn (Red 🔴)</div>
+<button onclick="init()" style="margin-top:12px;background:#1e293b;border:1px solid #38bdf8;color:#38bdf8;padding:8px 18px;border-radius:999px;font-weight:800;cursor:pointer;">🔄 Restart</button>
+<script>
+const ROWS=6, COLS=7;
+let grid = [], turn = 'R', over = false;
+function init() {
+  grid = Array(ROWS).fill().map(()=>Array(COLS).fill(''));
+  turn = 'R'; over = false; document.getElementById('st').textContent = 'Your Turn (Red 🔴)';
+  render();
+}
+function drop(col) {
+  if (over) return;
+  for(let r=ROWS-1; r>=0; r--) {
+    if (!grid[r][col]) {
+      grid[r][col] = turn;
+      render();
+      if (checkWin(r, col, turn)) {
+        over = true; document.getElementById('st').textContent = turn==='R'?'You Won! 🎉':'AI Won! 🤖';
+        return;
+      }
+      turn = turn==='R'?'Y':'R';
+      if (turn === 'Y') {
+        document.getElementById('st').textContent = 'AI Thinking... 🤖';
+        setTimeout(aiMove, 300);
+      } else {
+        document.getElementById('st').textContent = 'Your Turn (Red 🔴)';
+      }
+      return;
+    }
+  }
+}
+function aiMove() {
+  if (over) return;
+  let valid = [];
+  for(let c=0; c<COLS; c++) if (!grid[0][c]) valid.push(c);
+  if (!valid.length) return;
+  drop(valid[Math.floor(Math.random()*valid.length)]);
+}
+function checkWin(r, c, p) {
+  const dirs = [[[0,1],[0,-1]], [[1,0],[-1,0]], [[1,1],[-1,-1]], [[1,-1],[-1,1]]];
+  return dirs.some(axis => {
+    let count = 1;
+    axis.forEach(([dr, dc]) => {
+      let nr=r+dr, nc=c+dc;
+      while(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&grid[nr][nc]===p) { count++; nr+=dr; nc+=dc; }
+    });
+    return count >= 4;
+  });
+}
+function render() {
+  const b = document.getElementById('board'); b.innerHTML = '';
+  for(let r=0; r<ROWS; r++) {
+    for(let c=0; c<COLS; c++) {
+      let d = document.createElement('div'); d.className = 'cell';
+      if (grid[r][c]) {
+        let disc = document.createElement('div'); disc.className = 'disc ' + grid[r][c];
+        d.appendChild(disc);
+      }
+      d.onclick = () => drop(c);
+      b.appendChild(d);
+    }
+  }
+}
+init();
+</script>
+</body>
+</html>

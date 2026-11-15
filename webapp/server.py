@@ -111,8 +111,15 @@ async def add_custom_game(req: CustomGameRequest) -> dict[str, Any]:
         raise HTTPException(status_code=403, detail="Admin permissions required")
 
     clean_url = req.url.strip()
-    if not (clean_url.startswith("https://") or clean_url.startswith("http://localhost")):
-        raise HTTPException(status_code=400, detail="Game URL must start with https:// (or http://localhost)")
+    if not (
+        clean_url.startswith("https://")
+        or clean_url.startswith("http://localhost")
+        or clean_url.startswith("/static/")
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Game URL must start with https://, /static/, or http://localhost",
+        )
 
     game = storage.add_custom_game(
         title=req.title,

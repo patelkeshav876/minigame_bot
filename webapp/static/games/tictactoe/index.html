@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Neon XO</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+body{background:#090d16;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
+.title{font-size:1.6rem;font-weight:900;color:#38bdf8;margin-bottom:12px;}
+.grid{display:grid;grid-template-columns:repeat(3,90px);grid-template-rows:repeat(3,90px);gap:10px;}
+.cell{background:#1e293b;border:2px solid #334155;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:2.8rem;font-weight:900;cursor:pointer;}
+.cell.X{color:#ef4444;text-shadow:0 0 15px #ef4444;}
+.cell.O{color:#38bdf8;text-shadow:0 0 15px #38bdf8;}
+.btn{margin-top:16px;background:linear-gradient(135deg,#38bdf8,#0284c7);color:#fff;border:none;padding:10px 24px;border-radius:999px;font-weight:800;font-size:0.9rem;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="title">❌ NEON TIC-TAC-TOE ⭕</div>
+<div class="grid" id="grid"></div>
+<button class="btn" onclick="init()">🔄 Restart</button>
+<script>
+let board = Array(9).fill(''), turn = 'X', over = false;
+const g = document.getElementById('grid');
+function init() {
+  board = Array(9).fill(''); turn = 'X'; over = false; render();
+}
+function render() {
+  g.innerHTML = '';
+  board.forEach((v, i) => {
+    let d = document.createElement('div');
+    d.className = 'cell ' + v;
+    d.textContent = v;
+    d.onclick = () => tap(i);
+    g.appendChild(d);
+  });
+}
+function checkWin(b) {
+  const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  for(let [x,y,z] of lines) {
+    if (b[x] && b[x]===b[y] && b[y]===b[z]) return b[x];
+  }
+  return b.every(v => v) ? 'Draw' : null;
+}
+function tap(i) {
+  if (board[i] || over) return;
+  board[i] = 'X';
+  let res = checkWin(board);
+  if (res) { over = true; render(); setTimeout(()=>alert(res==='Draw'?'Draw!':res+' Wins!'),100); return; }
+  // AI Turn
+  let empty = board.map((v,idx)=>v===''?idx:null).filter(v=>v!==null);
+  if (empty.length) {
+    let aiMove = empty[Math.floor(Math.random()*empty.length)];
+    board[aiMove] = 'O';
+    let res2 = checkWin(board);
+    if (res2) { over = true; setTimeout(()=>alert(res2==='Draw'?'Draw!':res2+' Wins!'),100); }
+  }
+  render();
+}
+init();
+</script>
+</body>
+</html>
