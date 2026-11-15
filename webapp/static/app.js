@@ -46,13 +46,19 @@
     match: document.getElementById("view-match"),
     ranks: document.getElementById("view-ranks"),
     profile: document.getElementById("view-profile"),
+    community: document.getElementById("view-community"),
     player: document.getElementById("view-player"),
   };
 
   function showView(name) {
-    Object.entries(views).forEach(([k, el]) => el.classList.toggle("active", k === name));
+    Object.entries(views).forEach(([k, el]) => {
+      if (el) el.classList.toggle("active", k === name);
+    });
     navItems.forEach((n) => n.classList.toggle("active", n.dataset.view === name));
     document.getElementById("bottomNav").classList.toggle("hidden", name === "match" || name === "player");
+    if (window.lucide) {
+      setTimeout(() => { window.lucide.createIcons(); }, 10);
+    }
   }
 
   function haptic(type = "light") {
@@ -803,19 +809,33 @@
       renderContinuePlayingCarousel();
       renderTrendingGamesList();
 
-      // Check if user launched via Telegram bot /flipster command
+      if (window.lucide) {
+        setTimeout(() => { window.lucide.createIcons(); }, 20);
+      }
+
+      // Check if user launched via Telegram bot /aviator or /flipster command
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get("game") === "flipster") {
-        const flipster = state.allCustomGames.find(g => g.title.toLowerCase().includes("flipster"));
-        if (flipster) {
-          launchWebGame(flipster.title, flipster.url, flipster.icon);
+      const targetGame = urlParams.get("game");
+      if (targetGame === "aviator" || targetGame === "flipster") {
+        const aviator = state.allCustomGames.find(g => g.title.toLowerCase().includes("aviator") || g.title.toLowerCase().includes("flipster"));
+        if (aviator) {
+          launchWebGame(aviator.title, aviator.url, aviator.icon);
         } else {
-          launchWebGame("Flipster Multiplier", "/static/games/flipster/index.html", "⚡");
+          launchWebGame("Aviator Rocket", "/static/games/aviator/index.html", "🚀");
         }
       }
     } catch (_) {
       if (el) el.textContent = "Could not load web games.";
     }
+  }
+
+  function exitGameToHome() {
+    const iframe = document.getElementById("customGameIframe");
+    if (iframe) iframe.src = "";
+    state.currentGameUrl = "";
+    try { tg?.exitFullscreen?.(); } catch (_) {}
+    try { tg?.BackButton?.hide?.(); } catch (_) {}
+    showView("home");
   }
 
   function launchWebGame(title, url, icon = "🎮") {
@@ -830,21 +850,73 @@
       tg?.expand?.();
       tg?.requestFullscreen?.();
     } catch (_) {}
+    try {
+      if (tg?.BackButton) {
+        tg.BackButton.show();
+        tg.BackButton.onClick(exitGameToHome);
+      }
+    } catch (_) {}
   }
 
-  document.getElementById("btnPlayFlipsterHero")?.addEventListener("click", () => {
+  // Hero Sliding Window Carousel Control
+  let heroCurrentSlide = 0;
+  const heroTotalSlides = 4;
+  let heroAutoSlideInterval = null;
+
+  function setHeroSlide(idx) {
+    heroCurrentSlide = (idx + heroTotalSlides) % heroTotalSlides;
+    const wrapper = document.getElementById("heroSlidesWrapper");
+    if (wrapper) {
+      wrapper.style.transform = `translateX(-${heroCurrentSlide * 100}%)`;
+    }
+    document.querySelectorAll(".carousel-dot").forEach((dot, dIdx) => {
+      dot.classList.toggle("active", dIdx === heroCurrentSlide);
+    });
+  }
+
+  function startHeroAutoSlide() {
+    if (heroAutoSlideInterval) clearInterval(heroAutoSlideInterval);
+    heroAutoSlideInterval = setInterval(() => {
+      setHeroSlide(heroCurrentSlide + 1);
+    }, 4500);
+  }
+
+  document.querySelectorAll(".carousel-dot").forEach((dot) => {
+    dot.addEventListener("click", () => {
+      haptic("light");
+      const idx = parseInt(dot.dataset.index, 10);
+      setHeroSlide(idx);
+      startHeroAutoSlide();
+    });
+  });
+  startHeroAutoSlide();
+
+  // Hero Play buttons for each slide
+  document.getElementById("btnPlayAviatorHero")?.addEventListener("click", () => {
     haptic("heavy");
-    launchWebGame("Flipster Multiplier", "/static/games/flipster/index.html", "⚡");
+    launchWebGame("Aviator Rocket", "/static/games/aviator/index.html", "🚀");
+  });
+  document.getElementById("btnPlaySpeedwayHero")?.addEventListener("click", () => {
+    haptic("heavy");
+    launchWebGame("T-Rex Desert Run", "/static/games/dino/index.html", "🦖");
+  });
+  document.getElementById("btnPlayInvadersHero")?.addEventListener("click", () => {
+    haptic("heavy");
+    launchWebGame("Space Invaders", "/static/games/space_invaders/index.html", "👾");
+  });
+  document.getElementById("btnPlayTetrisHero")?.addEventListener("click", () => {
+    haptic("heavy");
+    launchWebGame("Retro Tetris", "/static/games/tetris/index.html", "🧩");
   });
 
   document.getElementById("btnPlayQuest")?.addEventListener("click", () => {
     haptic("medium");
-    launchWebGame("Flipster Multiplier", "/static/games/flipster/index.html", "⚡");
+    launchWebGame("Aviator Rocket", "/static/games/aviator/index.html", "🚀");
   });
 
   document.getElementById("btnJoinTournament")?.addEventListener("click", () => {
     haptic("heavy");
-    launchWebGame("Flipster Multiplier", "/static/games/flipster/index.html", "⚡");
+    launchWebGame("Aviator Rocket", "/static/games/aviator/index.html", "🚀");
   });
 
   // Hub shortcuts navigation
@@ -852,9 +924,7 @@
     btn.addEventListener("click", () => {
       haptic("light");
       const nav = btn.dataset.nav;
-      if (nav === "vault") {
-        document.getElementById("sectionAllGames")?.scrollIntoView({ behavior: "smooth" });
-      } else {
+      if (nav) {
         showView(nav);
       }
     });
@@ -862,7 +932,7 @@
 
   // Category filter scroll bar
   document.querySelectorAll(".cat-filter-btn").forEach(btn => {
-    if (btn.id === "btnToggleSearch") return;
+    if (btn.id === "btnToggleSearch" || btn.id === "btnNavAddGame") return;
     btn.addEventListener("click", () => {
       haptic("light");
       document.querySelectorAll(".cat-filter-btn").forEach(b => b.classList.remove("active"));
@@ -948,27 +1018,30 @@
     });
   }
 
-  document.getElementById("btnCloseGamePlayer")?.addEventListener("click", () => {
-    document.getElementById("customGameIframe").src = "";
-    state.currentGameUrl = "";
-    try {
-      tg?.exitFullscreen?.();
-    } catch (_) {}
-    showView(state.prevView || "home");
+  document.getElementById("btnCloseGamePlayer")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    exitGameToHome();
   });
 
   const modalAddGame = document.getElementById("modalAddGame");
   const btnOpenAddGameModal = document.getElementById("btnOpenAddGameModal");
+  const btnNavAddGame = document.getElementById("btnNavAddGame");
+  const btnShortcutAddGame = document.getElementById("btnShortcutAddGame");
   const btnCloseModal = document.getElementById("btnCloseModal");
 
   function closeModal() {
     if (modalAddGame) modalAddGame.classList.add("hidden");
   }
 
-  btnOpenAddGameModal?.addEventListener("click", () => {
+  function openAddGameModal() {
     modalAddGame?.classList.remove("hidden");
     loadAdminGamesList();
-  });
+  }
+
+  btnOpenAddGameModal?.addEventListener("click", openAddGameModal);
+  btnNavAddGame?.addEventListener("click", openAddGameModal);
+  btnShortcutAddGame?.addEventListener("click", openAddGameModal);
 
   btnCloseModal?.addEventListener("click", closeModal);
 
@@ -1020,4 +1093,8 @@
   });
 
   initAuth();
+
+  if (window.lucide) {
+    window.lucide.createIcons();
+  }
 })();

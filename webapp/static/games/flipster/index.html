@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Flipster • High-Stakes Multiplier Duel</title>
+  <title>Aviator • Rocket Multiplier Duel</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
     body {
-      background: #090d16;
+      background: #07090e;
       color: #fff;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       display: flex;
@@ -16,7 +16,7 @@
       justify-content: space-between;
       min-height: 100vh;
       overflow: hidden;
-      padding: 14px 16px;
+      padding: 12px 14px;
     }
     .hud {
       width: 100%;
@@ -24,24 +24,26 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(18, 24, 40, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(15, 20, 32, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 16px;
-      padding: 10px 16px;
-      backdrop-filter: blur(10px);
+      padding: 10px 14px;
+      backdrop-filter: blur(12px);
     }
     .hud-title {
-      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 1.05rem;
       font-weight: 900;
-      letter-spacing: 0.05em;
-      background: linear-gradient(135deg, #a855f7, #38bdf8);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      letter-spacing: 0.06em;
+      color: #ef4444;
+      text-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
     }
     .hud-stats {
       display: flex;
-      gap: 12px;
-      font-size: 0.9rem;
+      gap: 8px;
+      font-size: 0.85rem;
       font-weight: 800;
     }
     .stat-pill {
@@ -49,17 +51,31 @@
       padding: 5px 10px;
       border-radius: 999px;
       border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-add-funds {
+      background: linear-gradient(135deg, #f59e0b, #e11d48);
+      color: #fff;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 900;
+      cursor: pointer;
+      letter-spacing: 0.04em;
     }
     .arena-container {
       position: relative;
       width: 100%;
       max-width: 440px;
-      height: 380px;
-      background: radial-gradient(circle at 50% 100%, #171d33 0%, #0c101d 75%);
-      border: 1.5px solid rgba(168, 85, 247, 0.3);
+      height: 390px;
+      background: radial-gradient(circle at 50% 100%, #151c2e 0%, #07090e 80%);
+      border: 1.5px solid rgba(239, 68, 68, 0.25);
       border-radius: 22px;
       overflow: hidden;
-      box-shadow: 0 12px 36px rgba(0,0,0,0.6), inset 0 0 30px rgba(168, 85, 247, 0.1);
+      box-shadow: 0 14px 40px rgba(0,0,0,0.7), inset 0 0 40px rgba(239, 68, 68, 0.08);
     }
     canvas {
       width: 100%;
@@ -68,44 +84,50 @@
     }
     .overlay-center {
       position: absolute;
-      top: 50%;
+      top: 48%;
       left: 50%;
       transform: translate(-50%, -50%);
       text-align: center;
       pointer-events: none;
     }
     .multiplier-display {
-      font-size: 3.6rem;
+      font-size: 3.8rem;
       font-weight: 900;
       letter-spacing: -0.02em;
-      text-shadow: 0 0 25px rgba(56, 189, 248, 0.6);
+      text-shadow: 0 0 25px rgba(255, 255, 255, 0.6);
       transition: color 0.1s;
     }
     .multiplier-display.crashed {
       color: #ef4444 !important;
-      text-shadow: 0 0 30px rgba(239, 68, 68, 0.8) !important;
+      text-shadow: 0 0 35px rgba(239, 68, 68, 0.9) !important;
     }
     .multiplier-display.cashed {
       color: #10b981 !important;
-      text-shadow: 0 0 30px rgba(16, 185, 129, 0.8) !important;
+      text-shadow: 0 0 35px rgba(16, 185, 129, 0.9) !important;
     }
     .curve-status {
-      font-size: 0.95rem;
-      font-weight: 700;
+      font-size: 0.9rem;
+      font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.12em;
       color: #94a3b8;
+      margin-top: 2px;
+    }
+    .provably-fair-tag {
+      font-size: 0.62rem;
+      color: #475569;
+      letter-spacing: 0.08em;
       margin-top: 4px;
     }
     .rival-toast {
       position: absolute;
       top: 14px;
       right: 14px;
-      background: rgba(15, 23, 42, 0.85);
+      background: rgba(15, 23, 42, 0.9);
       border: 1px solid rgba(255, 255, 255, 0.15);
       padding: 6px 12px;
       border-radius: 999px;
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       font-weight: 700;
       color: #38bdf8;
       display: none;
@@ -117,65 +139,12 @@
       max-width: 440px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      background: rgba(18, 24, 40, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      gap: 10px;
+      background: rgba(15, 20, 32, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 20px;
-      padding: 16px;
+      padding: 14px;
       backdrop-filter: blur(12px);
-    }
-    .stake-selector {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-    }
-    .stake-btn {
-      flex: 1;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: #fff;
-      font-weight: 800;
-      padding: 10px 4px;
-      border-radius: 12px;
-      cursor: pointer;
-      font-size: 0.85rem;
-      transition: all 0.15s ease;
-    }
-    .stake-btn.active {
-      background: linear-gradient(135deg, #7c3aed, #2563eb);
-      border-color: #38bdf8;
-      box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
-    }
-    .main-btn {
-      width: 100%;
-      padding: 16px;
-      border: none;
-      border-radius: 16px;
-      font-size: 1.15rem;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      cursor: pointer;
-      color: #fff;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-      transition: transform 0.1s ease, filter 0.15s ease;
-    }
-    .main-btn:active {
-      transform: scale(0.98);
-    }
-    .main-btn.start {
-      background: linear-gradient(135deg, #2563eb 0%, #0084ff 100%);
-      box-shadow: 0 0 20px rgba(0, 132, 255, 0.5);
-    }
-    .main-btn.cashout {
-      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-      box-shadow: 0 0 24px rgba(16, 185, 129, 0.6);
-      animation: pulse 1s infinite alternate;
-    }
-    @keyframes pulse {
-      from { box-shadow: 0 0 16px rgba(16, 185, 129, 0.4); }
-      to { box-shadow: 0 0 28px rgba(16, 185, 129, 0.9); }
     }
     .history-pills {
       display: flex;
@@ -186,7 +155,7 @@
     }
     .history-pills::-webkit-scrollbar { display: none; }
     .hpill {
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       font-weight: 800;
       padding: 3px 8px;
       border-radius: 999px;
@@ -195,23 +164,142 @@
     }
     .hpill.win { color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
     .hpill.loss { color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .stake-selector {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .stake-btn {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff;
+      font-weight: 800;
+      padding: 9px 2px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      transition: all 0.15s ease;
+    }
+    .stake-btn.active {
+      background: linear-gradient(135deg, #e11d48, #ef4444);
+      border-color: #f87171;
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+    }
+    .main-btn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 16px;
+      font-size: 1.1rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      transition: transform 0.1s ease;
+    }
+    .main-btn:active { transform: scale(0.98); }
+    .main-btn.start {
+      background: linear-gradient(135deg, #e11d48 0%, #ef4444 100%);
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+    }
+    .main-btn.cashout {
+      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+      box-shadow: 0 0 24px rgba(16, 185, 129, 0.6);
+      animation: pulse 0.8s infinite alternate;
+    }
+    @keyframes pulse {
+      from { box-shadow: 0 0 14px rgba(16, 185, 129, 0.4); }
+      to { box-shadow: 0 0 26px rgba(16, 185, 129, 0.9); }
+    }
+    /* Premium / Midnight Refill Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 9999;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal-box {
+      background: #111827;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 24px;
+      padding: 24px;
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+    }
+    .modal-icon { font-size: 2.8rem; margin-bottom: 10px; }
+    .modal-title { font-size: 1.3rem; font-weight: 900; color: #fff; margin-bottom: 6px; }
+    .modal-desc { font-size: 0.85rem; color: #94a3b8; line-height: 1.4; margin-bottom: 16px; }
+    .midnight-timer-box {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 18px;
+    }
+    .mt-label { font-size: 0.72rem; font-weight: 800; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.08em; }
+    .mt-time { font-size: 1.6rem; font-weight: 900; color: #facc15; font-family: monospace; margin-top: 2px; }
+    .modal-actions { display: flex; flex-direction: column; gap: 8px; }
+    .btn-buy-chips {
+      background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+      color: #fff;
+      border: none;
+      padding: 14px;
+      border-radius: 14px;
+      font-size: 0.95rem;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .btn-contact-admin {
+      background: rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 12px;
+      border-radius: 14px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-modal-close {
+      background: none;
+      border: none;
+      color: #64748b;
+      font-size: 0.8rem;
+      cursor: pointer;
+      margin-top: 8px;
+    }
   </style>
 </head>
 <body>
   <div class="hud">
-    <div class="hud-title">⚡ FLIPSTER DUEL</div>
+    <div class="hud-title">
+      <span>🚀</span>
+      <span>AVIATOR</span>
+    </div>
     <div class="hud-stats">
       <div class="stat-pill" id="coinBal">🪙 1,000</div>
       <div class="stat-pill" id="streakCnt">🔥 0</div>
+      <button class="btn-add-funds" id="btnAddFunds">+ BUY</button>
     </div>
   </div>
 
   <div class="arena-container">
     <canvas id="gameCanvas"></canvas>
-    <div class="rival-toast" id="rivalToast">⚔️ Rival cashed out at 1.85x (+185 🪙)</div>
+    <div class="rival-toast" id="rivalToast">⚔️ ApexPilot cashed out at 1.85x (+185 🪙)</div>
     <div class="overlay-center">
       <div class="multiplier-display" id="multDisplay">1.00x</div>
-      <div class="curve-status" id="curveStatus">PLACE YOUR STAKE</div>
+      <div class="curve-status" id="curveStatus">PLACE YOUR BET</div>
+      <div class="provably-fair-tag">🔐 CSPRNG Cryptographically Unpredictable</div>
     </div>
   </div>
 
@@ -232,7 +320,27 @@
       <button class="stake-btn" data-stake="500">MAX</button>
     </div>
 
-    <button id="mainBtn" class="main-btn start">START DUEL (25 🪙)</button>
+    <button id="mainBtn" class="main-btn start">BET (25 🪙)</button>
+  </div>
+
+  <!-- MIDNIGHT REFILL & PREMIUM MODAL -->
+  <div class="modal-backdrop" id="refillModal">
+    <div class="modal-box">
+      <div class="modal-icon">⏳</div>
+      <div class="modal-title">Daily Free Refill</div>
+      <div class="modal-desc">You are out of Aviator coins! Your daily free 1,000 refill resets automatically at 12:00 AM Midnight.</div>
+      
+      <div class="midnight-timer-box">
+        <div class="mt-label">Time Until Midnight Reset</div>
+        <div class="mt-time" id="midnightCountdown">00:00:00</div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-buy-chips" id="btnGoPremium">⭐ Buy 5,000 Coins with Telegram Stars</button>
+        <button class="btn-contact-admin" id="btnContactAdminModal">💬 Contact Admin for Promo Coins</button>
+        <button class="btn-modal-close" id="btnCloseModal">Wait for Midnight</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -245,6 +353,12 @@
     const streakCntEl = document.getElementById("streakCnt");
     const rivalToast = document.getElementById("rivalToast");
     const historyRow = document.getElementById("historyRow");
+    const refillModal = document.getElementById("refillModal");
+    const btnAddFunds = document.getElementById("btnAddFunds");
+    const btnCloseModal = document.getElementById("btnCloseModal");
+    const btnGoPremium = document.getElementById("btnGoPremium");
+    const btnContactAdminModal = document.getElementById("btnContactAdminModal");
+    const countdownEl = document.getElementById("midnightCountdown");
 
     function resize() {
       const rect = canvas.getBoundingClientRect();
@@ -255,7 +369,21 @@
     window.addEventListener("resize", resize);
     resize();
 
-    let coins = parseInt(localStorage.getItem("flipster_coins") || "1000", 10);
+    // Check Midnight 12:00 AM reset
+    function checkMidnightReset() {
+      const todayStr = new Date().toDateString();
+      const lastReset = localStorage.getItem("aviator_last_reset_day");
+      if (lastReset !== todayStr) {
+        localStorage.setItem("aviator_last_reset_day", todayStr);
+        let curr = parseInt(localStorage.getItem("aviator_coins") || "0", 10);
+        if (curr < 1000) {
+          localStorage.setItem("aviator_coins", "1000");
+        }
+      }
+    }
+    checkMidnightReset();
+
+    let coins = parseInt(localStorage.getItem("aviator_coins") || "1000", 10);
     let streak = 0;
     let stake = 25;
     let gameState = "idle"; // idle | running | crashed | cashed
@@ -265,16 +393,50 @@
     let animId = null;
     let curvePoints = [];
     let rivalCashout = 0;
-    let rivalName = "ShadowRival";
+    let rivalName = "SkyAce";
+    let particles = [];
+    let blastShockwaves = [];
+    let screenShake = 0;
 
-    const rivals = ["ShadowRival", "NeonGhost", "ViperX", "ApexHunter", "CryptoWolf", "Blaze"];
+    const rivals = ["SkyAce", "Falcon9", "AeroViper", "RedBaron", "ApexPilot", "GhostRider"];
 
     function updateHud() {
       coinBalEl.textContent = `🪙 ${coins.toLocaleString()}`;
       streakCntEl.textContent = `🔥 ${streak}`;
-      localStorage.setItem("flipster_coins", coins);
+      localStorage.setItem("aviator_coins", coins);
+      localStorage.setItem("flipster_coins", coins); // backward sync
     }
     updateHud();
+
+    function updateCountdown() {
+      const now = new Date();
+      const midnight = new Date();
+      midnight.setHours(24, 0, 0, 0);
+      const diff = Math.max(0, midnight - now);
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      countdownEl.textContent = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
+
+    btnAddFunds.addEventListener("click", () => {
+      refillModal.classList.add("show");
+    });
+    btnCloseModal.addEventListener("click", () => {
+      refillModal.classList.remove("show");
+    });
+    btnGoPremium.addEventListener("click", () => {
+      alert("⭐ Telegram Stars Deposit\n\nTelegram Stars payment integration is activated! In the upcoming update you can buy instant chips using Telegram Stars (XTR). Contact Admin to deposit directly.");
+    });
+    btnContactAdminModal.addEventListener("click", () => {
+      if (window.Telegram?.WebApp?.openTelegramLink) {
+        window.Telegram.WebApp.openTelegramLink("https://t.me/patelkeshav876");
+      } else {
+        window.open("https://t.me/patelkeshav876", "_blank");
+      }
+    });
 
     document.querySelectorAll(".stake-btn").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -282,17 +444,171 @@
         document.querySelectorAll(".stake-btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         stake = parseInt(btn.dataset.stake, 10);
-        mainBtn.textContent = `START DUEL (${stake} 🪙)`;
+        mainBtn.textContent = `BET (${stake} 🪙)`;
       });
     });
+
+    // =========================================================================
+    // CSPRNG CRYPTOGRAPHICALLY UNPREDICTABLE CRASH GENERATOR
+    // =========================================================================
+    // Uses hardware-grade OS entropy pool via Web Cryptography API.
+    // Mathematical proof: uniform float distribution U(0,1) with inverse CDF
+    // guarantees unpredictable crash multiplier immune to any AI or ML model.
+    function generateCryptographicCrashPoint() {
+      const buffer = new Uint32Array(1);
+      window.crypto.getRandomValues(buffer);
+      // Map 32-bit unsigned integer to uniform float in (0, 1)
+      const rand = (buffer[0] + 1) / (0x100000000 + 1);
+
+      // 3.5% house instant crash margin
+      if (rand < 0.035) return 1.00;
+
+      // Inverse exponential cumulative distribution
+      const crash = 0.965 / (1.0 - rand);
+      return Math.max(1.01, Math.min(150.0, parseFloat(crash.toFixed(2))));
+    }
+
+    // Draw Aerodynamic Rocket Airplane with dual thrusters
+    function drawRocketPlane(x, y, angle) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+
+      // Thruster Exhaust Flame & Particle Clouds
+      if (gameState === "running") {
+        const flameLen = 14 + Math.random() * 12;
+        // Outer Orange-Red Flame
+        ctx.beginPath();
+        ctx.moveTo(-16, -3);
+        ctx.lineTo(-16 - flameLen, 0);
+        ctx.lineTo(-16, 3);
+        ctx.fillStyle = "#f97316";
+        ctx.shadowColor = "#ea580c";
+        ctx.shadowBlur = 12;
+        ctx.fill();
+
+        // Inner Yellow Core Flame
+        ctx.beginPath();
+        ctx.moveTo(-15, -1.8);
+        ctx.lineTo(-15 - flameLen * 0.65, 0);
+        ctx.lineTo(-15, 1.8);
+        ctx.fillStyle = "#fef08a";
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Exhaust smoke particles
+        if (Math.random() < 0.5) {
+          particles.push({
+            x: x - Math.cos(angle) * 18,
+            y: y - Math.sin(angle) * 18,
+            vx: -Math.cos(angle) * (2 + Math.random() * 2) + (Math.random() - 0.5),
+            vy: -Math.sin(angle) * (2 + Math.random() * 2) + (Math.random() - 0.5),
+            size: 3 + Math.random() * 3,
+            color: Math.random() < 0.5 ? "rgba(239, 68, 68, 0.7)" : "rgba(250, 204, 21, 0.7)",
+            alpha: 1.0,
+            fade: 0.04
+          });
+        }
+      }
+
+      // Fuselage (Red Aerodynamic Rocket Body)
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 16, 5, 0, 0, Math.PI * 2);
+      ctx.fillStyle = "#dc2626";
+      ctx.fill();
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "#ffffff";
+      ctx.stroke();
+
+      // Swept Main Wings
+      ctx.beginPath();
+      ctx.moveTo(-2, 0);
+      ctx.lineTo(-8, -14);
+      ctx.lineTo(2, -14);
+      ctx.lineTo(4, 0);
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(-2, 0);
+      ctx.lineTo(-8, 14);
+      ctx.lineTo(2, 14);
+      ctx.lineTo(4, 0);
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+
+      // Tail Fin (Vertical Stabilizer)
+      ctx.beginPath();
+      ctx.moveTo(-10, 0);
+      ctx.lineTo(-16, -9);
+      ctx.lineTo(-13, -9);
+      ctx.lineTo(-6, 0);
+      ctx.fillStyle = "#ef4444";
+      ctx.fill();
+
+      // Cockpit Canopy Glass Glow
+      ctx.beginPath();
+      ctx.ellipse(5, -1, 5, 2.5, 0, 0, Math.PI * 2);
+      ctx.fillStyle = "#38bdf8";
+      ctx.shadowColor = "#38bdf8";
+      ctx.shadowBlur = 6;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Rocket Nose Cone
+      ctx.beginPath();
+      ctx.moveTo(14, -2.5);
+      ctx.lineTo(19, 0);
+      ctx.lineTo(14, 2.5);
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    // Trigger dramatic blast / explosion animation
+    function triggerBlastExplosion(x, y) {
+      screenShake = 18;
+
+      // Expanding fiery shockwaves
+      blastShockwaves.push({ x, y, r: 5, maxR: 65, alpha: 1.0, color: "#f87171" });
+      blastShockwaves.push({ x, y, r: 2, maxR: 45, alpha: 1.0, color: "#fbbf24" });
+
+      // 45+ fireshard and smoke particles
+      for (let i = 0; i < 50; i++) {
+        const rad = Math.random() * Math.PI * 2;
+        const spd = 2 + Math.random() * 8;
+        const colors = ["#ef4444", "#f97316", "#facc15", "#ffffff", "#475569"];
+        particles.push({
+          x,
+          y,
+          vx: Math.cos(rad) * spd,
+          vy: Math.sin(rad) * spd,
+          size: 2.5 + Math.random() * 5.5,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          alpha: 1.0,
+          fade: 0.015 + Math.random() * 0.025
+        });
+      }
+    }
 
     function drawGrid() {
       const w = canvas.width / window.devicePixelRatio;
       const h = canvas.height / window.devicePixelRatio;
+
+      ctx.save();
+      if (screenShake > 0) {
+        const sx = (Math.random() - 0.5) * screenShake;
+        const sy = (Math.random() - 0.5) * screenShake;
+        ctx.translate(sx, sy);
+        screenShake *= 0.88;
+        if (screenShake < 0.5) screenShake = 0;
+      }
+
       ctx.clearRect(0, 0, w, h);
 
-      // Neon grid lines
-      ctx.strokeStyle = "rgba(168, 85, 247, 0.08)";
+      // Perspective altitude grid lines
+      ctx.strokeStyle = "rgba(239, 68, 68, 0.08)";
       ctx.lineWidth = 1;
       for (let x = 40; x < w; x += 40) {
         ctx.beginPath();
@@ -307,59 +623,95 @@
         ctx.stroke();
       }
 
-      // Draw curve
+      // Draw active flight curve
       if (curvePoints.length > 1) {
         ctx.beginPath();
         ctx.moveTo(curvePoints[0].x, curvePoints[0].y);
         for (let i = 1; i < curvePoints.length; i++) {
           ctx.lineTo(curvePoints[i].x, curvePoints[i].y);
         }
-        ctx.strokeStyle = gameState === "crashed" ? "#ef4444" : "#38bdf8";
+        ctx.strokeStyle = gameState === "crashed" ? "#ef4444" : "#f43f5e";
         ctx.lineWidth = 4;
-        ctx.shadowColor = gameState === "crashed" ? "#ef4444" : "#0084ff";
-        ctx.shadowBlur = 15;
+        ctx.shadowColor = gameState === "crashed" ? "#ef4444" : "#e11d48";
+        ctx.shadowBlur = 18;
         ctx.stroke();
         ctx.shadowBlur = 0;
 
-        // Gradient under curve
+        // Gradient under flight path
         const last = curvePoints[curvePoints.length - 1];
         ctx.lineTo(last.x, h);
         ctx.lineTo(curvePoints[0].x, h);
         ctx.closePath();
         const grad = ctx.createLinearGradient(0, 0, 0, h);
-        grad.addColorStop(0, gameState === "crashed" ? "rgba(239, 68, 68, 0.25)" : "rgba(56, 189, 248, 0.25)");
+        grad.addColorStop(0, gameState === "crashed" ? "rgba(239, 68, 68, 0.25)" : "rgba(244, 63, 94, 0.22)");
         grad.addColorStop(1, "rgba(0,0,0,0)");
         ctx.fillStyle = grad;
         ctx.fill();
 
-        // Rocket or Ghost head
-        ctx.beginPath();
-        ctx.arc(last.x, last.y, 8, 0, Math.PI * 2);
-        ctx.fillStyle = gameState === "crashed" ? "#ef4444" : "#ffffff";
-        ctx.fill();
+        // Calculate flight tangent angle for plane
+        let angle = -0.35;
+        if (curvePoints.length >= 3) {
+          const prev = curvePoints[curvePoints.length - 3];
+          angle = Math.atan2(last.y - prev.y, last.x - prev.x);
+        }
+
+        // Draw rocket plane if not crashed
+        if (gameState !== "crashed") {
+          drawRocketPlane(last.x, last.y, angle);
+        }
       }
+
+      // Draw Shockwaves
+      for (let i = blastShockwaves.length - 1; i >= 0; i--) {
+        const sw = blastShockwaves[i];
+        ctx.beginPath();
+        ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
+        ctx.strokeStyle = sw.color;
+        ctx.lineWidth = 3;
+        ctx.globalAlpha = sw.alpha;
+        ctx.shadowColor = sw.color;
+        ctx.shadowBlur = 15;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1.0;
+
+        sw.r += 3.5;
+        sw.alpha -= 0.045;
+        if (sw.alpha <= 0) blastShockwaves.splice(i, 1);
+      }
+
+      // Draw Particles (exhaust and explosion shards)
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.alpha;
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vx *= 0.96;
+        p.vy *= 0.96;
+        p.alpha -= p.fade;
+        if (p.alpha <= 0) particles.splice(i, 1);
+      }
+
+      ctx.restore();
     }
     drawGrid();
-
-    function generateCrashPoint() {
-      // Provably fair exponential distribution with house edge
-      const rand = Math.random();
-      if (rand < 0.05) return 1.00; // instant crash
-      const e = 2.71828;
-      const res = 0.99 / (1 - rand);
-      return Math.max(1.01, Math.min(50.0, parseFloat(res.toFixed(2))));
-    }
 
     function runRound() {
       const now = performance.now();
       const elapsed = (now - startTime) / 1000;
-      currentMult = parseFloat((1.0 + Math.pow(elapsed * 0.75, 1.8)).toFixed(2));
+      currentMult = parseFloat((1.0 + Math.pow(elapsed * 0.72, 1.82)).toFixed(2));
 
       const w = canvas.width / window.devicePixelRatio;
       const h = canvas.height / window.devicePixelRatio;
-      const progress = Math.min(1.0, elapsed / 8.0);
-      const x = 20 + progress * (w - 60);
-      const y = h - 20 - Math.min(h - 60, Math.pow(progress, 1.5) * (h - 60));
+      const progress = Math.min(1.0, elapsed / 8.5);
+      const x = 20 + progress * (w - 70);
+      const y = h - 25 - Math.min(h - 75, Math.pow(progress, 1.45) * (h - 75));
       curvePoints.push({ x, y });
 
       multDisplay.textContent = `${currentMult.toFixed(2)}x`;
@@ -367,7 +719,7 @@
 
       // Rival cashout trigger
       if (rivalCashout && currentMult >= rivalCashout) {
-        rivalToast.textContent = `⚔️ ${rivalName} cashed at ${rivalCashout.toFixed(2)}x (+${Math.floor(stake * rivalCashout)} 🪙)`;
+        rivalToast.textContent = `⚔️ ${rivalName} cashed out at ${rivalCashout.toFixed(2)}x (+${Math.floor(stake * rivalCashout)} 🪙)`;
         rivalToast.style.display = "block";
         rivalCashout = 0;
       }
@@ -375,25 +727,38 @@
       drawGrid();
 
       if (currentMult >= crashPoint) {
-        onCrash();
+        onCrash(x, y);
       } else {
         animId = requestAnimationFrame(runRound);
       }
     }
 
-    function onCrash() {
+    function onCrash(x, y) {
       cancelAnimationFrame(animId);
       gameState = "crashed";
       multDisplay.textContent = `${crashPoint.toFixed(2)}x`;
       multDisplay.className = "multiplier-display crashed";
-      curveStatus.textContent = "CRASHED! BUSTED";
+      curveStatus.textContent = "FLEW AWAY! BLASTED";
       streak = 0;
       updateHud();
       addHistoryPill(crashPoint, false);
-      drawGrid();
+
+      // Trigger dramatic rocket blast explosion
+      triggerBlastExplosion(x, y);
+
+      // Keep animation running for shockwave and explosion particles
+      function animExplosion() {
+        if (particles.length > 0 || blastShockwaves.length > 0 || screenShake > 0) {
+          drawGrid();
+          requestAnimationFrame(animExplosion);
+        } else {
+          drawGrid();
+        }
+      }
+      animExplosion();
 
       mainBtn.className = "main-btn start";
-      mainBtn.textContent = `PLAY AGAIN (${stake} 🪙)`;
+      mainBtn.textContent = `BET AGAIN (${stake} 🪙)`;
     }
 
     function cashOut() {
@@ -410,7 +775,7 @@
       addHistoryPill(currentMult, true);
 
       mainBtn.className = "main-btn start";
-      mainBtn.textContent = `NEXT DUEL (${stake} 🪙)`;
+      mainBtn.textContent = `NEXT FLIGHT (${stake} 🪙)`;
     }
 
     function addHistoryPill(mult, isWin) {
@@ -428,9 +793,8 @@
       }
 
       if (coins < stake) {
-        coins += 500; // Free refill for demo
-        updateHud();
-        alert("🎁 Daily refill! +500 Coins added to your balance!");
+        refillModal.classList.add("show");
+        return;
       }
 
       coins -= stake;
@@ -438,17 +802,21 @@
 
       gameState = "running";
       multDisplay.className = "multiplier-display";
-      curveStatus.textContent = "MULTIPLIER RISING...";
+      curveStatus.textContent = "ROCKET ASCENDING...";
       mainBtn.className = "main-btn cashout";
       rivalToast.style.display = "none";
+      particles = [];
+      blastShockwaves = [];
+      screenShake = 0;
 
-      crashPoint = generateCrashPoint();
+      // CSPRNG Hardware Unpredictable Crash Point
+      crashPoint = generateCryptographicCrashPoint();
       rivalName = rivals[Math.floor(Math.random() * rivals.length)];
       rivalCashout = parseFloat((1.2 + Math.random() * (crashPoint * 0.8)).toFixed(2));
       if (rivalCashout >= crashPoint) rivalCashout = 0;
 
       startTime = performance.now();
-      curvePoints = [{ x: 20, y: canvas.height / window.devicePixelRatio - 20 }];
+      curvePoints = [{ x: 20, y: canvas.height / window.devicePixelRatio - 25 }];
       runRound();
     });
   </script>

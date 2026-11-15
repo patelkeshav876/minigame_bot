@@ -17,6 +17,7 @@ from handlers.inline import handle_inline_query
 from handlers.menu import (
     addgame_command,
     arena_command,
+    aviator_command,
     broadcast_command,
     flipster_command,
     handle_menu_callback,
@@ -39,6 +40,7 @@ def build_bot_application() -> Application:
     app.add_handler(CommandHandler("play", play_command))
     app.add_handler(CommandHandler("leaderboard", leaderboard_command))
     app.add_handler(CommandHandler("arena", arena_command))
+    app.add_handler(CommandHandler("aviator", aviator_command))
     app.add_handler(CommandHandler("flipster", flipster_command))
     app.add_handler(CommandHandler("broadcast", broadcast_command))
     app.add_handler(CommandHandler("announce", broadcast_command))

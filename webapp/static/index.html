@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Ghost Plays • Gaming Hub</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Lucide Icons Package (Modern Crisp Vector Icons) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
@@ -17,13 +19,13 @@
           <span class="user-status-dot"></span>
         </div>
         <div class="user-text-info">
-          <div class="user-display-name" id="homePlayerName">Keshav Patel</div>
-          <div class="user-handle" id="homeUsername">@Player</div>
+          <div class="user-display-name" id="homePlayerName">Player</div>
+          <div class="user-handle" id="homeUsername">@GhostPlayer</div>
         </div>
       </div>
       <div class="topbar-right">
         <div class="currency-pill energy-pill" id="energyPill">
-          <span class="cur-icon">⚡</span>
+          <i data-lucide="zap" class="pill-lucide-icon text-yellow"></i>
           <span class="cur-val" id="energyVal">25</span>
         </div>
         <div class="currency-pill coin-pill" id="coinPill">
@@ -33,10 +35,10 @@
       </div>
     </header>
 
-    <!-- QUICK CATEGORY FILTER ROW (SCREENSHOT 2) -->
+    <!-- QUICK CATEGORY & ACTION FILTER ROW -->
     <div class="cat-filter-scroll" id="catFilterBar">
       <button class="cat-filter-btn icon-only" id="btnToggleSearch" title="Search Games">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <i data-lucide="search" class="lucide-sm"></i>
       </button>
       <button class="cat-filter-btn active" data-cat="all">ALL</button>
       <button class="cat-filter-btn" data-cat="arcade">ARCADE</button>
@@ -44,59 +46,132 @@
       <button class="cat-filter-btn" data-cat="sport">SPORT</button>
       <button class="cat-filter-btn" data-cat="casual">ACTION</button>
       <button class="cat-filter-btn" data-cat="cards">BOARD</button>
+      <button class="cat-filter-btn add-btn-highlight" id="btnNavAddGame" title="Add or submit a game">
+        <i data-lucide="plus-circle" class="lucide-sm"></i> ADD GAME
+      </button>
     </div>
 
     <!-- EXPANDABLE SEARCH BOX -->
     <div class="search-drawer hidden" id="searchDrawer">
       <div class="game-search-box">
-        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        <input id="inputGameSearch" type="text" placeholder="Search 30+ games (Flipster, Tetris, Snake, Billiards...)" />
+        <i data-lucide="search" class="search-icon"></i>
+        <input id="inputGameSearch" type="text" placeholder="Search 30+ games (Aviator, Tetris, Snake, Billiards...)" />
         <button id="btnClearSearch" class="btn-clear-search">✕</button>
       </div>
     </div>
 
     <!-- ==================== HOME VIEW (SCREENSHOT 2 HUB) ==================== -->
     <section id="view-home" class="view active">
-      <!-- 1. HERO CAROUSEL BANNER (FLIPSTER FEATURED) -->
-      <div class="hero-feature-card">
-        <div class="hero-feature-bg">
-          <div class="hero-feature-glow"></div>
-        </div>
-        <div class="hero-feature-content">
-          <div class="hero-badge-row">
-            <span class="hero-badge featured">🔥 HIGH STAKES</span>
-            <span class="hero-badge live">● 25 DUELING</span>
-          </div>
-          <div class="hero-feature-title">FLIPSTER</div>
-          <div class="hero-feature-desc">Ride the multiplier curve, duel opponents live, and cash out before the crash!</div>
-          <div class="hero-feature-cta-row">
-            <button id="btnPlayFlipsterHero" class="btn-hero-play">PLAY</button>
-            <div class="hero-dots">
-              <span class="hdot active"></span>
-              <span class="hdot"></span>
-              <span class="hdot"></span>
+      <!-- 1. SLIDING WINDOW CAROUSEL (HERO AREA) -->
+      <div class="hero-carousel-slider" id="heroCarousel">
+        <div class="hero-slides-wrapper" id="heroSlidesWrapper">
+          <!-- Slide 1: AVIATOR (Featured Rocket Multiplier Duel) -->
+          <div class="hero-slide active" data-slide="0">
+            <div class="hero-feature-card slide-aviator">
+              <div class="hero-feature-glow red-glow"></div>
+              <div class="hero-feature-content">
+                <div class="hero-badge-row">
+                  <span class="hero-badge featured">🔥 HIGH STAKES</span>
+                  <span class="hero-badge live">● 32 FLYING</span>
+                </div>
+                <div class="hero-feature-title">AVIATOR</div>
+                <div class="hero-feature-desc">Watch the rocket soar! Cash out before the unpredictable blast & win huge multipliers!</div>
+                <div class="hero-feature-cta-row">
+                  <button id="btnPlayAviatorHero" class="btn-hero-play red-cta">
+                    <i data-lucide="rocket" class="lucide-sm"></i> PLAY AVIATOR
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
+
+          <!-- Slide 2: CYBER SPEEDWAY -->
+          <div class="hero-slide" data-slide="1">
+            <div class="hero-feature-card slide-speedway">
+              <div class="hero-feature-glow blue-glow"></div>
+              <div class="hero-feature-content">
+                <div class="hero-badge-row">
+                  <span class="hero-badge speed-badge">⚡ TOP SPEED</span>
+                  <span class="hero-badge live">● ARCADE</span>
+                </div>
+                <div class="hero-feature-title">DESERT RUNNER</div>
+                <div class="hero-feature-desc">Dodge desert cacti & obstacles at turbo speed in this endless reflex challenge!</div>
+                <div class="hero-feature-cta-row">
+                  <button id="btnPlaySpeedwayHero" class="btn-hero-play blue-cta">
+                    <i data-lucide="gauge" class="lucide-sm"></i> PLAY SPEEDWAY
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slide 3: NEON SPACE INVADERS -->
+          <div class="hero-slide" data-slide="2">
+            <div class="hero-feature-card slide-invaders">
+              <div class="hero-feature-glow purple-glow"></div>
+              <div class="hero-feature-content">
+                <div class="hero-badge-row">
+                  <span class="hero-badge retro-badge">👾 CLASSIC</span>
+                  <span class="hero-badge live">● SCI-FI</span>
+                </div>
+                <div class="hero-feature-title">SPACE INVADERS</div>
+                <div class="hero-feature-desc">Defend planetary fleet from relentless alien attack waves with laser cannons!</div>
+                <div class="hero-feature-cta-row">
+                  <button id="btnPlayInvadersHero" class="btn-hero-play purple-cta">
+                    <i data-lucide="shield" class="lucide-sm"></i> PLAY INVADERS
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slide 4: RETRO TETRIS -->
+          <div class="hero-slide" data-slide="3">
+            <div class="hero-feature-card slide-tetris">
+              <div class="hero-feature-glow green-glow"></div>
+              <div class="hero-feature-content">
+                <div class="hero-badge-row">
+                  <span class="hero-badge puzzle-badge">🧩 BRAIN PUZZLE</span>
+                  <span class="hero-badge live">● RANKED</span>
+                </div>
+                <div class="hero-feature-title">RETRO TETRIS</div>
+                <div class="hero-feature-desc">Rotate and slot falling tetromino blocks to clear lines & shatter high scores!</div>
+                <div class="hero-feature-cta-row">
+                  <button id="btnPlayTetrisHero" class="btn-hero-play green-cta">
+                    <i data-lucide="boxes" class="lucide-sm"></i> PLAY TETRIS
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slider Carousel Indicator Dots -->
+        <div class="carousel-nav-dots" id="carouselDots">
+          <span class="carousel-dot active" data-index="0"></span>
+          <span class="carousel-dot" data-index="1"></span>
+          <span class="carousel-dot" data-index="2"></span>
+          <span class="carousel-dot" data-index="3"></span>
         </div>
       </div>
 
       <!-- QUICK ACTION SHORTCUTS (SCREENSHOT 2 ROW) -->
       <div class="hub-shortcuts-row">
         <button class="hub-shortcut-btn" data-nav="ranks">
-          <span class="hs-icon">🏆</span>
+          <i data-lucide="trophy" class="hs-lucide text-yellow"></i>
           <span class="hs-label">Leaderboards</span>
         </button>
         <button class="hub-shortcut-btn" data-nav="battle">
-          <span class="hs-icon">⚔️</span>
+          <i data-lucide="swords" class="hs-lucide text-blue"></i>
           <span class="hs-label">PvP Arena</span>
         </button>
-        <button class="hub-shortcut-btn" data-nav="vault">
-          <span class="hs-icon">⛏️</span>
-          <span class="hs-label">Vault</span>
+        <button class="hub-shortcut-btn" id="btnShortcutAddGame">
+          <i data-lucide="plus-circle" class="hs-lucide text-green"></i>
+          <span class="hs-label">Add Game</span>
         </button>
-        <button class="hub-shortcut-btn" data-nav="profile">
-          <span class="hs-icon">🎁</span>
-          <span class="hs-label">Rewards</span>
+        <button class="hub-shortcut-btn" data-nav="community">
+          <i data-lucide="users" class="hs-lucide text-purple"></i>
+          <span class="hs-label">Community</span>
         </button>
       </div>
 
@@ -109,11 +184,11 @@
         <div class="quest-card" id="activeQuestCard">
           <div class="quest-left">
             <div class="quest-icon-tile">
-              <span class="quest-tile-art">⚡</span>
+              <span class="quest-tile-art">🚀</span>
             </div>
             <div class="quest-info">
-              <div class="quest-game-tag">FLIPSTER DUEL</div>
-              <div class="quest-desc">Reach 3.00x multiplier in one round without crashing.</div>
+              <div class="quest-game-tag">AVIATOR ROCKET</div>
+              <div class="quest-desc">Reach 3.00x multiplier in one flight without blasting.</div>
               <div class="quest-reward-row">
                 <span class="qr-label">REWARDS</span>
                 <span class="qr-badge">10 ⚡</span>
@@ -149,21 +224,21 @@
           </div>
           <div class="tournament-body">
             <div class="tournament-info">
-              <div class="tournament-name">Random Rush • Multiplier Duel</div>
-              <div class="tournament-sub">25 players dueling right now</div>
+              <div class="tournament-name">Aviator Sky High • Duel Cup</div>
+              <div class="tournament-sub">32 rocket pilots dueling right now</div>
             </div>
             <button class="btn-tournament-join" id="btnJoinTournament">JOIN</button>
           </div>
         </div>
       </div>
 
-      <!-- 5. TRENDING / SINGLE PLAYER GAMES (SCREENSHOT 2) -->
+      <!-- 5. TRENDING GAMES (SCREENSHOT 2) -->
       <div class="hub-section">
         <div class="hub-section-head">
           <span class="hub-section-title">TRENDING GAMES</span>
           <button class="hub-section-link" id="linkViewAllTrending">View all</button>
         </div>
-        <div class="hub-section-sub">Complete missions by achieving scores to unlock extra rewards.</div>
+        <div class="hub-section-sub">Complete missions by achieving scores to unlock extra tickets & rewards.</div>
         <div class="trending-games-list" id="trendingGamesList">
           <!-- Populated by JavaScript with stacked cards -->
         </div>
@@ -202,7 +277,9 @@
       <div class="hub-section" id="sectionAllGames">
         <div class="hub-section-head">
           <span class="hub-section-title">ALL ARCADE GAMES (<span id="totalGamesCount">30+</span>)</span>
-          <button id="btnOpenAddGameModal" class="btn small primary hidden">⚙️ Add Game</button>
+          <button id="btnOpenAddGameModal" class="btn small primary">
+            <i data-lucide="plus" class="lucide-sm"></i> Add Game
+          </button>
         </div>
         <div id="customGamesGrid" class="custom-games-grid">Loading games library...</div>
       </div>
@@ -245,6 +322,77 @@
           <input id="roomCodeInput" type="text" maxlength="10" placeholder="CODE (E.G. A1B2C3)" />
           <button id="btnJoinRoom" class="btn primary">Enter</button>
         </div>
+      </div>
+    </section>
+
+    <!-- ==================== COMMUNITY & CHANNELS VIEW (REQUEST 7) ==================== -->
+    <section id="view-community" class="view">
+      <div class="card community-hero-card">
+        <div class="community-hero-content">
+          <div class="comm-badge">📢 TELEGRAM HUB</div>
+          <h2 class="comm-title">Official Ghost Plays Community</h2>
+          <p class="comm-desc">Join our official channels, discuss high scores, join Aviator multiplier tournaments, and promote your own channel!</p>
+        </div>
+      </div>
+
+      <!-- Channel & Group Cards -->
+      <div class="card">
+        <div class="card-head">
+          <h3>👥 Channels & Discussion Groups</h3>
+        </div>
+        <div class="channel-list">
+          <div class="channel-card">
+            <div class="channel-icon-wrap">
+              <i data-lucide="bell" class="text-blue"></i>
+            </div>
+            <div class="channel-details">
+              <div class="channel-name">Ghost Plays Official</div>
+              <div class="channel-sub">Game releases, patch notes & tournament prize announcements</div>
+            </div>
+            <a href="https://t.me/patelkeshav876" target="_blank" class="btn small primary channel-btn">JOIN</a>
+          </div>
+
+          <div class="channel-card">
+            <div class="channel-icon-wrap">
+              <i data-lucide="message-square" class="text-green"></i>
+            </div>
+            <div class="channel-details">
+              <div class="channel-name">Global Gamers Lounge</div>
+              <div class="channel-sub">Chat with players, share Aviator crash records & arrange duels</div>
+            </div>
+            <a href="https://t.me/patelkeshav876" target="_blank" class="btn small secondary channel-btn">CHAT</a>
+          </div>
+
+          <div class="channel-card">
+            <div class="channel-icon-wrap">
+              <i data-lucide="flame" class="text-yellow"></i>
+            </div>
+            <div class="channel-details">
+              <div class="channel-name">High Rollers & Tournaments</div>
+              <div class="channel-sub">Exclusive Aviator high-multiplier challenges & rewards</div>
+            </div>
+            <a href="https://t.me/patelkeshav876" target="_blank" class="btn small primary channel-btn">JOIN</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Promotion & Partnership Box -->
+      <div class="card promo-inquiry-card">
+        <div class="promo-head">
+          <i data-lucide="sparkles" class="promo-star text-yellow"></i>
+          <div>
+            <h3>Promote Your Channel or Game</h3>
+            <p class="promo-sub">Want your Telegram channel, community group, or HTML5 game featured here to thousands of daily active gamers?</p>
+          </div>
+        </div>
+        <div class="promo-perks">
+          <div class="perk-pill">✨ Featured Channel Spot</div>
+          <div class="perk-pill">🎮 Custom In-App Game Slot</div>
+          <div class="perk-pill">📢 Broadcast to All Players</div>
+        </div>
+        <a href="https://t.me/patelkeshav876" target="_blank" class="btn primary full btn-contact-admin-promo">
+          <i data-lucide="send" class="lucide-sm"></i> Contact Admin for Promotion Details
+        </a>
       </div>
     </section>
 
@@ -357,35 +505,6 @@
         </div>
       </div>
 
-      <!-- Trophy Cabinet -->
-      <div class="card">
-        <div class="card-head">
-          <h3>🎖️ Trophy Cabinet</h3>
-        </div>
-        <div class="trophy-grid">
-          <div class="trophy-item unlocked">
-            <div class="trophy-icon">🥇</div>
-            <div class="trophy-title">First Blood</div>
-            <div class="trophy-desc">Won first PvP match</div>
-          </div>
-          <div class="trophy-item unlocked">
-            <div class="trophy-icon">⚡</div>
-            <div class="trophy-title">High Roller</div>
-            <div class="trophy-desc">Played Flipster Duel</div>
-          </div>
-          <div class="trophy-item">
-            <div class="trophy-icon">👑</div>
-            <div class="trophy-title">Grandmaster</div>
-            <div class="trophy-desc">Reach 1500 ELO</div>
-          </div>
-          <div class="trophy-item">
-            <div class="trophy-icon">🔥</div>
-            <div class="trophy-title">Unstoppable</div>
-            <div class="trophy-desc">5-win streak</div>
-          </div>
-        </div>
-      </div>
-
       <!-- Arena Ratings -->
       <div class="card">
         <div class="card-head">
@@ -406,7 +525,7 @@
 
     <!-- ==================== FULLSCREEN IN-APP WEB GAME PLAYER ==================== -->
     <section id="view-player" class="view fullscreen-player">
-      <button id="btnCloseGamePlayer" class="player-floating-close" title="Exit Game">✕</button>
+      <button id="btnCloseGamePlayer" class="player-floating-close" title="Exit to Home">✕</button>
       <div id="gamePlayerTitle" class="game-player-watermark">Ghost Plays</div>
       <iframe id="customGameIframe" src="" allowfullscreen allow="autoplay; fullscreen; gamepad"></iframe>
     </section>
@@ -448,27 +567,27 @@
       </div>
     </div>
 
-    <!-- DOCKED BOTTOM NAVIGATION (SCREENSHOT 2 STYLE) -->
+    <!-- DOCKED BOTTOM NAVIGATION WITH COMMUNITY TAB -->
     <nav class="bottom-nav" id="bottomNav">
-      <button class="nav-item" data-view="shop" id="navShopBtn">
-        <span class="nav-icon">🛒</span>
-        <span class="nav-lbl">SHOP</span>
-      </button>
       <button class="nav-item active" data-view="home">
-        <span class="nav-icon">🎮</span>
+        <i data-lucide="gamepad-2" class="nav-lucide"></i>
         <span class="nav-lbl">GAMES</span>
       </button>
       <button class="nav-item" data-view="battle">
-        <span class="nav-icon">🎲</span>
-        <span class="nav-lbl">BOARD</span>
+        <i data-lucide="swords" class="nav-lucide"></i>
+        <span class="nav-lbl">ARENA</span>
+      </button>
+      <button class="nav-item" data-view="community">
+        <i data-lucide="users" class="nav-lucide"></i>
+        <span class="nav-lbl">COMMUNITY</span>
       </button>
       <button class="nav-item" data-view="ranks">
-        <span class="nav-icon">🏆</span>
-        <span class="nav-lbl">SEASON</span>
+        <i data-lucide="trophy" class="nav-lucide"></i>
+        <span class="nav-lbl">RANKS</span>
       </button>
       <button class="nav-item" data-view="profile">
-        <span class="nav-icon">🎁</span>
-        <span class="nav-lbl">REWARDS</span>
+        <i data-lucide="user" class="nav-lucide"></i>
+        <span class="nav-lbl">PROFILE</span>
       </button>
     </nav>
   </div>

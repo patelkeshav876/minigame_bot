@@ -31,15 +31,15 @@ def _main_menu_markup(is_private_chat: bool = True) -> InlineKeyboardMarkup:
             [InlineKeyboardButton("🚀 Launch Ghost Plays (Mini App)", web_app=WebAppInfo(url=WEBAPP_URL))]
         )
         rows.append(
-            [InlineKeyboardButton("⚡ Play Flipster (High Stakes)", web_app=WebAppInfo(url=f"{WEBAPP_URL}?game=flipster"))]
+            [InlineKeyboardButton("🚀 Play Aviator (Rocket Duel)", web_app=WebAppInfo(url=f"{WEBAPP_URL}?game=aviator"))]
         )
     else:
         rows.append([InlineKeyboardButton("🚀 Launch Ghost Plays (Mini App)", callback_data="menu:arena")])
-        rows.append([InlineKeyboardButton("⚡ Play Flipster", callback_data="menu:flipster")])
+        rows.append([InlineKeyboardButton("🚀 Play Aviator", callback_data="menu:aviator")])
     rows.append(
         [
             InlineKeyboardButton("🏆 Leaderboards", callback_data="menu:leaderboard"),
-            InlineKeyboardButton("⚔️ Challenge Friend", switch_inline_query="challenge"),
+            InlineKeyboardButton("⚔️ Challenge Friend", switch_inline_query="challenge aviator"),
         ]
     )
     return InlineKeyboardMarkup(rows)
@@ -111,8 +111,8 @@ async def play_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     text = (
         "🎮 *GHOST PLAYS • Gaming Hub*\n\n"
         "Welcome to the ultimate Telegram gaming arena!\n\n"
-        "🔥 *30+ HTML5 Canvas & Retro Games*\n"
-        "⚡ *Flipster: High-Stakes Live Multiplier Challenge*\n"
+        "🔥 *30+ Retro & Arcade Games*\n"
+        "🚀 *Aviator: High-Stakes Rocket Multiplier Duel*\n"
         "⚔️ *Real-Time PvP Arena (Chess, Connect 4, Othello)*\n"
         "🏆 *Global ELO Rankings & Player Profiles*\n\n"
         "Tap below to launch Ghost Plays in full screen!"
@@ -124,26 +124,25 @@ async def play_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         await safe_edit_message(update.callback_query, text, markup, parse_mode="Markdown")
 
 
-async def flipster_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Post promotional Flipster high-stakes card like Screenshot 1."""
+async def aviator_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Post promotional Aviator rocket duel card."""
     is_private = bool(update.effective_chat and update.effective_chat.type == "private")
-    flipster_url = f"{WEBAPP_URL}?game=flipster" if WEBAPP_URL else None
+    aviator_url = f"{WEBAPP_URL}?game=aviator" if WEBAPP_URL else None
 
     buttons = []
-    if flipster_url and is_private:
-        buttons.append(InlineKeyboardButton("🕹️ Play", web_app=WebAppInfo(url=flipster_url)))
+    if aviator_url and is_private:
+        buttons.append(InlineKeyboardButton("🚀 Launch Aviator", web_app=WebAppInfo(url=aviator_url)))
     else:
-        buttons.append(InlineKeyboardButton("🕹️ Play", callback_data="menu:arena"))
-    buttons.append(InlineKeyboardButton("⚔️ Challenge", switch_inline_query="challenge flipster"))
+        buttons.append(InlineKeyboardButton("🚀 Launch Aviator", callback_data="menu:arena"))
+    buttons.append(InlineKeyboardButton("⚔️ Challenge Friend", switch_inline_query="challenge aviator"))
     markup = InlineKeyboardMarkup([buttons])
 
     caption = (
-        "⚡ *FLIPSTER • High-Stakes Multiplier Duel*\n\n"
-        "Ride the rising curve, challenge rivals live, and cash out before the crash! "
-        "Compete in head-to-head duels and climb the Ghost Plays leaderboard.\n\n"
-        "• *Instant PvP Matchmaking*\n"
-        "• *Real-Time Multiplier Curve*\n"
-        "• *Compete for High Scores & Coins*"
+        "🚀 *AVIATOR • Rocket Multiplier Duel*\n\n"
+        "Watch the rocket soar into the sky! Ride the multiplier curve, duel opponents live, and cash out before the sudden blast!\n\n"
+        "• *Cryptographically Unpredictable Crash*\n"
+        "• *Live Rocket Flight & Blast Effects*\n"
+        "• *Daily Midnight Coin Refills & High-Stakes Duels*"
     )
 
     photo_path = Path(__file__).resolve().parent.parent / "webapp" / "static" / "bot_avatar.jpg"
@@ -158,6 +157,10 @@ async def flipster_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         await update.message.reply_text(caption, reply_markup=markup, parse_mode="Markdown")
     elif update.callback_query:
         await safe_edit_message(update.callback_query, caption, markup, parse_mode="Markdown")
+
+
+# Backward-compatible alias
+flipster_command = aviator_command
 
 
 async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -305,8 +308,8 @@ async def handle_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYP
                 ),
                 parse_mode="Markdown",
             )
-        elif section == "flipster":
-            await flipster_command(update, context)
+        elif section in ("aviator", "flipster"):
+            await aviator_command(update, context)
         elif section == "arena":
             bot_name = context.bot.username or "your_bot"
             info = (

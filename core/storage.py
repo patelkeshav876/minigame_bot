@@ -45,7 +45,7 @@ def compute_level(xp: int) -> tuple[int, int, int]:
 
 DEFAULT_HTML5_GAMES: list[tuple[str, str, str, str]] = [
     # ⚡ High-Stakes Duel & Personal Wager
-    ("Flipster Multiplier", "/static/games/flipster/index.html", "⚡", "High-stakes multiplier curve duel! Cash out before the crash"),
+    ("Aviator Rocket", "/static/games/aviator/index.html", "🚀", "High-stakes rocket multiplier curve! Cash out before the blast"),
 
     # 🕹️ Arcade Classics (Self-Hosted & 100% Working)
     ("Neon Snake", "/static/games/snake/index.html", "🐍", "Classic retro snake with smooth controls"),
