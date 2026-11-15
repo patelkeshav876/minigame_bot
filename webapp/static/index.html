@@ -3,108 +3,226 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Ghost Plays • Mini App</title>
+  <title>Ghost Plays • Gaming Hub</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
   <div class="app">
+    <!-- TOPBAR / USER STATS BAR (SCREENSHOT 2 STYLE) -->
     <header class="topbar">
-      <div class="brand">
-        <span class="brand-glow">👻</span>
-        <span class="brand-text">GHOST PLAYS</span>
+      <div class="user-profile-summary" id="topbarUserProfile">
+        <div class="user-avatar-wrap">
+          <img src="/static/bot_avatar.jpg" alt="Avatar" class="user-avatar-img" />
+          <span class="user-status-dot"></span>
+        </div>
+        <div class="user-text-info">
+          <div class="user-display-name" id="homePlayerName">Keshav Patel</div>
+          <div class="user-handle" id="homeUsername">@Player</div>
+        </div>
       </div>
       <div class="topbar-right">
-        <button id="btnThemeToggle" class="theme-toggle-btn" title="Toggle Theme">🎨</button>
-        <div class="profile-pill" id="profilePill">Loading...</div>
+        <div class="currency-pill energy-pill" id="energyPill">
+          <span class="cur-icon">⚡</span>
+          <span class="cur-val" id="energyVal">25</span>
+        </div>
+        <div class="currency-pill coin-pill" id="coinPill">
+          <span class="cur-icon">🪙</span>
+          <span class="cur-val" id="coinVal">1,250</span>
+        </div>
       </div>
     </header>
 
-    <!-- HOME VIEW -->
+    <!-- QUICK CATEGORY FILTER ROW (SCREENSHOT 2) -->
+    <div class="cat-filter-scroll" id="catFilterBar">
+      <button class="cat-filter-btn icon-only" id="btnToggleSearch" title="Search Games">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      </button>
+      <button class="cat-filter-btn active" data-cat="all">ALL</button>
+      <button class="cat-filter-btn" data-cat="arcade">ARCADE</button>
+      <button class="cat-filter-btn" data-cat="puzzle">PUZZLE</button>
+      <button class="cat-filter-btn" data-cat="sport">SPORT</button>
+      <button class="cat-filter-btn" data-cat="casual">ACTION</button>
+      <button class="cat-filter-btn" data-cat="cards">BOARD</button>
+    </div>
+
+    <!-- EXPANDABLE SEARCH BOX -->
+    <div class="search-drawer hidden" id="searchDrawer">
+      <div class="game-search-box">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="inputGameSearch" type="text" placeholder="Search 30+ games (Flipster, Tetris, Snake, Billiards...)" />
+        <button id="btnClearSearch" class="btn-clear-search">✕</button>
+      </div>
+    </div>
+
+    <!-- ==================== HOME VIEW (SCREENSHOT 2 HUB) ==================== -->
     <section id="view-home" class="view active">
-      <div class="hero-card">
-        <div class="hero-top">
-          <div class="rank-emblem" id="homeTierIcon">🥉</div>
-          <div class="hero-info">
-            <div class="hero-name" id="homePlayerName">Challenger</div>
-            <div class="hero-sub">
-              <span class="tier-badge" id="homeTierName">Bronze</span>
-              <span>•</span>
-              <span id="homeGlobalElo">1200 ELO</span>
-              <span>•</span>
-              <span id="homeWinRate">0% WR</span>
+      <!-- 1. HERO CAROUSEL BANNER (FLIPSTER FEATURED) -->
+      <div class="hero-feature-card">
+        <div class="hero-feature-bg">
+          <div class="hero-feature-glow"></div>
+        </div>
+        <div class="hero-feature-content">
+          <div class="hero-badge-row">
+            <span class="hero-badge featured">🔥 HIGH STAKES</span>
+            <span class="hero-badge live">● 25 DUELING</span>
+          </div>
+          <div class="hero-feature-title">FLIPSTER</div>
+          <div class="hero-feature-desc">Ride the multiplier curve, duel opponents live, and cash out before the crash!</div>
+          <div class="hero-feature-cta-row">
+            <button id="btnPlayFlipsterHero" class="btn-hero-play">PLAY</button>
+            <div class="hero-dots">
+              <span class="hdot active"></span>
+              <span class="hdot"></span>
+              <span class="hdot"></span>
             </div>
           </div>
-          <div class="lvl-pill" id="homeLevelPill">LVL 1</div>
         </div>
-        <div class="xp-bar-wrap">
-          <div class="xp-bar-fill" id="homeXpFill" style="width: 0%"></div>
-        </div>
-        <div class="xp-label" id="homeXpLabel">0 / 100 XP</div>
       </div>
 
-      <div class="section-title">🎯 Competitive Games</div>
-      <div class="home-games-grid" id="homeGamesGrid">
-        <button class="arena-game-card" data-game="chess">
-          <div class="gc-icon">♟️</div>
-          <div class="gc-title">Blitz Chess</div>
-          <div class="gc-meta">3:00 • <span data-elo="chess">1200 ELO</span></div>
+      <!-- QUICK ACTION SHORTCUTS (SCREENSHOT 2 ROW) -->
+      <div class="hub-shortcuts-row">
+        <button class="hub-shortcut-btn" data-nav="ranks">
+          <span class="hs-icon">🏆</span>
+          <span class="hs-label">Leaderboards</span>
         </button>
-        <button class="arena-game-card" data-game="othello">
-          <div class="gc-icon">⚫</div>
-          <div class="gc-title">Reversi / Othello</div>
-          <div class="gc-meta">2:00 • <span data-elo="othello">1200 ELO</span></div>
+        <button class="hub-shortcut-btn" data-nav="battle">
+          <span class="hs-icon">⚔️</span>
+          <span class="hs-label">PvP Arena</span>
         </button>
-        <button class="arena-game-card" data-game="connect4">
-          <div class="gc-icon">🔴</div>
-          <div class="gc-title">Connect 4</div>
-          <div class="gc-meta">1:30 • <span data-elo="connect4">1200 ELO</span></div>
+        <button class="hub-shortcut-btn" data-nav="vault">
+          <span class="hs-icon">⛏️</span>
+          <span class="hs-label">Vault</span>
         </button>
-        <button class="arena-game-card" data-game="tictactoe">
-          <div class="gc-icon">❌</div>
-          <div class="gc-title">Tic-Tac-Toe Blitz</div>
-          <div class="gc-meta">0:45 • <span data-elo="tictactoe">1200 ELO</span></div>
+        <button class="hub-shortcut-btn" data-nav="profile">
+          <span class="hs-icon">🎁</span>
+          <span class="hs-label">Rewards</span>
         </button>
       </div>
 
-      <div class="card clay-vault-card">
-        <div class="card-head">
-          <div class="vault-title-row">
-            <span class="vault-badge">🕹️ 30+ ARCADE</span>
-            <h3>🕹️ Arcade Games</h3>
+      <!-- 2. DAILY QUESTS SECTION (SCREENSHOT 2) -->
+      <div class="hub-section">
+        <div class="hub-section-head">
+          <span class="hub-section-title">DAILY QUESTS</span>
+          <button class="hub-section-link" id="linkViewAllQuests">View all</button>
+        </div>
+        <div class="quest-card" id="activeQuestCard">
+          <div class="quest-left">
+            <div class="quest-icon-tile">
+              <span class="quest-tile-art">⚡</span>
+            </div>
+            <div class="quest-info">
+              <div class="quest-game-tag">FLIPSTER DUEL</div>
+              <div class="quest-desc">Reach 3.00x multiplier in one round without crashing.</div>
+              <div class="quest-reward-row">
+                <span class="qr-label">REWARDS</span>
+                <span class="qr-badge">10 ⚡</span>
+                <span class="qr-badge">+50 🪙</span>
+              </div>
+            </div>
           </div>
+          <button class="btn-quest-play" id="btnPlayQuest">PLAY</button>
+        </div>
+      </div>
+
+      <!-- 3. CONTINUE PLAYING CAROUSEL (SCREENSHOT 2) -->
+      <div class="hub-section">
+        <div class="hub-section-head">
+          <span class="hub-section-title">CONTINUE PLAYING</span>
+          <button class="hub-section-link" id="linkViewAllContinue">View all</button>
+        </div>
+        <div class="carousel-cards-row" id="continuePlayingRow">
+          <!-- Populated by JavaScript with square artwork cards -->
+        </div>
+      </div>
+
+      <!-- 4. TOURNAMENTS BANNER (SCREENSHOT 2) -->
+      <div class="hub-section">
+        <div class="hub-section-head">
+          <span class="hub-section-title">TOURNAMENTS</span>
+          <button class="hub-section-link" id="linkViewAllTournaments">View all</button>
+        </div>
+        <div class="tournament-card" id="tournamentBanner">
+          <div class="tournament-top">
+            <span class="tourn-timer-badge">⏱️ Ends in 02h 15m</span>
+            <span class="tourn-prize-badge">Prize Pool: <strong>2,500 🪙</strong></span>
+          </div>
+          <div class="tournament-body">
+            <div class="tournament-info">
+              <div class="tournament-name">Random Rush • Multiplier Duel</div>
+              <div class="tournament-sub">25 players dueling right now</div>
+            </div>
+            <button class="btn-tournament-join" id="btnJoinTournament">JOIN</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. TRENDING / SINGLE PLAYER GAMES (SCREENSHOT 2) -->
+      <div class="hub-section">
+        <div class="hub-section-head">
+          <span class="hub-section-title">TRENDING GAMES</span>
+          <button class="hub-section-link" id="linkViewAllTrending">View all</button>
+        </div>
+        <div class="hub-section-sub">Complete missions by achieving scores to unlock extra rewards.</div>
+        <div class="trending-games-list" id="trendingGamesList">
+          <!-- Populated by JavaScript with stacked cards -->
+        </div>
+      </div>
+
+      <!-- 6. GAMES BY CATEGORY (SCREENSHOT 2) -->
+      <div class="hub-section">
+        <div class="hub-section-head">
+          <span class="hub-section-title">GAMES BY CATEGORY</span>
+        </div>
+        <div class="category-chunky-grid">
+          <div class="chunky-cat-card" data-cat="arcade">
+            <div class="chunky-icon">🕹️</div>
+            <div class="chunky-title">ARCADE</div>
+            <div class="chunky-meta">Snake, Asteroids, Invaders</div>
+          </div>
+          <div class="chunky-cat-card" data-cat="puzzle">
+            <div class="chunky-icon">🧩</div>
+            <div class="chunky-title">PUZZLE</div>
+            <div class="chunky-meta">2048, Minesweeper, Tetris</div>
+          </div>
+          <div class="chunky-cat-card" data-cat="sport">
+            <div class="chunky-icon">🎱</div>
+            <div class="chunky-title">SPORT</div>
+            <div class="chunky-meta">Billiards, Neon Pong</div>
+          </div>
+          <div class="chunky-cat-card" data-cat="cards">
+            <div class="chunky-icon">🃏</div>
+            <div class="chunky-title">CARDS & BOARD</div>
+            <div class="chunky-meta">Solitaire, Chess, Connect 4</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. ALL 30+ ARCADE GAMES GRID -->
+      <div class="hub-section" id="sectionAllGames">
+        <div class="hub-section-head">
+          <span class="hub-section-title">ALL ARCADE GAMES (<span id="totalGamesCount">30+</span>)</span>
           <button id="btnOpenAddGameModal" class="btn small primary hidden">⚙️ Add Game</button>
         </div>
-
-        <div class="game-search-box">
-          <span class="search-icon">🔍</span>
-          <input id="inputGameSearch" type="text" placeholder="Search arcade (Snake, Flappy, 2048, Dino, Tetris...)" />
-        </div>
-
-        <div class="category-pills" id="gameCategories">
-          <button class="cat-pill active" data-cat="all">🌟 All (<span id="totalGamesCount">30+</span>)</button>
-          <button class="cat-pill" data-cat="arcade">🕹️ Arcade</button>
-          <button class="cat-pill" data-cat="puzzle">🧩 Puzzle</button>
-          <button class="cat-pill" data-cat="cards">🃏 Cards & Board</button>
-          <button class="cat-pill" data-cat="casual">⚡ Fast Action</button>
-        </div>
-
-        <div id="customGamesGrid" class="custom-games-grid">Loading arcade games...</div>
+        <div id="customGamesGrid" class="custom-games-grid">Loading games library...</div>
       </div>
 
-      <div class="card">
-        <div class="card-head">
-          <h3>👁️ Live Matches to Spectate</h3>
+      <!-- 8. LIVE PVP MATCHES TO SPECTATE -->
+      <div class="hub-section">
+        <div class="hub-section-head">
+          <span class="hub-section-title">LIVE ARENA MATCHES</span>
           <button id="btnRefreshLive" class="btn small">🔄</button>
         </div>
         <div id="liveRoomsList" class="live-list">No active PvP matches right now.</div>
       </div>
     </section>
 
-    <!-- BATTLE LOBBY VIEW -->
+    <!-- ==================== BATTLE LOBBY VIEW ==================== -->
     <section id="view-battle" class="view">
       <div class="card">
-        <h2>Select Arena Mode</h2>
+        <div class="card-head">
+          <h2>Select Arena Mode</h2>
+        </div>
         <div class="game-pills" id="gameSelector">
           <button class="game-pill selected" data-game="chess">♟️ Chess</button>
           <button class="game-pill" data-game="othello">⚫ Othello</button>
@@ -130,7 +248,7 @@
       </div>
     </section>
 
-    <!-- ACTIVE MATCH VIEW -->
+    <!-- ==================== ACTIVE MATCH VIEW ==================== -->
     <section id="view-match" class="view">
       <div class="match-header">
         <button id="btnLeaveRoom" class="btn small">⬅️ Back</button>
@@ -161,7 +279,7 @@
       </div>
     </section>
 
-    <!-- LEADERBOARD VIEW -->
+    <!-- ==================== LEADERBOARD VIEW ==================== -->
     <section id="view-ranks" class="view">
       <div class="card">
         <div class="card-head">
@@ -175,11 +293,11 @@
           <button class="filter-pill" data-game="connect4">Connect 4</button>
           <button class="filter-pill" data-game="tictactoe">Tic-Tac-Toe</button>
         </div>
-        <div id="leaderboardList" class="lb-list">Loading...</div>
+        <div id="leaderboardList" class="lb-list">Loading rankings...</div>
       </div>
     </section>
 
-    <!-- PROFILE VIEW (Redesigned Esports Gamer Card & Trophy Room) -->
+    <!-- ==================== PROFILE VIEW ==================== -->
     <section id="view-profile" class="view">
       <div class="card profile-hero-card">
         <div class="prof-hero-top">
@@ -218,53 +336,57 @@
         <div class="combat-stats-grid">
           <div class="combat-stat-tile">
             <div class="cs-icon">⚔️</div>
-            <div class="cs-val" id="statMatches">0</div>
+            <div class="cs-val" id="profStatTotal">0</div>
             <div class="cs-lbl">Matches</div>
           </div>
           <div class="combat-stat-tile">
             <div class="cs-icon">🏆</div>
-            <div class="cs-val" id="statWins">0</div>
+            <div class="cs-val" id="profStatWins">0</div>
             <div class="cs-lbl">Victories</div>
           </div>
           <div class="combat-stat-tile">
             <div class="cs-icon">🎯</div>
-            <div class="cs-val" id="statWinRate">0%</div>
+            <div class="cs-val" id="profStatWinRate">0%</div>
             <div class="cs-lbl">Win Rate</div>
           </div>
           <div class="combat-stat-tile">
-            <div class="cs-icon">🔥</div>
-            <div class="cs-val" id="statStreak">0</div>
-            <div class="cs-lbl">Streak</div>
+            <div class="cs-icon">⚡</div>
+            <div class="cs-val" id="profStatStreak">0</div>
+            <div class="cs-lbl">Win Streak</div>
           </div>
         </div>
       </div>
 
-      <!-- Trophy Badges Showcase -->
+      <!-- Trophy Cabinet -->
       <div class="card">
         <div class="card-head">
-          <h3>🏅 Badges & Trophies</h3>
+          <h3>🎖️ Trophy Cabinet</h3>
         </div>
-        <div class="trophy-row">
-          <div class="trophy-badge" title="First Victory">
-            <div class="tb-icon">🗡️</div>
-            <div class="tb-name">First Blood</div>
+        <div class="trophy-grid">
+          <div class="trophy-item unlocked">
+            <div class="trophy-icon">🥇</div>
+            <div class="trophy-title">First Blood</div>
+            <div class="trophy-desc">Won first PvP match</div>
           </div>
-          <div class="trophy-badge" title="Tactician">
-            <div class="tb-icon">♟️</div>
-            <div class="tb-name">Chess Ace</div>
+          <div class="trophy-item unlocked">
+            <div class="trophy-icon">⚡</div>
+            <div class="trophy-title">High Roller</div>
+            <div class="trophy-desc">Played Flipster Duel</div>
           </div>
-          <div class="trophy-badge" title="Champion">
-            <div class="tb-icon">👑</div>
-            <div class="tb-name">Arena King</div>
+          <div class="trophy-item">
+            <div class="trophy-icon">👑</div>
+            <div class="trophy-title">Grandmaster</div>
+            <div class="trophy-desc">Reach 1500 ELO</div>
           </div>
-          <div class="trophy-badge" title="Fast Reflexes">
-            <div class="tb-icon">⚡</div>
-            <div class="tb-name">Speedster</div>
+          <div class="trophy-item">
+            <div class="trophy-icon">🔥</div>
+            <div class="trophy-title">Unstoppable</div>
+            <div class="trophy-desc">5-win streak</div>
           </div>
         </div>
       </div>
 
-      <!-- Per-Game Ratings -->
+      <!-- Arena Ratings -->
       <div class="card">
         <div class="card-head">
           <h3>🎮 Arena Ratings</h3>
@@ -282,16 +404,11 @@
       </div>
     </section>
 
-    <!-- IN-APP WEB GAME PLAYER VIEW -->
-    <section id="view-player" class="view">
-      <div class="game-player-bar">
-        <button id="btnCloseGamePlayer" class="btn small">⬅️ Exit</button>
-        <div id="gamePlayerTitle" class="game-player-title">Custom Game</div>
-        <button id="btnOpenExternal" class="btn small">🔗 Browser</button>
-      </div>
-      <div class="game-frame-container">
-        <iframe id="customGameIframe" src="" allowfullscreen allow="autoplay; fullscreen; gamepad"></iframe>
-      </div>
+    <!-- ==================== FULLSCREEN IN-APP WEB GAME PLAYER ==================== -->
+    <section id="view-player" class="view fullscreen-player">
+      <button id="btnCloseGamePlayer" class="player-floating-close" title="Exit Game">✕</button>
+      <div id="gamePlayerTitle" class="game-player-watermark">Ghost Plays</div>
+      <iframe id="customGameIframe" src="" allowfullscreen allow="autoplay; fullscreen; gamepad"></iframe>
     </section>
 
     <!-- ADMIN MODAL: MANAGE / ADD WEB GAMES -->
@@ -331,23 +448,27 @@
       </div>
     </div>
 
-    <!-- BOTTOM NAVIGATION -->
+    <!-- DOCKED BOTTOM NAVIGATION (SCREENSHOT 2 STYLE) -->
     <nav class="bottom-nav" id="bottomNav">
+      <button class="nav-item" data-view="shop" id="navShopBtn">
+        <span class="nav-icon">🛒</span>
+        <span class="nav-lbl">SHOP</span>
+      </button>
       <button class="nav-item active" data-view="home">
-        <span class="nav-icon">🏠</span>
-        <span class="nav-lbl">Home</span>
+        <span class="nav-icon">🎮</span>
+        <span class="nav-lbl">GAMES</span>
       </button>
       <button class="nav-item" data-view="battle">
-        <span class="nav-icon">⚔️</span>
-        <span class="nav-lbl">Battle</span>
+        <span class="nav-icon">🎲</span>
+        <span class="nav-lbl">BOARD</span>
       </button>
       <button class="nav-item" data-view="ranks">
         <span class="nav-icon">🏆</span>
-        <span class="nav-lbl">Ranks</span>
+        <span class="nav-lbl">SEASON</span>
       </button>
       <button class="nav-item" data-view="profile">
-        <span class="nav-icon">👤</span>
-        <span class="nav-lbl">Profile</span>
+        <span class="nav-icon">🎁</span>
+        <span class="nav-lbl">REWARDS</span>
       </button>
     </nav>
   </div>

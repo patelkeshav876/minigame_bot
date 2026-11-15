@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo
 from telegram.ext import ContextTypes
 
@@ -24,18 +25,23 @@ from handlers.games.tic_tac_toe import (
 
 
 def _main_menu_markup(is_private_chat: bool = True) -> InlineKeyboardMarkup:
-    rows = [
-        [InlineKeyboardButton("🎮 Single Player", callback_data="menu:single")],
-        [InlineKeyboardButton("👥 Two Player (In Chat)", callback_data="menu:two")],
-        [InlineKeyboardButton("💬 Challenge Friend (Inline)", switch_inline_query="")],
-    ]
+    rows = []
     if WEBAPP_URL and is_private_chat:
         rows.append(
-            [InlineKeyboardButton("👻 Ghost Plays (Mini App)", web_app=WebAppInfo(url=WEBAPP_URL))]
+            [InlineKeyboardButton("🚀 Launch Ghost Plays (Mini App)", web_app=WebAppInfo(url=WEBAPP_URL))]
+        )
+        rows.append(
+            [InlineKeyboardButton("⚡ Play Flipster (High Stakes)", web_app=WebAppInfo(url=f"{WEBAPP_URL}?game=flipster"))]
         )
     else:
-        rows.append([InlineKeyboardButton("👻 Ghost Plays (Mini App)", callback_data="menu:arena")])
-    rows.append([InlineKeyboardButton("🏆 Leaderboard", callback_data="menu:leaderboard")])
+        rows.append([InlineKeyboardButton("🚀 Launch Ghost Plays (Mini App)", callback_data="menu:arena")])
+        rows.append([InlineKeyboardButton("⚡ Play Flipster", callback_data="menu:flipster")])
+    rows.append(
+        [
+            InlineKeyboardButton("🏆 Leaderboards", callback_data="menu:leaderboard"),
+            InlineKeyboardButton("⚔️ Challenge Friend", switch_inline_query="challenge"),
+        ]
+    )
     return InlineKeyboardMarkup(rows)
 
 
@@ -103,16 +109,92 @@ async def play_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     is_private = bool(update.effective_chat and update.effective_chat.type == "private")
     text = (
-        "👻 *Ghost Plays • Gaming Hub*\n\n"
-        "• Play casual games directly in chat\n"
-        "• Type `@" + (context.bot.username or "yourbot") + "` in any DM/group for Inline games\n"
-        "• Open *Ghost Plays Mini App* for 30+ arcade games & ranked battles!"
+        "🎮 *GHOST PLAYS • Gaming Hub*\n\n"
+        "Welcome to the ultimate Telegram gaming arena!\n\n"
+        "🔥 *30+ HTML5 Canvas & Retro Games*\n"
+        "⚡ *Flipster: High-Stakes Live Multiplier Challenge*\n"
+        "⚔️ *Real-Time PvP Arena (Chess, Connect 4, Othello)*\n"
+        "🏆 *Global ELO Rankings & Player Profiles*\n\n"
+        "Tap below to launch Ghost Plays in full screen!"
     )
     markup = _main_menu_markup(is_private_chat=is_private)
     if update.message:
         await update.message.reply_text(text, reply_markup=markup, parse_mode="Markdown")
     elif update.callback_query:
         await safe_edit_message(update.callback_query, text, markup, parse_mode="Markdown")
+
+
+async def flipster_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Post promotional Flipster high-stakes card like Screenshot 1."""
+    is_private = bool(update.effective_chat and update.effective_chat.type == "private")
+    flipster_url = f"{WEBAPP_URL}?game=flipster" if WEBAPP_URL else None
+
+    buttons = []
+    if flipster_url and is_private:
+        buttons.append(InlineKeyboardButton("🕹️ Play", web_app=WebAppInfo(url=flipster_url)))
+    else:
+        buttons.append(InlineKeyboardButton("🕹️ Play", callback_data="menu:arena"))
+    buttons.append(InlineKeyboardButton("⚔️ Challenge", switch_inline_query="challenge flipster"))
+    markup = InlineKeyboardMarkup([buttons])
+
+    caption = (
+        "⚡ *FLIPSTER • High-Stakes Multiplier Duel*\n\n"
+        "Ride the rising curve, challenge rivals live, and cash out before the crash! "
+        "Compete in head-to-head duels and climb the Ghost Plays leaderboard.\n\n"
+        "• *Instant PvP Matchmaking*\n"
+        "• *Real-Time Multiplier Curve*\n"
+        "• *Compete for High Scores & Coins*"
+    )
+
+    photo_path = Path(__file__).resolve().parent.parent / "webapp" / "static" / "bot_avatar.jpg"
+    if update.message:
+        if photo_path.exists():
+            try:
+                with open(photo_path, "rb") as photo:
+                    await update.message.reply_photo(photo=photo, caption=caption, reply_markup=markup, parse_mode="Markdown")
+                    return
+            except Exception:
+                pass
+        await update.message.reply_text(caption, reply_markup=markup, parse_mode="Markdown")
+    elif update.callback_query:
+        await safe_edit_message(update.callback_query, caption, markup, parse_mode="Markdown")
+
+
+async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Admin command to broadcast announcements to all registered players: /broadcast <text>."""
+    user = update.effective_user
+    if not user:
+        return
+    if ADMIN_USER_IDS and str(user.id) not in ADMIN_USER_IDS:
+        await update.message.reply_text("⛔ Admin only command.")
+        return
+
+    msg_text = " ".join(context.args or []).strip()
+    if not msg_text:
+        await update.message.reply_text("Usage: `/broadcast <announcement message>`", parse_mode="Markdown")
+        return
+
+    player_ids = storage.list_all_player_ids()
+    if not player_ids:
+        await update.message.reply_text("No registered players found.")
+        return
+
+    sent = 0
+    failed = 0
+    status_msg = await update.message.reply_text(f"📢 Broadcasting to {len(player_ids)} players...")
+
+    for pid in player_ids:
+        try:
+            await context.bot.send_message(
+                chat_id=int(pid),
+                text=f"📢 *Ghost Plays Update*\n\n{msg_text}",
+                parse_mode="Markdown",
+            )
+            sent += 1
+        except Exception:
+            failed += 1
+
+    await status_msg.edit_text(f"✅ Broadcast complete!\nSent: `{sent}` | Failed/Blocked: `{failed}`", parse_mode="Markdown")
 
 
 async def leaderboard_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -223,6 +305,8 @@ async def handle_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYP
                 ),
                 parse_mode="Markdown",
             )
+        elif section == "flipster":
+            await flipster_command(update, context)
         elif section == "arena":
             bot_name = context.bot.username or "your_bot"
             info = (

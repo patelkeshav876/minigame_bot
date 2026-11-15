@@ -69,22 +69,24 @@
     if (!profile) return;
     state.profile = profile;
     const elo = Math.round(profile.elo);
-    const total = profile.wins + profile.losses + profile.draws;
+    const total = (profile.wins || 0) + (profile.losses || 0) + (profile.draws || 0);
     const wr = total ? Math.round((profile.wins / total) * 100) : 0;
 
-    profilePill.textContent = `${profile.tier?.icon || "🥉"} ${elo} ELO`;
-    document.getElementById("homeTierIcon").textContent = profile.tier?.icon || "🥉";
-    document.getElementById("homePlayerName").textContent = profile.display_name;
-    document.getElementById("homeTierName").textContent = profile.tier?.name || "Bronze";
-    document.getElementById("homeGlobalElo").textContent = `${elo} ELO`;
-    document.getElementById("homeWinRate").textContent = `${wr}% WR`;
-    document.getElementById("homeLevelPill").textContent = `LVL ${profile.level || 1}`;
+    const hpName = document.getElementById("homePlayerName");
+    if (hpName) hpName.textContent = profile.display_name || "Player";
+    const hpUser = document.getElementById("homeUsername");
+    if (hpUser) hpUser.textContent = profile.username ? `@${profile.username}` : `@user${profile.user_id}`;
+
+    // Read stored coins or initialize
+    const storedCoins = localStorage.getItem("flipster_coins") || "1250";
+    const coinValEl = document.getElementById("coinVal");
+    if (coinValEl) coinValEl.textContent = Number(storedCoins).toLocaleString();
+    const energyValEl = document.getElementById("energyVal");
+    if (energyValEl) energyValEl.textContent = "25";
 
     const pct = Math.min(100, Math.round(((profile.xp_progress || 0) / (profile.xp_next || 100)) * 100));
-    document.getElementById("homeXpFill").style.width = `${pct}%`;
-    document.getElementById("homeXpLabel").textContent = `${profile.xp_progress || 0} / ${profile.xp_next || 100} XP`;
 
-    // Redesigned Gamer Profile Hero & Records
+    // Profile View Elements
     const pName = document.getElementById("profPlayerName");
     if (pName) pName.textContent = profile.display_name || "Player";
     const pTier = document.getElementById("profTierBadge");
@@ -98,13 +100,13 @@
     const pXpFill = document.getElementById("profXpFill");
     if (pXpFill) pXpFill.style.width = `${pct}%`;
 
-    const sMatches = document.getElementById("statMatches");
-    if (sMatches) sMatches.textContent = (profile.wins || 0) + (profile.losses || 0) + (profile.draws || 0);
-    const sWins = document.getElementById("statWins");
+    const sMatches = document.getElementById("profStatTotal");
+    if (sMatches) sMatches.textContent = total;
+    const sWins = document.getElementById("profStatWins");
     if (sWins) sWins.textContent = profile.wins || 0;
-    const sWr = document.getElementById("statWinRate");
+    const sWr = document.getElementById("profStatWinRate");
     if (sWr) sWr.textContent = `${wr}%`;
-    const sStreak = document.getElementById("statStreak");
+    const sStreak = document.getElementById("profStatStreak");
     if (sStreak) sStreak.textContent = profile.wins > 0 ? `${profile.wins}` : "0";
 
     const gr = profile.game_ratings || {};
@@ -560,6 +562,7 @@
   navItems.forEach((item) => {
     item.addEventListener("click", () => {
       const v = item.dataset.view;
+      if (v === "shop") return;
       state.prevView = v;
       showView(v);
       if (v === "home") refreshLiveRooms();
@@ -647,7 +650,8 @@
   function classifyGameCategory(g) {
     const t = `${g.title} ${g.description}`.toLowerCase();
     if (/puzzle|wordle|sudoku|minesweeper|2048|crossword|nonogram|hanoi|flood|matrix|memory|hextris|15 puzzle/.test(t)) return "puzzle";
-    if (/arcade|pac-man|pacman|dino|flappy|jump|tower|breakout|invaders|asteroids|snake|pinball|duck|mole|geometry|fruit|knife|pong|slither|paper|helix/.test(t)) return "arcade";
+    if (/sport|billiards|pool|pong|golf|soccer|basketball|hockey|tennis/.test(t)) return "sport";
+    if (/arcade|pac-man|pacman|dino|flappy|jump|tower|breakout|invaders|asteroids|snake|pinball|duck|mole|geometry|fruit|knife|slither|paper|helix/.test(t)) return "arcade";
     if (/solitaire|card|mahjong|checkers|reversi|othello|backgammon|domino|yahtzee|hearts|spades|rummy|cribbage|freecell/.test(t)) return "cards";
     return "casual";
   }
@@ -717,6 +721,78 @@
     });
   });
 
+  function renderContinuePlayingCarousel() {
+    const row = document.getElementById("continuePlayingRow");
+    if (!row) return;
+    const games = state.allCustomGames || [];
+    if (!games.length) return;
+
+    // Pick top games for the carousel
+    const pickTitles = ["Flipster Multiplier", "Retro Tetris", "Fruit Slicer", "Knife Master", "Helix Drop", "Space Invaders", "Neon Snake", "2048 Classic", "8-Ball Billiards"];
+    const picks = games.filter(g => pickTitles.some(t => g.title.toLowerCase().includes(t.toLowerCase()))).slice(0, 8);
+    const displayList = picks.length >= 4 ? picks : games.slice(0, 8);
+
+    row.innerHTML = displayList.map(g => `
+      <button class="carousel-game-card" data-url="${encodeURI(g.url)}" data-title="${g.title}" data-icon="${g.icon}">
+        <div class="cgc-thumb-wrap">
+          <span class="cgc-art">${g.icon || "🎮"}</span>
+        </div>
+        <div class="cgc-card-title">${g.title}</div>
+        <div class="cgc-card-tag">${classifyGameCategory(g).toUpperCase()}</div>
+      </button>
+    `).join("");
+
+    row.querySelectorAll(".carousel-game-card").forEach(btn => {
+      btn.addEventListener("click", () => {
+        haptic("medium");
+        launchWebGame(btn.dataset.title, btn.dataset.url, btn.dataset.icon);
+      });
+    });
+  }
+
+  function renderTrendingGamesList() {
+    const list = document.getElementById("trendingGamesList");
+    if (!list) return;
+    const games = state.allCustomGames || [];
+    if (!games.length) return;
+
+    // Featured trending picks
+    const trendingList = games.slice(1, 6);
+    const missions = [
+      "Next: Score 320 points",
+      "Next: Clear 3 stages",
+      "Next: Survive 60 seconds",
+      "Next: Win 2 consecutive rounds",
+      "Next: Beat personal high score"
+    ];
+
+    list.innerHTML = trendingList.map((g, idx) => `
+      <div class="trending-game-card" data-url="${encodeURI(g.url)}" data-title="${g.title}" data-icon="${g.icon}">
+        <div class="tgc-left">
+          <div class="tgc-thumb">${g.icon || "🎮"}</div>
+          <div class="tgc-info">
+            <div class="tgc-title">${g.title}</div>
+            <div class="tgc-mission">${missions[idx % missions.length]}</div>
+            <div class="tgc-dots">
+              <span class="tdot active"></span>
+              <span class="tdot active"></span>
+              <span class="tdot"></span>
+              <span class="tdot"></span>
+            </div>
+          </div>
+        </div>
+        <button class="btn-trending-play">PLAY</button>
+      </div>
+    `).join("");
+
+    list.querySelectorAll(".trending-game-card").forEach(card => {
+      card.addEventListener("click", () => {
+        haptic("medium");
+        launchWebGame(card.dataset.title, card.dataset.url, card.dataset.icon);
+      });
+    });
+  }
+
   async function loadCustomGames() {
     const el = document.getElementById("customGamesGrid");
     try {
@@ -724,6 +800,19 @@
       const data = await res.json();
       state.allCustomGames = data.games || [];
       renderFilteredGames();
+      renderContinuePlayingCarousel();
+      renderTrendingGamesList();
+
+      // Check if user launched via Telegram bot /flipster command
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get("game") === "flipster") {
+        const flipster = state.allCustomGames.find(g => g.title.toLowerCase().includes("flipster"));
+        if (flipster) {
+          launchWebGame(flipster.title, flipster.url, flipster.icon);
+        } else {
+          launchWebGame("Flipster Multiplier", "/static/games/flipster/index.html", "⚡");
+        }
+      }
     } catch (_) {
       if (el) el.textContent = "Could not load web games.";
     }
@@ -731,11 +820,97 @@
 
   function launchWebGame(title, url, icon = "🎮") {
     state.currentGameUrl = url;
-    document.getElementById("gamePlayerTitle").textContent = `${icon} ${title}`;
-    document.getElementById("customGameIframe").src = url;
+    const titleEl = document.getElementById("gamePlayerTitle");
+    if (titleEl) titleEl.textContent = `${title}`;
+    const iframe = document.getElementById("customGameIframe");
+    if (iframe) iframe.src = url;
     state.prevView = "home";
     showView("player");
+    try {
+      tg?.expand?.();
+      tg?.requestFullscreen?.();
+    } catch (_) {}
   }
+
+  document.getElementById("btnPlayFlipsterHero")?.addEventListener("click", () => {
+    haptic("heavy");
+    launchWebGame("Flipster Multiplier", "/static/games/flipster/index.html", "⚡");
+  });
+
+  document.getElementById("btnPlayQuest")?.addEventListener("click", () => {
+    haptic("medium");
+    launchWebGame("Flipster Multiplier", "/static/games/flipster/index.html", "⚡");
+  });
+
+  document.getElementById("btnJoinTournament")?.addEventListener("click", () => {
+    haptic("heavy");
+    launchWebGame("Flipster Multiplier", "/static/games/flipster/index.html", "⚡");
+  });
+
+  // Hub shortcuts navigation
+  document.querySelectorAll(".hub-shortcut-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      haptic("light");
+      const nav = btn.dataset.nav;
+      if (nav === "vault") {
+        document.getElementById("sectionAllGames")?.scrollIntoView({ behavior: "smooth" });
+      } else {
+        showView(nav);
+      }
+    });
+  });
+
+  // Category filter scroll bar
+  document.querySelectorAll(".cat-filter-btn").forEach(btn => {
+    if (btn.id === "btnToggleSearch") return;
+    btn.addEventListener("click", () => {
+      haptic("light");
+      document.querySelectorAll(".cat-filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      state.gameFilterCat = btn.dataset.cat || "all";
+      renderFilteredGames();
+      document.getElementById("sectionAllGames")?.scrollIntoView({ behavior: "smooth" });
+    });
+  });
+
+  // Search toggle and clear
+  const btnToggleSearch = document.getElementById("btnToggleSearch");
+  const searchDrawer = document.getElementById("searchDrawer");
+  const btnClearSearch = document.getElementById("btnClearSearch");
+  btnToggleSearch?.addEventListener("click", () => {
+    searchDrawer?.classList.toggle("hidden");
+    if (!searchDrawer?.classList.contains("hidden")) {
+      document.getElementById("inputGameSearch")?.focus();
+    }
+  });
+  btnClearSearch?.addEventListener("click", () => {
+    const sInput = document.getElementById("inputGameSearch");
+    if (sInput) {
+      sInput.value = "";
+      state.gameSearchQuery = "";
+      renderFilteredGames();
+    }
+  });
+
+  // Chunky category cards
+  document.querySelectorAll(".chunky-cat-card").forEach(card => {
+    card.addEventListener("click", () => {
+      haptic("medium");
+      const cat = card.dataset.cat;
+      state.gameFilterCat = cat;
+      document.querySelectorAll(".cat-filter-btn").forEach(b => {
+        b.classList.toggle("active", b.dataset.cat === cat);
+      });
+      renderFilteredGames();
+      document.getElementById("sectionAllGames")?.scrollIntoView({ behavior: "smooth" });
+    });
+  });
+
+  // Shop button alert
+  document.getElementById("navShopBtn")?.addEventListener("click", () => {
+    haptic("light");
+    alert("🪙 Ghost Shop\n\nDaily coin refills are free! In the upcoming update, players can deposit Telegram Stars (XTR) to enter high-stakes rooms in Flipster.");
+  });
 
   async function loadAdminGamesList() {
     const listEl = document.getElementById("adminGamesList");
@@ -773,16 +948,13 @@
     });
   }
 
-  document.getElementById("btnCloseGamePlayer").addEventListener("click", () => {
+  document.getElementById("btnCloseGamePlayer")?.addEventListener("click", () => {
     document.getElementById("customGameIframe").src = "";
     state.currentGameUrl = "";
+    try {
+      tg?.exitFullscreen?.();
+    } catch (_) {}
     showView(state.prevView || "home");
-  });
-
-  document.getElementById("btnOpenExternal").addEventListener("click", () => {
-    if (!state.currentGameUrl) return;
-    if (tg?.openLink) tg.openLink(state.currentGameUrl);
-    else window.open(state.currentGameUrl, "_blank");
   });
 
   const modalAddGame = document.getElementById("modalAddGame");

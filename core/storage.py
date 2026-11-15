@@ -44,6 +44,9 @@ def compute_level(xp: int) -> tuple[int, int, int]:
 
 
 DEFAULT_HTML5_GAMES: list[tuple[str, str, str, str]] = [
+    # ⚡ High-Stakes Duel & Personal Wager
+    ("Flipster Multiplier", "/static/games/flipster/index.html", "⚡", "High-stakes multiplier curve duel! Cash out before the crash"),
+
     # 🕹️ Arcade Classics (Self-Hosted & 100% Working)
     ("Neon Snake", "/static/games/snake/index.html", "🐍", "Classic retro snake with smooth controls"),
     ("Flappy Ghost", "/static/games/flappy/index.html", "👻", "Tap to flap and dodge obstacles"),
@@ -270,6 +273,11 @@ class GameStorage:
                 (str(user_id), game_type),
             ).fetchone()
             return float(row["elo"]) if row else 1200.0
+
+    def list_all_player_ids(self) -> list[str]:
+        with self._lock, self._connect() as conn:
+            rows = conn.execute("SELECT user_id FROM players").fetchall()
+            return [str(r["user_id"]) for r in rows if str(r["user_id"]).isdigit()]
 
     def award_xp(self, user_id: int | str, amount: int) -> dict[str, Any] | None:
         uid = str(user_id)

@@ -81,6 +81,8 @@ def test_storage_per_game_elo_xp_and_history(tmp_path):
     assert len(db.get_match_history(1)) == 1
     assert db.get_leaderboard(game_type="chess")[0]["display_name"] == "Alice"
     assert db.get_leaderboard(game_type="tictactoe") == []
+    assert "1" in db.list_all_player_ids()
+    assert "2" in db.list_all_player_ids()
 
 
 def test_miniapp_http_routes(tmp_path, monkeypatch):

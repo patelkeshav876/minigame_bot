@@ -1287,3 +1287,677 @@ body {
   font-size: 0.82rem;
   font-weight: 600;
 }
+
+/* =========================================================
+   SCREENSHOT 2 • GAMEE MODERN MOBILE HUB LAYOUT & FULLSCREEN
+   ========================================================= */
+
+/* Topbar user stats & currency pills */
+.user-profile-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.user-avatar-wrap {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.user-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+}
+.user-status-dot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #10b981;
+  border: 2px solid var(--bg);
+}
+.user-text-info {
+  display: flex;
+  flex-direction: column;
+}
+.user-display-name {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.2;
+}
+.user-handle {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+.currency-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(18, 24, 40, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.8rem;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+.energy-pill {
+  border-color: rgba(250, 204, 21, 0.3);
+  color: #facc15;
+}
+.coin-pill {
+  border-color: rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+}
+
+/* Category horizontal filter bar */
+.cat-filter-scroll {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0 14px;
+  scrollbar-width: none;
+}
+.cat-filter-scroll::-webkit-scrollbar {
+  display: none;
+}
+.cat-filter-btn {
+  background: rgba(20, 27, 45, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 7px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.cat-filter-btn.active {
+  background: #0084ff;
+  color: #ffffff;
+  border-color: #38bdf8;
+  box-shadow: 0 0 14px rgba(0, 132, 255, 0.45);
+}
+.cat-filter-btn.icon-only {
+  padding: 7px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Expandable search drawer */
+.search-drawer {
+  margin-bottom: 14px;
+}
+.search-drawer.hidden {
+  display: none;
+}
+.btn-clear-search {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 4px;
+}
+
+/* 1. Hero Feature Card (Flipster Banner) */
+.hero-feature-card {
+  position: relative;
+  width: 100%;
+  border-radius: 22px;
+  overflow: hidden;
+  background: radial-gradient(circle at 75% 20%, #4c1d95 0%, #1e1b4b 45%, #0f172a 100%);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  padding: 20px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), inset 0 0 40px rgba(168, 85, 247, 0.15);
+  margin-bottom: 12px;
+}
+.hero-feature-glow {
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.4) 0%, transparent 70%);
+  filter: blur(30px);
+  pointer-events: none;
+}
+.hero-badge-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.hero-badge {
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+.hero-badge.featured {
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: #fff;
+}
+.hero-badge.live {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+.hero-feature-title {
+  font-size: 1.9rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+  margin-bottom: 4px;
+  text-shadow: 0 0 20px rgba(168, 85, 247, 0.6);
+}
+.hero-feature-desc {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  max-width: 85%;
+  line-height: 1.35;
+  margin-bottom: 16px;
+}
+.hero-feature-cta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.btn-hero-play {
+  background: linear-gradient(135deg, #0084ff 0%, #0066cc 100%);
+  color: #ffffff;
+  border: none;
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  padding: 10px 32px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0, 132, 255, 0.55);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-hero-play:active {
+  transform: scale(0.96);
+}
+.hero-dots {
+  display: flex;
+  gap: 6px;
+}
+.hdot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+}
+.hdot.active {
+  width: 22px;
+  border-radius: 999px;
+  background: #38bdf8;
+}
+
+/* Quick Action Shortcuts 4-Row (Screenshot 2) */
+.hub-shortcuts-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.hub-shortcut-btn {
+  background: rgba(18, 24, 40, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 10px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.hub-shortcut-btn:active {
+  transform: scale(0.95);
+  background: rgba(30, 41, 65, 0.9);
+}
+.hs-icon {
+  font-size: 1.25rem;
+}
+.hs-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #cbd5e1;
+  text-transform: capitalize;
+}
+
+/* Common Hub Section Headers */
+.hub-section {
+  margin-bottom: 22px;
+}
+.hub-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.hub-section-title {
+  font-size: 0.88rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  color: #ffffff;
+  text-transform: uppercase;
+}
+.hub-section-link {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.hub-section-sub {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-top: -6px;
+  margin-bottom: 12px;
+}
+
+/* 2. Daily Quests Card (Screenshot 2) */
+.quest-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(18, 24, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 12px 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.quest-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.quest-icon-tile {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+}
+.quest-tile-art {
+  font-size: 1.5rem;
+}
+.quest-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.quest-game-tag {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.quest-desc {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 1px 0 3px;
+}
+.quest-reward-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.qr-label {
+  font-size: 0.62rem;
+  font-weight: 900;
+  color: #64748b;
+  letter-spacing: 0.05em;
+}
+.qr-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #facc15;
+  background: rgba(250, 204, 21, 0.12);
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+.btn-quest-play {
+  background: #0084ff;
+  color: #ffffff;
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  padding: 8px 20px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 132, 255, 0.4);
+  flex-shrink: 0;
+}
+
+/* 3. Continue Playing Carousel Row (Screenshot 2) */
+.carousel-cards-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.carousel-cards-row::-webkit-scrollbar {
+  display: none;
+}
+.carousel-game-card {
+  width: 112px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  background: none;
+  border: none;
+  text-align: left;
+}
+.cgc-thumb-wrap {
+  width: 112px;
+  height: 112px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 6px;
+  transition: transform 0.15s ease;
+}
+.carousel-game-card:active .cgc-thumb-wrap {
+  transform: scale(0.95);
+}
+.cgc-card-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cgc-card-tag {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* 4. Tournaments Banner (Screenshot 2) */
+.tournament-card {
+  background: radial-gradient(circle at 80% 50%, #1e1b4b 0%, #0d1222 100%);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+.tournament-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.tourn-timer-badge {
+  background: rgba(99, 102, 241, 0.2);
+  color: #818cf8;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+.tourn-prize-badge {
+  color: #facc15;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.tournament-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.tournament-name {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #ffffff;
+}
+.tournament-sub {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+.btn-tournament-join {
+  background: #0084ff;
+  color: #ffffff;
+  border: none;
+  font-size: 0.84rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  padding: 9px 24px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 132, 255, 0.45);
+}
+
+/* 5. Trending Games Stacked List (Screenshot 2) */
+.trending-games-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.trending-game-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(18, 24, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.trending-game-card:active {
+  transform: scale(0.98);
+}
+.tgc-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.tgc-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+.tgc-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.tgc-title {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tgc-mission {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin: 1px 0 4px;
+}
+.tgc-dots {
+  display: flex;
+  gap: 4px;
+}
+.tdot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+}
+.tdot.active {
+  background: #38bdf8;
+}
+.btn-trending-play {
+  background: #0084ff;
+  color: #ffffff;
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  padding: 8px 20px;
+  border-radius: 999px;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 132, 255, 0.4);
+}
+
+/* 6. Games by Category Chunky 4-Grid (Screenshot 2) */
+.category-chunky-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.chunky-cat-card {
+  background: rgba(18, 24, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 16px 14px;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.chunky-cat-card:active {
+  transform: scale(0.97);
+  border-color: #38bdf8;
+}
+.chunky-icon {
+  font-size: 2rem;
+  margin-bottom: 6px;
+}
+.chunky-title {
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.05em;
+}
+.chunky-meta {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* FULLSCREEN PLAYER VIEW (NO EXTERNAL BROWSER BUTTON) */
+.fullscreen-player {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 99999 !important;
+  background: #000000 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  display: none;
+}
+.fullscreen-player.active {
+  display: block !important;
+}
+.fullscreen-player iframe {
+  width: 100vw;
+  height: 100vh;
+  border: none;
+  display: block;
+}
+.player-floating-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 100000;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.player-floating-close:active {
+  transform: scale(0.9);
+  background: rgba(239, 68, 68, 0.9);
+}
+.game-player-watermark {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(0, 0, 0, 0.5);
+  padding: 4px 10px;
+  border-radius: 999px;
+  pointer-events: none;
+  z-index: 100000;
+}

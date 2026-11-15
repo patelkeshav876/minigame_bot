@@ -103,8 +103,18 @@ class ArenaManager:
     def __init__(self, storage: GameStorage) -> None:
         self.storage = storage
         self.rooms: dict[str, ArenaRoom] = {}
-        self._lock = asyncio.Lock()
+        self._raw_lock: asyncio.Lock | None = None
         self._clock_task: asyncio.Task[None] | None = None
+
+    @property
+    def _lock(self) -> asyncio.Lock:
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+        if self._raw_lock is None or getattr(self._raw_lock, "_loop", None) is not loop:
+            self._raw_lock = asyncio.Lock()
+        return self._raw_lock
 
     def start_background_tasks(self) -> None:
         if self._clock_task is None or self._clock_task.done():

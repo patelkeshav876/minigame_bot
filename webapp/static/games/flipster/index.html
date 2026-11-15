@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Flipster • High-Stakes Multiplier Duel</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+    body {
+      background: #090d16;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 100vh;
+      overflow: hidden;
+      padding: 14px 16px;
+    }
+    .hud {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(18, 24, 40, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      padding: 10px 16px;
+      backdrop-filter: blur(10px);
+    }
+    .hud-title {
+      font-size: 1.1rem;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      background: linear-gradient(135deg, #a855f7, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hud-stats {
+      display: flex;
+      gap: 12px;
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+    .stat-pill {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .arena-container {
+      position: relative;
+      width: 100%;
+      max-width: 440px;
+      height: 380px;
+      background: radial-gradient(circle at 50% 100%, #171d33 0%, #0c101d 75%);
+      border: 1.5px solid rgba(168, 85, 247, 0.3);
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.6), inset 0 0 30px rgba(168, 85, 247, 0.1);
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .overlay-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+    }
+    .multiplier-display {
+      font-size: 3.6rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      text-shadow: 0 0 25px rgba(56, 189, 248, 0.6);
+      transition: color 0.1s;
+    }
+    .multiplier-display.crashed {
+      color: #ef4444 !important;
+      text-shadow: 0 0 30px rgba(239, 68, 68, 0.8) !important;
+    }
+    .multiplier-display.cashed {
+      color: #10b981 !important;
+      text-shadow: 0 0 30px rgba(16, 185, 129, 0.8) !important;
+    }
+    .curve-status {
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+    .rival-toast {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #38bdf8;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+    .controls {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: rgba(18, 24, 40, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 16px;
+      backdrop-filter: blur(12px);
+    }
+    .stake-selector {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .stake-btn {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff;
+      font-weight: 800;
+      padding: 10px 4px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.15s ease;
+    }
+    .stake-btn.active {
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      border-color: #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+    }
+    .main-btn {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 16px;
+      font-size: 1.15rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      transition: transform 0.1s ease, filter 0.15s ease;
+    }
+    .main-btn:active {
+      transform: scale(0.98);
+    }
+    .main-btn.start {
+      background: linear-gradient(135deg, #2563eb 0%, #0084ff 100%);
+      box-shadow: 0 0 20px rgba(0, 132, 255, 0.5);
+    }
+    .main-btn.cashout {
+      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+      box-shadow: 0 0 24px rgba(16, 185, 129, 0.6);
+      animation: pulse 1s infinite alternate;
+    }
+    @keyframes pulse {
+      from { box-shadow: 0 0 16px rgba(16, 185, 129, 0.4); }
+      to { box-shadow: 0 0 28px rgba(16, 185, 129, 0.9); }
+    }
+    .history-pills {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+    .history-pills::-webkit-scrollbar { display: none; }
+    .hpill {
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      white-space: nowrap;
+    }
+    .hpill.win { color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .hpill.loss { color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+  </style>
+</head>
+<body>
+  <div class="hud">
+    <div class="hud-title">⚡ FLIPSTER DUEL</div>
+    <div class="hud-stats">
+      <div class="stat-pill" id="coinBal">🪙 1,000</div>
+      <div class="stat-pill" id="streakCnt">🔥 0</div>
+    </div>
+  </div>
+
+  <div class="arena-container">
+    <canvas id="gameCanvas"></canvas>
+    <div class="rival-toast" id="rivalToast">⚔️ Rival cashed out at 1.85x (+185 🪙)</div>
+    <div class="overlay-center">
+      <div class="multiplier-display" id="multDisplay">1.00x</div>
+      <div class="curve-status" id="curveStatus">PLACE YOUR STAKE</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="history-pills" id="historyRow">
+      <span class="hpill win">2.14x</span>
+      <span class="hpill loss">1.12x</span>
+      <span class="hpill win">3.40x</span>
+      <span class="hpill loss">1.04x</span>
+      <span class="hpill win">5.20x</span>
+    </div>
+
+    <div class="stake-selector">
+      <button class="stake-btn active" data-stake="25">25 🪙</button>
+      <button class="stake-btn" data-stake="50">50 🪙</button>
+      <button class="stake-btn" data-stake="100">100 🪙</button>
+      <button class="stake-btn" data-stake="250">250 🪙</button>
+      <button class="stake-btn" data-stake="500">MAX</button>
+    </div>
+
+    <button id="mainBtn" class="main-btn start">START DUEL (25 🪙)</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const multDisplay = document.getElementById("multDisplay");
+    const curveStatus = document.getElementById("curveStatus");
+    const mainBtn = document.getElementById("mainBtn");
+    const coinBalEl = document.getElementById("coinBal");
+    const streakCntEl = document.getElementById("streakCnt");
+    const rivalToast = document.getElementById("rivalToast");
+    const historyRow = document.getElementById("historyRow");
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = rect.height * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    let coins = parseInt(localStorage.getItem("flipster_coins") || "1000", 10);
+    let streak = 0;
+    let stake = 25;
+    let gameState = "idle"; // idle | running | crashed | cashed
+    let currentMult = 1.0;
+    let crashPoint = 1.0;
+    let startTime = 0;
+    let animId = null;
+    let curvePoints = [];
+    let rivalCashout = 0;
+    let rivalName = "ShadowRival";
+
+    const rivals = ["ShadowRival", "NeonGhost", "ViperX", "ApexHunter", "CryptoWolf", "Blaze"];
+
+    function updateHud() {
+      coinBalEl.textContent = `🪙 ${coins.toLocaleString()}`;
+      streakCntEl.textContent = `🔥 ${streak}`;
+      localStorage.setItem("flipster_coins", coins);
+    }
+    updateHud();
+
+    document.querySelectorAll(".stake-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (gameState === "running") return;
+        document.querySelectorAll(".stake-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        stake = parseInt(btn.dataset.stake, 10);
+        mainBtn.textContent = `START DUEL (${stake} 🪙)`;
+      });
+    });
+
+    function drawGrid() {
+      const w = canvas.width / window.devicePixelRatio;
+      const h = canvas.height / window.devicePixelRatio;
+      ctx.clearRect(0, 0, w, h);
+
+      // Neon grid lines
+      ctx.strokeStyle = "rgba(168, 85, 247, 0.08)";
+      ctx.lineWidth = 1;
+      for (let x = 40; x < w; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 40; y < h; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      // Draw curve
+      if (curvePoints.length > 1) {
+        ctx.beginPath();
+        ctx.moveTo(curvePoints[0].x, curvePoints[0].y);
+        for (let i = 1; i < curvePoints.length; i++) {
+          ctx.lineTo(curvePoints[i].x, curvePoints[i].y);
+        }
+        ctx.strokeStyle = gameState === "crashed" ? "#ef4444" : "#38bdf8";
+        ctx.lineWidth = 4;
+        ctx.shadowColor = gameState === "crashed" ? "#ef4444" : "#0084ff";
+        ctx.shadowBlur = 15;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // Gradient under curve
+        const last = curvePoints[curvePoints.length - 1];
+        ctx.lineTo(last.x, h);
+        ctx.lineTo(curvePoints[0].x, h);
+        ctx.closePath();
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, gameState === "crashed" ? "rgba(239, 68, 68, 0.25)" : "rgba(56, 189, 248, 0.25)");
+        grad.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Rocket or Ghost head
+        ctx.beginPath();
+        ctx.arc(last.x, last.y, 8, 0, Math.PI * 2);
+        ctx.fillStyle = gameState === "crashed" ? "#ef4444" : "#ffffff";
+        ctx.fill();
+      }
+    }
+    drawGrid();
+
+    function generateCrashPoint() {
+      // Provably fair exponential distribution with house edge
+      const rand = Math.random();
+      if (rand < 0.05) return 1.00; // instant crash
+      const e = 2.71828;
+      const res = 0.99 / (1 - rand);
+      return Math.max(1.01, Math.min(50.0, parseFloat(res.toFixed(2))));
+    }
+
+    function runRound() {
+      const now = performance.now();
+      const elapsed = (now - startTime) / 1000;
+      currentMult = parseFloat((1.0 + Math.pow(elapsed * 0.75, 1.8)).toFixed(2));
+
+      const w = canvas.width / window.devicePixelRatio;
+      const h = canvas.height / window.devicePixelRatio;
+      const progress = Math.min(1.0, elapsed / 8.0);
+      const x = 20 + progress * (w - 60);
+      const y = h - 20 - Math.min(h - 60, Math.pow(progress, 1.5) * (h - 60));
+      curvePoints.push({ x, y });
+
+      multDisplay.textContent = `${currentMult.toFixed(2)}x`;
+      mainBtn.textContent = `CASH OUT (${Math.floor(stake * currentMult)} 🪙)`;
+
+      // Rival cashout trigger
+      if (rivalCashout && currentMult >= rivalCashout) {
+        rivalToast.textContent = `⚔️ ${rivalName} cashed at ${rivalCashout.toFixed(2)}x (+${Math.floor(stake * rivalCashout)} 🪙)`;
+        rivalToast.style.display = "block";
+        rivalCashout = 0;
+      }
+
+      drawGrid();
+
+      if (currentMult >= crashPoint) {
+        onCrash();
+      } else {
+        animId = requestAnimationFrame(runRound);
+      }
+    }
+
+    function onCrash() {
+      cancelAnimationFrame(animId);
+      gameState = "crashed";
+      multDisplay.textContent = `${crashPoint.toFixed(2)}x`;
+      multDisplay.className = "multiplier-display crashed";
+      curveStatus.textContent = "CRASHED! BUSTED";
+      streak = 0;
+      updateHud();
+      addHistoryPill(crashPoint, false);
+      drawGrid();
+
+      mainBtn.className = "main-btn start";
+      mainBtn.textContent = `PLAY AGAIN (${stake} 🪙)`;
+    }
+
+    function cashOut() {
+      if (gameState !== "running") return;
+      cancelAnimationFrame(animId);
+      gameState = "cashed";
+      const winAmt = Math.floor(stake * currentMult);
+      coins += winAmt;
+      streak++;
+      updateHud();
+
+      multDisplay.className = "multiplier-display cashed";
+      curveStatus.textContent = `WON +${winAmt} 🪙!`;
+      addHistoryPill(currentMult, true);
+
+      mainBtn.className = "main-btn start";
+      mainBtn.textContent = `NEXT DUEL (${stake} 🪙)`;
+    }
+
+    function addHistoryPill(mult, isWin) {
+      const pill = document.createElement("span");
+      pill.className = `hpill ${isWin ? "win" : "loss"}`;
+      pill.textContent = `${mult.toFixed(2)}x`;
+      historyRow.prepend(pill);
+      if (historyRow.children.length > 8) historyRow.lastElementChild.remove();
+    }
+
+    mainBtn.addEventListener("click", () => {
+      if (gameState === "running") {
+        cashOut();
+        return;
+      }
+
+      if (coins < stake) {
+        coins += 500; // Free refill for demo
+        updateHud();
+        alert("🎁 Daily refill! +500 Coins added to your balance!");
+      }
+
+      coins -= stake;
+      updateHud();
+
+      gameState = "running";
+      multDisplay.className = "multiplier-display";
+      curveStatus.textContent = "MULTIPLIER RISING...";
+      mainBtn.className = "main-btn cashout";
+      rivalToast.style.display = "none";
+
+      crashPoint = generateCrashPoint();
+      rivalName = rivals[Math.floor(Math.random() * rivals.length)];
+      rivalCashout = parseFloat((1.2 + Math.random() * (crashPoint * 0.8)).toFixed(2));
+      if (rivalCashout >= crashPoint) rivalCashout = 0;
+
+      startTime = performance.now();
+      curvePoints = [{ x: 20, y: canvas.height / window.devicePixelRatio - 20 }];
+      runRound();
+    });
+  </script>
+</body>
+</html>
