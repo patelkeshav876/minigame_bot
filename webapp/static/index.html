@@ -35,33 +35,33 @@
       </div>
     </header>
 
-    <!-- QUICK CATEGORY & ACTION FILTER ROW -->
-    <div class="cat-filter-scroll" id="catFilterBar">
-      <button class="cat-filter-btn icon-only" id="btnToggleSearch" title="Search Games">
-        <i data-lucide="search" class="lucide-sm"></i>
-      </button>
-      <button class="cat-filter-btn active" data-cat="all">ALL</button>
-      <button class="cat-filter-btn" data-cat="arcade">ARCADE</button>
-      <button class="cat-filter-btn" data-cat="puzzle">PUZZLE</button>
-      <button class="cat-filter-btn" data-cat="sport">SPORT</button>
-      <button class="cat-filter-btn" data-cat="casual">ACTION</button>
-      <button class="cat-filter-btn" data-cat="cards">BOARD</button>
-      <button class="cat-filter-btn add-btn-highlight" id="btnNavAddGame" title="Add or submit a game">
-        <i data-lucide="plus-circle" class="lucide-sm"></i> ADD GAME
-      </button>
-    </div>
-
-    <!-- EXPANDABLE SEARCH BOX -->
-    <div class="search-drawer hidden" id="searchDrawer">
-      <div class="game-search-box">
-        <i data-lucide="search" class="search-icon"></i>
-        <input id="inputGameSearch" type="text" placeholder="Search 30+ games (Aviator, Tetris, Snake, Billiards...)" />
-        <button id="btnClearSearch" class="btn-clear-search">✕</button>
-      </div>
-    </div>
-
     <!-- ==================== HOME VIEW (SCREENSHOT 2 HUB) ==================== -->
     <section id="view-home" class="view active">
+      <!-- QUICK CATEGORY & ACTION FILTER ROW (ONLY SHOWN IN GAMES SECTION) -->
+      <div class="cat-filter-scroll" id="catFilterBar">
+        <button class="cat-filter-btn icon-only" id="btnToggleSearch" title="Search Games">
+          <i data-lucide="search" class="lucide-sm"></i>
+        </button>
+        <button class="cat-filter-btn active" data-cat="all">ALL</button>
+        <button class="cat-filter-btn" data-cat="arcade">ARCADE</button>
+        <button class="cat-filter-btn" data-cat="puzzle">PUZZLE</button>
+        <button class="cat-filter-btn" data-cat="sport">SPORT</button>
+        <button class="cat-filter-btn" data-cat="casual">ACTION</button>
+        <button class="cat-filter-btn" data-cat="cards">BOARD</button>
+        <button class="cat-filter-btn add-btn-highlight" id="btnNavAddGame" title="Add or submit a game">
+          <i data-lucide="plus-circle" class="lucide-sm"></i> ADD GAME
+        </button>
+      </div>
+
+      <!-- EXPANDABLE SEARCH BOX (ONLY SHOWN IN GAMES SECTION) -->
+      <div class="search-drawer hidden" id="searchDrawer">
+        <div class="game-search-box">
+          <i data-lucide="search" class="search-icon"></i>
+          <input id="inputGameSearch" type="text" placeholder="Search 30+ games (Aviator, Tetris, Snake, Billiards...)" />
+          <button id="btnClearSearch" class="btn-clear-search">✕</button>
+        </div>
+      </div>
+
       <!-- 1. SLIDING WINDOW CAROUSEL (HERO AREA) -->
       <div class="hero-carousel-slider" id="heroCarousel">
         <div class="hero-slides-wrapper" id="heroSlidesWrapper">
@@ -325,20 +325,20 @@
       </div>
     </section>
 
-    <!-- ==================== COMMUNITY & CHANNELS VIEW (REQUEST 7) ==================== -->
+    <!-- ==================== COMMUNITY & CHANNELS VIEW ==================== -->
     <section id="view-community" class="view">
       <div class="card community-hero-card">
         <div class="community-hero-content">
           <div class="comm-badge">📢 TELEGRAM HUB</div>
           <h2 class="comm-title">Official Ghost Plays Community</h2>
-          <p class="comm-desc">Join our official channels, discuss high scores, join Aviator multiplier tournaments, and promote your own channel!</p>
+          <p class="comm-desc">Join our official channels, discuss high scores, join Aviator multiplier tournaments, and discover our partner bots!</p>
         </div>
       </div>
 
-      <!-- Channel & Group Cards -->
+      <!-- Channel & Support Cards -->
       <div class="card">
         <div class="card-head">
-          <h3>👥 Channels & Discussion Groups</h3>
+          <h3>👥 Official Channel & Support</h3>
         </div>
         <div class="channel-list">
           <div class="channel-card">
@@ -346,52 +346,97 @@
               <i data-lucide="bell" class="text-blue"></i>
             </div>
             <div class="channel-details">
-              <div class="channel-name">Ghost Plays Official</div>
-              <div class="channel-sub">Game releases, patch notes & tournament prize announcements</div>
+              <div class="channel-name">Ghost Plays Official Channel <span class="badge-soon">SOON</span></div>
+              <div class="channel-sub">Official channel launching soon! Tap to get notified via Support Bot.</div>
             </div>
-            <a href="https://t.me/patelkeshav876" target="_blank" class="btn small primary channel-btn">JOIN</a>
+            <a id="btnOfficialChannelLink" href="https://t.me/ghost_help_and_support_bot" target="_blank" class="btn small primary channel-btn">NOTIFY ME</a>
           </div>
 
           <div class="channel-card">
             <div class="channel-icon-wrap">
-              <i data-lucide="message-square" class="text-green"></i>
+              <i data-lucide="headphones" class="text-green"></i>
             </div>
             <div class="channel-details">
-              <div class="channel-name">Global Gamers Lounge</div>
-              <div class="channel-sub">Chat with players, share Aviator crash records & arrange duels</div>
+              <div class="channel-name">Help & Support Official</div>
+              <div class="channel-sub">24/7 Player assistance, deposit inquiries, and game queries</div>
             </div>
-            <a href="https://t.me/patelkeshav876" target="_blank" class="btn small secondary channel-btn">CHAT</a>
-          </div>
-
-          <div class="channel-card">
-            <div class="channel-icon-wrap">
-              <i data-lucide="flame" class="text-yellow"></i>
-            </div>
-            <div class="channel-details">
-              <div class="channel-name">High Rollers & Tournaments</div>
-              <div class="channel-sub">Exclusive Aviator high-multiplier challenges & rewards</div>
-            </div>
-            <a href="https://t.me/patelkeshav876" target="_blank" class="btn small primary channel-btn">JOIN</a>
+            <a href="https://t.me/ghost_help_and_support_bot" target="_blank" class="btn small secondary channel-btn">SUPPORT</a>
           </div>
         </div>
       </div>
 
-      <!-- Promotion & Partnership Box -->
+      <!-- MORE FROM GHOST ECOSYSTEM & TRUSTED BOTS -->
+      <div class="card">
+        <div class="card-head">
+          <h3>⚡ More From Us (Ghost Ecosystem)</h3>
+        </div>
+        <div class="channel-list">
+          <!-- 1. TheGhostTalkBot (Anonymous Chat) -->
+          <div class="channel-card">
+            <div class="channel-icon-wrap">
+              <i data-lucide="message-circle" class="text-purple"></i>
+            </div>
+            <div class="channel-details">
+              <div class="channel-name">Ghost Anonymous Chat <span class="badge-live">HOT</span></div>
+              <div class="channel-sub">@TheGhostTalkBot • Anonymous 1v1 chat, partner matchmaking & dating</div>
+            </div>
+            <a href="https://t.me/TheGhostTalkBot" target="_blank" class="btn small primary channel-btn">OPEN</a>
+          </div>
+
+          <!-- 2. TheGhostTalk_Bot (Music Bot) -->
+          <div class="channel-card">
+            <div class="channel-icon-wrap">
+              <i data-lucide="music" class="text-blue"></i>
+            </div>
+            <div class="channel-details">
+              <div class="channel-name">Ghost Music Bot <span class="badge-live">24/7</span></div>
+              <div class="channel-sub">@TheGhostTalk_Bot • Play crystal-clear lag-free music in Telegram groups</div>
+            </div>
+            <a href="https://t.me/TheGhostTalk_Bot" target="_blank" class="btn small secondary channel-btn">ADD TO GROUP</a>
+          </div>
+
+          <!-- 3. flipsterduobot (Flipster 1v1) -->
+          <div class="channel-card">
+            <div class="channel-icon-wrap">
+              <i data-lucide="rocket" class="text-yellow"></i>
+            </div>
+            <div class="channel-details">
+              <div class="channel-name">Flipster Duo Duel <span class="badge-soon">LAUNCHING SOON</span></div>
+              <div class="channel-sub">@flipsterduobot • Real-time 1v1 rocket multiplier challenge battles</div>
+            </div>
+            <a href="https://t.me/flipsterduobot" target="_blank" class="btn small primary channel-btn">CHECK</a>
+          </div>
+
+          <!-- 4. Musical_beats01bot (Gpay Laddoo Bot) -->
+          <div class="channel-card">
+            <div class="channel-icon-wrap">
+              <i data-lucide="gift" class="text-green"></i>
+            </div>
+            <div class="channel-details">
+              <div class="channel-name">GPay Laddoo Bot <span class="badge-trusted">TRUSTED</span></div>
+              <div class="channel-sub">@Musical_beats01bot • User-favorite trusted rewards & daily laddoo minigames</div>
+            </div>
+            <a href="https://t.me/Musical_beats01bot" target="_blank" class="btn small secondary channel-btn">PLAY</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Promotion, Submit Game & Partnership Box -->
       <div class="card promo-inquiry-card">
         <div class="promo-head">
           <i data-lucide="sparkles" class="promo-star text-yellow"></i>
           <div>
-            <h3>Promote Your Channel or Game</h3>
-            <p class="promo-sub">Want your Telegram channel, community group, or HTML5 game featured here to thousands of daily active gamers?</p>
+            <h3>Submit Your Game or Promote Channel</h3>
+            <p class="promo-sub">Want to add your own HTML5 game to Ghost Plays, or feature your channel to thousands of daily active gamers?</p>
           </div>
         </div>
         <div class="promo-perks">
           <div class="perk-pill">✨ Featured Channel Spot</div>
-          <div class="perk-pill">🎮 Custom In-App Game Slot</div>
+          <div class="perk-pill">🎮 Add Your Own Game to Bot</div>
           <div class="perk-pill">📢 Broadcast to All Players</div>
         </div>
-        <a href="https://t.me/patelkeshav876" target="_blank" class="btn primary full btn-contact-admin-promo">
-          <i data-lucide="send" class="lucide-sm"></i> Contact Admin for Promotion Details
+        <a href="https://t.me/ghost_help_and_support_bot" target="_blank" class="btn primary full btn-contact-admin-promo">
+          <i data-lucide="send" class="lucide-sm"></i> Chat with Support @ghost_help_and_support_bot
         </a>
       </div>
     </section>
@@ -693,8 +738,8 @@
             <h4>Instant Crypto Refill</h4>
             <p>Send USDT (TRC20/BEP20) or Toncoin directly to receive instant chips credited to your wallet.</p>
             <div class="crypto-cta-buttons">
-              <a href="https://t.me/patelkeshav876" target="_blank" class="btn primary full">
-                <i data-lucide="send" class="lucide-sm"></i> Contact Admin for Binance Pay / USDT
+              <a href="https://t.me/ghost_help_and_support_bot" target="_blank" class="btn primary full">
+                <i data-lucide="send" class="lucide-sm"></i> Contact Support for Binance Pay / USDT
               </a>
             </div>
           </div>

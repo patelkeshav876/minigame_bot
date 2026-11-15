@@ -379,6 +379,35 @@ async def setupi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     )
 
 
+async def setchannel_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Admin command to set or view the official channel link: /setchannel <url>."""
+    user = update.effective_user
+    if not user:
+        return
+    if ADMIN_USER_IDS and str(user.id) not in ADMIN_USER_IDS:
+        await update.message.reply_text("⛔ Admin only command.")
+        return
+
+    args = context.args or []
+    if not args:
+        current_ch = storage.get_setting("channel_url", "https://t.me/ghost_help_and_support_bot")
+        await update.message.reply_text(
+            f"📢 *Current Channel Link:*\n`{current_ch}`\n\n"
+            f"To change it when your channel is created, run:\n`/setchannel https://t.me/yourchannel`",
+            parse_mode="Markdown",
+        )
+        return
+
+    new_ch = args[0].strip()
+    storage.set_setting("channel_url", new_ch)
+    await update.message.reply_text(
+        f"✅ *Channel Link Successfully Updated!*\n\n"
+        f"New Official Channel Link: `{new_ch}`\n"
+        f"All Mini App community buttons will now direct users to this channel.",
+        parse_mode="Markdown",
+    )
+
+
 async def handle_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Route all inline keyboard callbacks."""
     query = update.callback_query

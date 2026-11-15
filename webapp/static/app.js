@@ -866,13 +866,23 @@
   function setHeroSlide(idx) {
     heroCurrentSlide = (idx + heroTotalSlides) % heroTotalSlides;
     const wrapper = document.getElementById("heroSlidesWrapper");
+    const carousel = document.getElementById("heroCarousel");
     if (wrapper) {
-      wrapper.style.transform = `translateX(-${heroCurrentSlide * 100}%)`;
+      const slideW = carousel ? (carousel.clientWidth || carousel.offsetWidth) : 0;
+      if (slideW > 0) {
+        wrapper.style.transform = `translateX(-${heroCurrentSlide * slideW}px)`;
+      } else {
+        wrapper.style.transform = `translateX(-${heroCurrentSlide * 100}%)`;
+      }
     }
     document.querySelectorAll(".carousel-dot").forEach((dot, dIdx) => {
       dot.classList.toggle("active", dIdx === heroCurrentSlide);
     });
   }
+
+  window.addEventListener("resize", () => {
+    setHeroSlide(heroCurrentSlide);
+  });
 
   function startHeroAutoSlide() {
     if (heroAutoSlideInterval) clearInterval(heroAutoSlideInterval);
@@ -1167,6 +1177,13 @@
       shopConfig = data;
       const upiDisplay = document.getElementById("displayUpiId");
       if (upiDisplay) upiDisplay.textContent = shopConfig.upi_id;
+      if (data.channel_url && data.channel_url !== "https://t.me/ghost_help_and_support_bot") {
+        const chBtn = document.getElementById("btnOfficialChannelLink");
+        if (chBtn) {
+          chBtn.href = data.channel_url;
+          chBtn.textContent = "JOIN";
+        }
+      }
       updateUpiDisplay();
     } catch (_) {}
   }

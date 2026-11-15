@@ -289,7 +289,8 @@ async def get_shop_config() -> dict[str, Any]:
         "inr_packs": list(INR_PACKS.values()),
         "upi_id": configured_upi,
         "upi_name": "Ghost Plays Arena",
-        "crypto_contact": "@patelkeshav876",
+        "crypto_contact": "@ghost_help_and_support_bot",
+        "channel_url": storage.get_setting("channel_url", "https://t.me/ghost_help_and_support_bot"),
     }
 
 
