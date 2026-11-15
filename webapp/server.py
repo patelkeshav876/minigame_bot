@@ -57,6 +57,58 @@ class CustomGameRequest(BaseModel):
     admin_secret: str = ""
 
 
+class StarInvoiceRequest(BaseModel):
+    pack_id: str
+    init_data: str = ""
+    guest_id: str = ""
+
+
+class ClaimMockCoinsRequest(BaseModel):
+    user_id: str
+    coins: int = 1000
+    secret: str = ""
+
+
+STAR_PACKS = {
+    "pack_50": {
+        "id": "pack_50",
+        "title": "Starter Coin Stash",
+        "description": "5,000 Coins for Ghost Plays & Aviator rocket rounds",
+        "stars": 50,
+        "coins": 5000,
+        "badge": "STARTER",
+        "icon": "🪙",
+    },
+    "pack_150": {
+        "id": "pack_150",
+        "title": "Pilot Booster (+20% Bonus)",
+        "description": "18,000 Coins (+20% bonus) for longer duel streaks",
+        "stars": 150,
+        "coins": 18000,
+        "badge": "MOST POPULAR",
+        "icon": "🔥",
+    },
+    "pack_500": {
+        "id": "pack_500",
+        "title": "High Roller Vault (+50% Bonus)",
+        "description": "75,000 Coins (+50% bonus) for high-stakes tables",
+        "stars": 500,
+        "coins": 75000,
+        "badge": "HIGH ROLLER",
+        "icon": "💎",
+    },
+    "pack_1000": {
+        "id": "pack_1000",
+        "title": "VIP Legend Treasury (+100% Bonus)",
+        "description": "200,000 Coins (+100% bonus) & exclusive VIP glory",
+        "stars": 1000,
+        "coins": 200000,
+        "badge": "VIP LEGEND",
+        "icon": "👑",
+    },
+}
+
+
 def _is_admin(user_id: str, admin_secret: str = "") -> bool:
     if admin_secret and admin_secret == ADMIN_SECRET:
         return True
@@ -184,6 +236,72 @@ async def get_room(room_id: str) -> dict[str, Any]:
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
     return {"room": arena.serialize_room(room)}
+
+
+@app.get("/api/stars/packs")
+async def get_star_packs() -> dict[str, Any]:
+    return {"packs": list(STAR_PACKS.values())}
+
+
+@app.post("/api/stars/create-invoice")
+async def create_stars_invoice(req: StarInvoiceRequest) -> dict[str, Any]:
+    pack = STAR_PACKS.get(req.pack_id)
+    if not pack:
+        raise HTTPException(status_code=400, detail="Invalid star pack ID")
+
+    user_info = _resolve_user(req.init_data, req.guest_id, "Player")
+    user_id = str(user_info["profile"]["user_id"])
+
+    if not BOT_TOKEN:
+        return {
+            "invoice_link": f"mock://stars_payment?pack={pack['id']}&user={user_id}&stars={pack['stars']}&coins={pack['coins']}",
+            "pack": pack,
+            "mock": True,
+        }
+
+    try:
+        import json
+        from telegram import Bot, LabeledPrice
+        bot = Bot(token=BOT_TOKEN)
+        payload = json.dumps({
+            "user_id": user_id,
+            "pack_id": pack["id"],
+            "coins": pack["coins"],
+            "stars": pack["stars"],
+        })
+        link = await bot.create_invoice_link(
+            title=f"Ghost Plays: {pack['title']}",
+            description=pack["description"],
+            payload=payload,
+            provider_token="",  # ALWAYS empty for Telegram Stars
+            currency="XTR",     # Telegram Stars currency code
+            prices=[LabeledPrice(label=pack["title"], amount=pack["stars"])],
+        )
+        return {"invoice_link": link, "pack": pack, "mock": False}
+    except Exception as exc:
+        return {
+            "invoice_link": f"mock://stars_payment?pack={pack['id']}&user={user_id}&stars={pack['stars']}&coins={pack['coins']}",
+            "pack": pack,
+            "mock": True,
+            "error_detail": str(exc),
+        }
+
+
+@app.get("/api/wallet/{user_id}")
+async def get_user_wallet(user_id: str) -> dict[str, Any]:
+    coins = storage.get_player_coins(user_id)
+    profile = storage.get_player(user_id)
+    return {
+        "user_id": user_id,
+        "coins": coins,
+        "stars_spent": profile.get("stars_spent", 0) if profile else 0,
+    }
+
+
+@app.post("/api/stars/dev-credit")
+async def dev_credit_coins(req: ClaimMockCoinsRequest) -> dict[str, Any]:
+    new_bal = storage.add_player_coins(req.user_id, req.coins)
+    return {"status": "ok", "user_id": req.user_id, "coins": new_bal}
 
 
 @app.websocket("/ws/{room_id}")

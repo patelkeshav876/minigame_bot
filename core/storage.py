@@ -166,6 +166,16 @@ class GameStorage:
                     is_active INTEGER NOT NULL DEFAULT 1,
                     created_at REAL NOT NULL
                 );
+
+                CREATE TABLE IF NOT EXISTS star_payments (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id TEXT NOT NULL,
+                    charge_id TEXT NOT NULL,
+                    stars_amount INTEGER NOT NULL,
+                    coins_credited INTEGER NOT NULL,
+                    pack_id TEXT NOT NULL DEFAULT '',
+                    created_at REAL NOT NULL
+                );
                 """
             )
             cols = {
@@ -173,6 +183,10 @@ class GameStorage:
             }
             if "xp" not in cols:
                 conn.execute("ALTER TABLE players ADD COLUMN xp INTEGER NOT NULL DEFAULT 0")
+            if "coins" not in cols:
+                conn.execute("ALTER TABLE players ADD COLUMN coins INTEGER NOT NULL DEFAULT 1000")
+            if "stars_spent" not in cols:
+                conn.execute("ALTER TABLE players ADD COLUMN stars_spent INTEGER NOT NULL DEFAULT 0")
 
             count = conn.execute("SELECT COUNT(*) AS c FROM custom_games").fetchone()["c"]
             if count == 0:
@@ -218,6 +232,8 @@ class GameStorage:
         data["xp_progress"] = xp_in
         data["xp_next"] = xp_need
         data["tier"] = get_rank_tier(float(data["elo"]))
+        data["coins"] = int(data.get("coins", 1000) if data.get("coins") is not None else 1000)
+        data["stars_spent"] = int(data.get("stars_spent", 0) if data.get("stars_spent") is not None else 0)
         ratings = conn.execute(
             "SELECT game_type, elo, wins, losses, draws FROM game_ratings WHERE user_id = ?",
             (data["user_id"],),
@@ -265,6 +281,73 @@ class GameStorage:
                 "SELECT * FROM players WHERE user_id = ?", (str(user_id),)
             ).fetchone()
             return self._enrich_player(conn, row) if row else None
+
+    def add_player_coins(self, user_id: int | str, amount: int) -> int:
+        uid = str(user_id)
+        now = time.time()
+        with self._lock, self._connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO players (user_id, updated_at, coins)
+                VALUES (?, ?, ?)
+                ON CONFLICT(user_id) DO UPDATE SET
+                    coins = MAX(0, players.coins + ?),
+                    updated_at = ?
+                """,
+                (uid, now, max(0, 1000 + amount), amount, now),
+            )
+            conn.commit()
+            row = conn.execute("SELECT coins FROM players WHERE user_id = ?", (uid,)).fetchone()
+            return int(row["coins"]) if row and row["coins"] is not None else 1000
+
+    def get_player_coins(self, user_id: int | str) -> int:
+        uid = str(user_id)
+        with self._lock, self._connect() as conn:
+            row = conn.execute("SELECT coins FROM players WHERE user_id = ?", (uid,)).fetchone()
+            if row and row["coins"] is not None:
+                return int(row["coins"])
+            return 1000
+
+    def record_star_payment(
+        self,
+        user_id: int | str,
+        charge_id: str,
+        stars_amount: int,
+        coins_credited: int,
+        pack_id: str = "",
+    ) -> dict[str, Any]:
+        uid = str(user_id)
+        now = time.time()
+        with self._lock, self._connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO star_payments (user_id, charge_id, stars_amount, coins_credited, pack_id, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (uid, charge_id, stars_amount, coins_credited, pack_id, now),
+            )
+            conn.execute(
+                """
+                UPDATE players
+                SET coins = coins + ?,
+                    stars_spent = stars_spent + ?,
+                    updated_at = ?
+                WHERE user_id = ?
+                """,
+                (coins_credited, stars_amount, now, uid),
+            )
+            conn.commit()
+            row = conn.execute("SELECT coins, stars_spent FROM players WHERE user_id = ?", (uid,)).fetchone()
+            new_coins = int(row["coins"]) if row and row["coins"] is not None else coins_credited
+            return {
+                "user_id": uid,
+                "charge_id": charge_id,
+                "stars_amount": stars_amount,
+                "coins_credited": coins_credited,
+                "pack_id": pack_id,
+                "new_coins": new_coins,
+                "created_at": now,
+            }
 
     def get_game_elo(self, user_id: int | str, game_type: str) -> float:
         with self._lock, self._connect() as conn:

@@ -976,11 +976,228 @@
     });
   });
 
-  // Shop button alert
-  document.getElementById("navShopBtn")?.addEventListener("click", () => {
+  // ============================================================
+  // CONFETTI PARTICLE SYSTEM (CELEBRATIONS & PAYMENTS)
+  // ============================================================
+  function triggerConfetti() {
+    const canvas = document.getElementById("confettiCanvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const colors = ["#facc15", "#f59e0b", "#38bdf8", "#ec4899", "#10b981", "#a855f7"];
+    const particles = [];
+    const count = 75;
+
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: canvas.width / 2 + (Math.random() - 0.5) * 60,
+        y: canvas.height * 0.4 + (Math.random() - 0.5) * 40,
+        vx: (Math.random() - 0.5) * 14,
+        vy: (Math.random() - 0.9) * 16,
+        size: Math.random() * 8 + 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * 360,
+        rotSpeed: (Math.random() - 0.5) * 12,
+        alpha: 1,
+        gravity: 0.38,
+      });
+    }
+
+    let startTime = performance.now();
+    function renderConfetti(now) {
+      const elapsed = now - startTime;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      let alive = false;
+      particles.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += p.gravity;
+        p.rotation += p.rotSpeed;
+        p.alpha -= 0.009;
+
+        if (p.alpha > 0 && p.y < canvas.height + 50) {
+          alive = true;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rotation * Math.PI) / 180);
+          ctx.globalAlpha = Math.max(0, p.alpha);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+          ctx.restore();
+        }
+      });
+
+      if (alive && elapsed < 4000) {
+        requestAnimationFrame(renderConfetti);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+    requestAnimationFrame(renderConfetti);
+  }
+
+  // ============================================================
+  // TELEGRAM STARS COIN SHOP & BOT API 8.0 INVOICES
+  // ============================================================
+  const modalStarsShop = document.getElementById("modalStarsShop");
+  const btnCloseStarsShop = document.getElementById("btnCloseStarsShop");
+  const coinPill = document.getElementById("coinPill");
+
+  function openStarsShop() {
     haptic("light");
-    alert("🪙 Ghost Shop\n\nDaily coin refills are free! In the upcoming update, players can deposit Telegram Stars (XTR) to enter high-stakes rooms in Flipster.");
+    const storedCoins = localStorage.getItem("flipster_coins") || localStorage.getItem("aviator_coins") || "1000";
+    const shopBalEl = document.getElementById("shopUserCoins");
+    if (shopBalEl) shopBalEl.textContent = `🪙 ${Number(storedCoins).toLocaleString()} Coins`;
+    modalStarsShop?.classList.remove("hidden");
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  function closeStarsShop() {
+    modalStarsShop?.classList.add("hidden");
+  }
+
+  coinPill?.addEventListener("click", openStarsShop);
+  document.getElementById("navShopBtn")?.addEventListener("click", openStarsShop);
+  btnCloseStarsShop?.addEventListener("click", closeStarsShop);
+  modalStarsShop?.addEventListener("click", (e) => {
+    if (e.target === modalStarsShop) closeStarsShop();
   });
+
+  // Handle Stars Purchase Buttons
+  document.querySelectorAll(".btn-buy-stars").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      haptic("medium");
+      const packId = btn.dataset.pack;
+      const stars = parseInt(btn.dataset.stars, 10);
+      const coins = parseInt(btn.dataset.coins, 10);
+
+      btn.disabled = true;
+      const originalText = btn.innerHTML;
+      btn.innerHTML = `<span class="star-sym">⏳</span> Invoicing...`;
+
+      try {
+        const res = await fetch("/api/stars/create-invoice", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            pack_id: packId,
+            init_data: tg?.initData || "",
+            guest_id: state.userId || "guest",
+          }),
+        });
+        const data = await res.json();
+
+        if (data.invoice_link) {
+          if (tg && typeof tg.openInvoice === "function" && !data.mock) {
+            // Live Telegram Client Native Payment Drawer
+            tg.openInvoice(data.invoice_link, (status) => {
+              if (status === "paid") {
+                triggerConfetti();
+                try { tg?.HapticFeedback?.notificationOccurred("success"); } catch (_) {}
+                const cur = parseInt(localStorage.getItem("flipster_coins") || "1000", 10);
+                const next = cur + coins;
+                localStorage.setItem("flipster_coins", next);
+                localStorage.setItem("aviator_coins", next);
+                document.getElementById("coinVal").textContent = next.toLocaleString();
+                document.getElementById("shopUserCoins").textContent = `🪙 ${next.toLocaleString()} Coins`;
+                alert(`🎉 Payment Verified!\n\nSuccessfully added +${coins.toLocaleString()} Coins with ${stars} Telegram Stars!`);
+                closeStarsShop();
+              } else if (status === "cancelled") {
+                console.log("Invoice cancelled by user.");
+              } else {
+                alert("Payment was not completed.");
+              }
+            });
+          } else {
+            // Dev / Mock Browser fallback for local testing
+            await fetch("/api/stars/dev-credit", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ user_id: state.userId || "guest", coins: coins }),
+            });
+            triggerConfetti();
+            try { tg?.HapticFeedback?.notificationOccurred("success"); } catch (_) {}
+            const cur = parseInt(localStorage.getItem("flipster_coins") || "1000", 10);
+            const next = cur + coins;
+            localStorage.setItem("flipster_coins", next);
+            localStorage.setItem("aviator_coins", next);
+            document.getElementById("coinVal").textContent = next.toLocaleString();
+            document.getElementById("shopUserCoins").textContent = `🪙 ${next.toLocaleString()} Coins`;
+            alert(`🎉 [Mock Test Mode]\n\nSuccessfully credited +${coins.toLocaleString()} Coins (${stars} Stars) for testing!`);
+            closeStarsShop();
+          }
+        } else {
+          alert(`Could not generate Stars invoice: ${data.detail || "Server error"}`);
+        }
+      } catch (err) {
+        console.error("Payment error:", err);
+        alert("Payment connection error. Please try again.");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    });
+  });
+
+  // Listen for iframe child game messages (e.g. from Aviator)
+  window.addEventListener("message", (event) => {
+    if (event.data && event.data.type === "OPEN_STARS_SHOP") {
+      openStarsShop();
+    }
+  });
+
+  // ============================================================
+  // BOT API 8.0: ADD TO HOME SCREEN FEATURE
+  // ============================================================
+  const btnAddToHomeScreen = document.getElementById("btnAddToHomeScreen");
+  const homeScreenStatusMsg = document.getElementById("homeScreenStatusMsg");
+
+  if (btnAddToHomeScreen) {
+    // Check home screen support if available in Bot API 8.0+
+    try {
+      if (tg && typeof tg.checkHomeScreenStatus === "function") {
+        tg.checkHomeScreenStatus((status) => {
+          if (status === "added") {
+            btnAddToHomeScreen.innerHTML = `<i data-lucide="check-circle" class="lucide-sm"></i> Installed on Home Screen`;
+            btnAddToHomeScreen.disabled = true;
+            if (homeScreenStatusMsg) homeScreenStatusMsg.textContent = "✅ Ghost Plays is installed on your device!";
+          }
+        });
+      }
+    } catch (_) {}
+
+    btnAddToHomeScreen.addEventListener("click", () => {
+      haptic("heavy");
+      try {
+        if (tg && typeof tg.addToHomeScreen === "function") {
+          tg.addToHomeScreen();
+        } else {
+          alert(
+            "📲 Install Ghost Plays on Phone:\n\n" +
+            "1. In the Telegram app, open this Mini App.\n" +
+            "2. Tap the ⋮ (three dots) menu in the top right.\n" +
+            "3. Select 'Add to Home Screen'!"
+          );
+        }
+      } catch (_) {
+        alert("Tip: Open Mini App menu (⋮) in Telegram and tap 'Add to Home Screen'.");
+      }
+    });
+  }
+
+  // Check URL query parameters for auto-nav (e.g. ?tab=shop or ?game=aviator)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get("tab") === "shop") {
+    setTimeout(openStarsShop, 300);
+  }
+  if (urlParams.get("game") === "aviator") {
+    setTimeout(() => {
+      launchWebGame("Aviator Rocket", "/static/games/aviator/index.html", "🚀");
+    }, 400);
+  }
 
   async function loadAdminGamesList() {
     const listEl = document.getElementById("adminGamesList");

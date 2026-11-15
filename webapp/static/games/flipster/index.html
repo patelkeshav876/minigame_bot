@@ -428,7 +428,12 @@
       refillModal.classList.remove("show");
     });
     btnGoPremium.addEventListener("click", () => {
-      alert("⭐ Telegram Stars Deposit\n\nTelegram Stars payment integration is activated! In the upcoming update you can buy instant chips using Telegram Stars (XTR). Contact Admin to deposit directly.");
+      refillModal.classList.remove("show");
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: "OPEN_STARS_SHOP" }, "*");
+      } else {
+        window.location.href = "/?tab=shop";
+      }
     });
     btnContactAdminModal.addEventListener("click", () => {
       if (window.Telegram?.WebApp?.openTelegramLink) {
@@ -569,6 +574,10 @@
     // Trigger dramatic blast / explosion animation
     function triggerBlastExplosion(x, y) {
       screenShake = 18;
+      try {
+        window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('heavy');
+        window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('error');
+      } catch (_) {}
 
       // Expanding fiery shockwaves
       blastShockwaves.push({ x, y, r: 5, maxR: 65, alpha: 1.0, color: "#f87171" });
@@ -765,6 +774,9 @@
       if (gameState !== "running") return;
       cancelAnimationFrame(animId);
       gameState = "cashed";
+      try {
+        window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('success');
+      } catch (_) {}
       const winAmt = Math.floor(stake * currentMult);
       coins += winAmt;
       streak++;

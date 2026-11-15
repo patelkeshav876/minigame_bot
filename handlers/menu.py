@@ -33,9 +33,13 @@ def _main_menu_markup(is_private_chat: bool = True) -> InlineKeyboardMarkup:
         rows.append(
             [InlineKeyboardButton("🚀 Play Aviator (Rocket Duel)", web_app=WebAppInfo(url=f"{WEBAPP_URL}?game=aviator"))]
         )
+        rows.append(
+            [InlineKeyboardButton("🪙 Star Coin Shop", web_app=WebAppInfo(url=f"{WEBAPP_URL}?tab=shop"))]
+        )
     else:
         rows.append([InlineKeyboardButton("🚀 Launch Ghost Plays (Mini App)", callback_data="menu:arena")])
         rows.append([InlineKeyboardButton("🚀 Play Aviator", callback_data="menu:aviator")])
+        rows.append([InlineKeyboardButton("🪙 Star Coin Shop", callback_data="menu:shop")])
     rows.append(
         [
             InlineKeyboardButton("🏆 Leaderboards", callback_data="menu:leaderboard"),
@@ -229,6 +233,86 @@ async def arena_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         await update.message.reply_text(msg, parse_mode="Markdown")
 
 
+async def shop_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Displays the Telegram Stars Coin Shop in chat."""
+    user = update.effective_user
+    if not user:
+        return
+    bal = storage.get_player_coins(user.id)
+    text = (
+        f"🪙 *Ghost Plays Stars Coin Shop*\n\n"
+        f"Your Current Balance: *{bal:,} Coins*\n\n"
+        f"Select a Telegram Stars pack to refill your chips for Aviator and high-stakes duels:\n\n"
+        f"⭐ *50 Stars* ➔ 5,000 Coins\n"
+        f"⭐ *150 Stars* ➔ 18,000 Coins _(+20% Bonus)_\n"
+        f"⭐ *500 Stars* ➔ 75,000 Coins _(+50% Bonus)_\n"
+        f"⭐ *1,000 Stars* ➔ 200,000 Coins _(+100% VIP Mega)_\n"
+    )
+    is_private = bool(update.effective_chat and update.effective_chat.type == "private")
+    rows = []
+    if WEBAPP_URL and is_private:
+        rows.append([InlineKeyboardButton("🛒 Open Stars Shop in Mini App", web_app=WebAppInfo(url=f"{WEBAPP_URL}?tab=shop"))])
+    rows.append([
+        InlineKeyboardButton("⭐ 50 XTR", callback_data="buy_stars:pack_50"),
+        InlineKeyboardButton("⭐ 150 XTR", callback_data="buy_stars:pack_150"),
+    ])
+    rows.append([
+        InlineKeyboardButton("⭐ 500 XTR", callback_data="buy_stars:pack_500"),
+        InlineKeyboardButton("⭐ 1,000 XTR", callback_data="buy_stars:pack_1000"),
+    ])
+    rows.append([InlineKeyboardButton("🔙 Back to Main Menu", callback_data="menu:main")])
+    await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(rows), parse_mode="Markdown")
+
+
+async def handle_pre_checkout_query(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Responds to Telegram's pre-checkout query within 10 seconds."""
+    query = update.pre_checkout_query
+    if not query:
+        return
+    await query.answer(ok=True)
+
+
+async def handle_successful_payment(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handles completed payment, credits user coins in storage, and congratulates the player."""
+    payment = update.message.successful_payment
+    user = update.effective_user
+    if not payment or not user:
+        return
+
+    import json
+    try:
+        payload = json.loads(payment.invoice_payload)
+        pack_id = payload.get("pack_id", "")
+        coins = int(payload.get("coins", payment.total_amount * 100))
+    except Exception:
+        pack_id = "unknown"
+        coins = payment.total_amount * 100
+
+    rec = storage.record_star_payment(
+        user_id=user.id,
+        charge_id=payment.telegram_payment_charge_id,
+        stars_amount=payment.total_amount,
+        coins_credited=coins,
+        pack_id=pack_id,
+    )
+
+    markup = None
+    if WEBAPP_URL:
+        markup = InlineKeyboardMarkup([
+            [InlineKeyboardButton("🚀 Launch Ghost Plays", web_app=WebAppInfo(url=WEBAPP_URL))]
+        ])
+
+    await update.message.reply_text(
+        f"🎉 *Payment Verified!*\n\n"
+        f"⭐ *Paid:* `{payment.total_amount} Stars`\n"
+        f"🪙 *Credited:* `+{coins:,} Coins`\n"
+        f"💰 *New Balance:* `{rec['new_coins']:,} Coins`\n\n"
+        f"Your coins are ready to use in Aviator and all arcade battle tables!",
+        reply_markup=markup,
+        parse_mode="Markdown",
+    )
+
+
 async def addgame_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Admin command to add a custom web game: /addgame <title> <https://url> [icon]."""
     user = update.effective_user
@@ -308,6 +392,30 @@ async def handle_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYP
                 ),
                 parse_mode="Markdown",
             )
+        elif section == "shop":
+            bal = storage.get_player_coins(user.id)
+            text = (
+                f"🪙 *Ghost Plays Stars Coin Shop*\n\n"
+                f"Your Current Balance: *{bal:,} Coins*\n\n"
+                f"Select a Telegram Stars pack to refill your chips for Aviator and high-stakes duels:\n\n"
+                f"⭐ *50 Stars* ➔ 5,000 Coins\n"
+                f"⭐ *150 Stars* ➔ 18,000 Coins _(+20% Bonus)_\n"
+                f"⭐ *500 Stars* ➔ 75,000 Coins _(+50% Bonus)_\n"
+                f"⭐ *1,000 Stars* ➔ 200,000 Coins _(+100% VIP Mega)_\n"
+            )
+            rows = []
+            if WEBAPP_URL and is_private:
+                rows.append([InlineKeyboardButton("🛒 Open Stars Shop in Mini App", web_app=WebAppInfo(url=f"{WEBAPP_URL}?tab=shop"))])
+            rows.append([
+                InlineKeyboardButton("⭐ 50 XTR", callback_data="buy_stars:pack_50"),
+                InlineKeyboardButton("⭐ 150 XTR", callback_data="buy_stars:pack_150"),
+            ])
+            rows.append([
+                InlineKeyboardButton("⭐ 500 XTR", callback_data="buy_stars:pack_500"),
+                InlineKeyboardButton("⭐ 1,000 XTR", callback_data="buy_stars:pack_1000"),
+            ])
+            rows.append([InlineKeyboardButton("⬅️ Main Menu", callback_data="menu:main")])
+            await safe_edit_message(query, text, InlineKeyboardMarkup(rows), parse_mode="Markdown")
         elif section in ("aviator", "flipster"):
             await aviator_command(update, context)
         elif section == "arena":
@@ -328,6 +436,32 @@ async def handle_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYP
                 parse_mode="Markdown",
             )
         return
+
+    # Telegram Stars purchases directly via in-chat invoice
+    if data.startswith("buy_stars:"):
+        pack_id = data.split(":", 1)[1]
+        from webapp.server import STAR_PACKS
+        pack = STAR_PACKS.get(pack_id)
+        if pack and query.message:
+            import json
+            from telegram import LabeledPrice
+            await query.answer()
+            payload = json.dumps({
+                "user_id": str(user.id),
+                "pack_id": pack["id"],
+                "coins": pack["coins"],
+                "stars": pack["stars"],
+            })
+            await context.bot.send_invoice(
+                chat_id=query.message.chat_id,
+                title=f"Ghost Plays: {pack['title']}",
+                description=pack["description"],
+                payload=payload,
+                provider_token="",  # ALWAYS empty for Telegram Stars
+                currency="XTR",     # Telegram Stars currency code
+                prices=[LabeledPrice(label=pack["title"], amount=pack["stars"])],
+            )
+            return
 
     # Single-player games
     if data.startswith("snake:"):

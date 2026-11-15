@@ -10,6 +10,9 @@ from telegram.ext import (
     CallbackQueryHandler,
     CommandHandler,
     InlineQueryHandler,
+    MessageHandler,
+    PreCheckoutQueryHandler,
+    filters,
 )
 
 from config import BOT_TOKEN
@@ -21,8 +24,11 @@ from handlers.menu import (
     broadcast_command,
     flipster_command,
     handle_menu_callback,
+    handle_pre_checkout_query,
+    handle_successful_payment,
     leaderboard_command,
     play_command,
+    shop_command,
 )
 
 logging.basicConfig(
@@ -42,9 +48,13 @@ def build_bot_application() -> Application:
     app.add_handler(CommandHandler("arena", arena_command))
     app.add_handler(CommandHandler("aviator", aviator_command))
     app.add_handler(CommandHandler("flipster", flipster_command))
+    app.add_handler(CommandHandler("shop", shop_command))
+    app.add_handler(CommandHandler("stars", shop_command))
     app.add_handler(CommandHandler("broadcast", broadcast_command))
     app.add_handler(CommandHandler("announce", broadcast_command))
     app.add_handler(CommandHandler("addgame", addgame_command))
+    app.add_handler(PreCheckoutQueryHandler(handle_pre_checkout_query))
+    app.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, handle_successful_payment))
     app.add_handler(InlineQueryHandler(handle_inline_query))
     app.add_handler(CallbackQueryHandler(handle_menu_callback))
     return app

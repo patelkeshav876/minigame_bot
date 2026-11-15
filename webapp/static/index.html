@@ -513,6 +513,21 @@
         <div id="profileRatingsGrid" class="ratings-grid">Loading...</div>
       </div>
 
+      <!-- Mini Apps 2.0 Feature: Add to Home Screen -->
+      <div class="card homescreen-install-card">
+        <div class="homescreen-install-content">
+          <div class="hs-badge"><i data-lucide="sparkles" class="lucide-xs"></i> BOT API 8.0 READY</div>
+          <h3 class="hs-title">📲 Install Ghost Plays on Phone</h3>
+          <p class="hs-desc">Launch instantly from your mobile home screen with full-screen immersive mode, zero browser bars, and ultra-fast loading.</p>
+          <div class="hs-btn-row">
+            <button id="btnAddToHomeScreen" class="btn primary full">
+              <i data-lucide="smartphone" class="lucide-sm"></i> Add to Home Screen
+            </button>
+          </div>
+          <div id="homeScreenStatusMsg" class="hs-status-note">Compatible with Telegram iOS & Android</div>
+        </div>
+      </div>
+
       <!-- Match History -->
       <div class="card">
         <div class="card-head">
@@ -529,6 +544,80 @@
       <div id="gamePlayerTitle" class="game-player-watermark">Ghost Plays</div>
       <iframe id="customGameIframe" src="" allowfullscreen allow="autoplay; fullscreen; gamepad"></iframe>
     </section>
+
+    <!-- ==================== TELEGRAM STARS COIN SHOP MODAL ==================== -->
+    <div id="modalStarsShop" class="modal hidden">
+      <div class="modal-card stars-shop-modal-card">
+        <div class="modal-header">
+          <div class="modal-header-title">
+            <span class="stars-icon-glow">⭐</span>
+            <h3>Telegram Stars Shop</h3>
+          </div>
+          <button id="btnCloseStarsShop" class="btn small">✖</button>
+        </div>
+        <div class="stars-shop-subtitle">
+          Refill your gaming chips instantly using official <strong>Telegram Stars (XTR)</strong>. Fully compliant with Telegram Bot API 8.0!
+        </div>
+
+        <div class="user-current-chips-box">
+          <span class="ucc-label">Current Balance:</span>
+          <span class="ucc-val" id="shopUserCoins">🪙 1,000 Coins</span>
+        </div>
+
+        <div class="stars-packs-grid" id="starsPacksGrid">
+          <!-- Tier 1 -->
+          <div class="star-pack-card" data-pack="pack_50">
+            <div class="star-pack-badge starter">STARTER</div>
+            <div class="star-pack-icon">🪙</div>
+            <div class="star-pack-coins">5,000 Coins</div>
+            <div class="star-pack-desc">Standard refill for casual rounds</div>
+            <button class="btn-buy-stars" data-pack="pack_50" data-stars="50" data-coins="5000">
+              <span class="star-sym">⭐</span> 50 XTR
+            </button>
+          </div>
+
+          <!-- Tier 2 -->
+          <div class="star-pack-card popular" data-pack="pack_150">
+            <div class="star-pack-badge popular">🔥 MOST POPULAR</div>
+            <div class="star-pack-icon">🚀</div>
+            <div class="star-pack-coins">18,000 Coins</div>
+            <div class="star-pack-bonus">+20% Extra Bonus</div>
+            <button class="btn-buy-stars popular-btn" data-pack="pack_150" data-stars="150" data-coins="18000">
+              <span class="star-sym">⭐</span> 150 XTR
+            </button>
+          </div>
+
+          <!-- Tier 3 -->
+          <div class="star-pack-card" data-pack="pack_500">
+            <div class="star-pack-badge roller">💎 HIGH ROLLER</div>
+            <div class="star-pack-icon">💰</div>
+            <div class="star-pack-coins">75,000 Coins</div>
+            <div class="star-pack-bonus">+50% High Stakes Stash</div>
+            <button class="btn-buy-stars" data-pack="pack_500" data-stars="500" data-coins="75000">
+              <span class="star-sym">⭐</span> 500 XTR
+            </button>
+          </div>
+
+          <!-- Tier 4 -->
+          <div class="star-pack-card vip" data-pack="pack_1000">
+            <div class="star-pack-badge vip">👑 VIP LEGEND</div>
+            <div class="star-pack-icon">🏆</div>
+            <div class="star-pack-coins">200,000 Coins</div>
+            <div class="star-pack-bonus">+100% Double Value</div>
+            <button class="btn-buy-stars vip-btn" data-pack="pack_1000" data-stars="1000" data-coins="200000">
+              <span class="star-sym">⭐</span> 1,000 XTR
+            </button>
+          </div>
+        </div>
+
+        <div class="free-refill-note">
+          <i data-lucide="clock" class="lucide-xs"></i> Free 1,000 Coins auto-refilled every midnight (12:00 AM) if your balance drops below stake.
+        </div>
+      </div>
+    </div>
+
+    <!-- FULLSCREEN CONFETTI CANVAS -->
+    <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
 
     <!-- ADMIN MODAL: MANAGE / ADD WEB GAMES -->
     <div id="modalAddGame" class="modal hidden">
