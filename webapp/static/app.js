@@ -1320,14 +1320,47 @@
     });
   }
 
-  // Check URL query parameters for auto-nav (e.g. ?tab=shop or ?game=aviator)
+  // Direct promo launcher map for one-click Gamee-style play buttons
+  const PROMO_LAUNCH_MAP = {
+    aviator: { title: "Aviator Rocket", url: "/static/games/aviator/index.html", icon: "🚀" },
+    flipster: { title: "Aviator Rocket", url: "/static/games/aviator/index.html", icon: "🚀" },
+    dino: { title: "Cyber Dino", url: "/static/games/dino/index.html", icon: "🦖" },
+    tetris: { title: "Retro Tetris", url: "/static/games/tetris/index.html", icon: "🧩" },
+    space_invaders: { title: "Galaxy Defender", url: "/static/games/space_invaders/index.html", icon: "👾" },
+    knife_hit: { title: "Knife Master 3D", url: "/static/games/knife_hit/index.html", icon: "🗡️" },
+    knife: { title: "Knife Master 3D", url: "/static/games/knife_hit/index.html", icon: "🗡️" },
+    tictactoe: { title: "XO Blitz", url: "/static/games/tictactoe/index.html", icon: "❌" },
+    xo: { title: "XO Blitz", url: "/static/games/tictactoe/index.html", icon: "❌" },
+    "2048": { title: "2048 Neon", url: "/static/games/2048/index.html", icon: "🔢" },
+    flappy: { title: "Flappy Ghost", url: "/static/games/flappy/index.html", icon: "👻" },
+    breakout: { title: "Neon Breakout", url: "/static/games/breakout/index.html", icon: "🧱" },
+    snake: { title: "Retro Snake", url: "/static/games/snake/index.html", icon: "🐍" },
+    helix_jump: { title: "Helix Spiral", url: "/static/games/helix_jump/index.html", icon: "🌀" },
+    fruit_slice: { title: "Fruit Ninja", url: "/static/games/fruit_slice/index.html", icon: "🍉" },
+    tower_stack: { title: "Tower Stack", url: "/static/games/tower_stack/index.html", icon: "🏗️" },
+    minesweeper: { title: "Minesweeper Pro", url: "/static/games/minesweeper/index.html", icon: "💣" },
+    speed_typer: { title: "Speed Typer", url: "/static/games/speed_typer/index.html", icon: "⌨️" },
+    wordle: { title: "Wordle Guess", url: "/static/games/wordle/index.html", icon: "🔤" },
+  };
+
+  // Check URL query parameters and Telegram Mini App start_param for auto-nav
   const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get("tab") === "shop") {
-    setTimeout(openStarsShop, 300);
+  const tgStartParam = urlParams.get("tgWebAppStartParam") || 
+                       window.Telegram?.WebApp?.initDataUnsafe?.start_param || 
+                       urlParams.get("startapp") || 
+                       "";
+
+  let targetGame = urlParams.get("game") || "";
+  if (!targetGame && tgStartParam.startsWith("game_")) {
+    targetGame = tgStartParam.replace("game_", "");
   }
-  if (urlParams.get("game") === "aviator") {
+
+  if (urlParams.get("tab") === "shop" || tgStartParam === "shop") {
+    setTimeout(openStarsShop, 300);
+  } else if (targetGame && PROMO_LAUNCH_MAP[targetGame.toLowerCase()]) {
+    const g = PROMO_LAUNCH_MAP[targetGame.toLowerCase()];
     setTimeout(() => {
-      launchWebGame("Aviator Rocket", "/static/games/aviator/index.html", "🚀");
+      launchWebGame(g.title, g.url, g.icon);
     }, 400);
   }
 

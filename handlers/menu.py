@@ -6,7 +6,8 @@ from pathlib import Path
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo
 from telegram.ext import ContextTypes
 
-from config import ADMIN_USER_IDS, WEBAPP_URL
+from config import ADMIN_USER_IDS, BOT_USERNAME, WEBAPP_URL
+from core.promo import PROMO_GAMES, get_promo_card, list_promo_keys
 from core.storage import storage
 from core.telegram_utils import player_display_name, safe_edit_message
 from handlers.games.chess_game import handle_chess_callback, init_chess_state, render_chess
@@ -202,6 +203,121 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             failed += 1
 
     await status_msg.edit_text(f"✅ Broadcast complete!\nSent: `{sent}` | Failed/Blocked: `{failed}`", parse_mode="Markdown")
+
+
+async def promo_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Send Gamee-style promotional message card for a game: /promo [game_id]."""
+    user = update.effective_user
+    if not user:
+        return
+
+    args = context.args or []
+    game_key = args[0].lower().strip() if args else "aviator"
+
+    bot_name = BOT_USERNAME or (context.bot.username or "")
+    caption, banner_path, markup = get_promo_card(game_key, bot_username=bot_name, webapp_url=WEBAPP_URL)
+
+    # If user ran /promo without specific game, add game selector rows
+    if not args:
+        selector_buttons_1 = [
+            InlineKeyboardButton("🚀 Aviator", callback_data="promo_view:aviator"),
+            InlineKeyboardButton("🦖 Dino", callback_data="promo_view:dino"),
+            InlineKeyboardButton("🧩 Tetris", callback_data="promo_view:tetris"),
+        ]
+        selector_buttons_2 = [
+            InlineKeyboardButton("👾 Galaxy", callback_data="promo_view:space_invaders"),
+            InlineKeyboardButton("🗡️ Knife", callback_data="promo_view:knife_hit"),
+            InlineKeyboardButton("❌ XO", callback_data="promo_view:tictactoe"),
+        ]
+        new_keyboard = list(markup.inline_keyboard)
+        new_keyboard.insert(1, selector_buttons_1)
+        new_keyboard.insert(2, selector_buttons_2)
+        markup = InlineKeyboardMarkup(new_keyboard)
+
+    if update.message:
+        if banner_path and banner_path.exists():
+            try:
+                with open(banner_path, "rb") as photo:
+                    await update.message.reply_photo(
+                        photo=photo,
+                        caption=caption,
+                        reply_markup=markup,
+                        parse_mode="Markdown",
+                    )
+                    return
+            except Exception:
+                pass
+        await update.message.reply_text(caption, reply_markup=markup, parse_mode="Markdown")
+
+
+async def promobroadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Admin command to broadcast a Gamee-style promotional card with banner to all players: /promobroadcast <game_id> [note]."""
+    user = update.effective_user
+    if not user:
+        return
+    if ADMIN_USER_IDS and str(user.id) not in ADMIN_USER_IDS:
+        await update.message.reply_text("⛔ Admin only command.")
+        return
+
+    args = context.args or []
+    if not args:
+        keys_str = ", ".join(f"`{k}`" for k in list_promo_keys())
+        await update.message.reply_text(
+            f"📢 *Usage:* `/promobroadcast <game_id> [custom note]`\n\n"
+            f"Available Games:\n{keys_str}\n\n"
+            f"Example:\n`/promobroadcast aviator Weekend Double Multiplier!`\n"
+            f"`/promobroadcast dino New Cyberpunk Track!`",
+            parse_mode="Markdown",
+        )
+        return
+
+    game_key = args[0].lower().strip()
+    custom_note = " ".join(args[1:]).strip()
+
+    bot_name = BOT_USERNAME or (context.bot.username or "")
+    caption, banner_path, markup = get_promo_card(game_key, bot_username=bot_name, webapp_url=WEBAPP_URL)
+
+    if custom_note:
+        caption = f"📢 *SPECIAL ANNOUNCEMENT*\n_{custom_note}_\n\n" + caption
+
+    player_ids = storage.list_all_player_ids()
+    if not player_ids:
+        await update.message.reply_text("No registered players found.")
+        return
+
+    sent = 0
+    failed = 0
+    status_msg = await update.message.reply_text(f"🚀 Broadcasting *{game_key.upper()}* promotional card to {len(player_ids)} players...", parse_mode="Markdown")
+
+    for pid in player_ids:
+        try:
+            if banner_path and banner_path.exists():
+                with open(banner_path, "rb") as photo:
+                    await context.bot.send_photo(
+                        chat_id=int(pid),
+                        photo=photo,
+                        caption=caption,
+                        reply_markup=markup,
+                        parse_mode="Markdown",
+                    )
+            else:
+                await context.bot.send_message(
+                    chat_id=int(pid),
+                    text=caption,
+                    reply_markup=markup,
+                    parse_mode="Markdown",
+                )
+            sent += 1
+        except Exception:
+            failed += 1
+
+    await status_msg.edit_text(
+        f"✅ *Promotional Broadcast Complete!*\n\n"
+        f"🎯 Game: `{game_key}`\n"
+        f"📤 Sent: `{sent}`\n"
+        f"⚠️ Failed/Blocked: `{failed}`",
+        parse_mode="Markdown",
+    )
 
 
 async def leaderboard_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -417,6 +533,36 @@ async def handle_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYP
 
     if data == "noop":
         await query.answer()
+        return
+
+    # Gamee-style promotional game viewer
+    if data.startswith("promo_view:"):
+        await query.answer()
+        game_key = data.split(":", 1)[1]
+        bot_name = BOT_USERNAME or (context.bot.username or "")
+        caption, banner_path, markup = get_promo_card(game_key, bot_username=bot_name, webapp_url=WEBAPP_URL)
+        selector_buttons_1 = [
+            InlineKeyboardButton("🚀 Aviator", callback_data="promo_view:aviator"),
+            InlineKeyboardButton("🦖 Dino", callback_data="promo_view:dino"),
+            InlineKeyboardButton("🧩 Tetris", callback_data="promo_view:tetris"),
+        ]
+        selector_buttons_2 = [
+            InlineKeyboardButton("👾 Galaxy", callback_data="promo_view:space_invaders"),
+            InlineKeyboardButton("🗡️ Knife", callback_data="promo_view:knife_hit"),
+            InlineKeyboardButton("❌ XO", callback_data="promo_view:tictactoe"),
+        ]
+        new_keyboard = list(markup.inline_keyboard)
+        new_keyboard.insert(1, selector_buttons_1)
+        new_keyboard.insert(2, selector_buttons_2)
+        markup = InlineKeyboardMarkup(new_keyboard)
+
+        try:
+            await query.edit_message_caption(caption=caption, reply_markup=markup, parse_mode="Markdown")
+        except Exception:
+            try:
+                await query.edit_message_text(caption, reply_markup=markup, parse_mode="Markdown")
+            except Exception:
+                pass
         return
 
     # Admin approval for UPI deposits

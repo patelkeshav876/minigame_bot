@@ -33,6 +33,52 @@ async def handle_inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     filter_text = (inline_query.query or "").strip().lower()
     results: list[InlineQueryResultArticle] = []
+    bot_user = BOT_USERNAME or (context.bot.username or "")
+
+    # Gamee-style Challenge Cards (e.g. @bot challenge aviator)
+    if "challenge" in filter_text or any(k in filter_text for k in ["aviator", "dino", "tetris", "space", "knife", "2048"]):
+        target_game = "aviator"
+        for k in ["aviator", "dino", "tetris", "space_invaders", "knife", "xo", "2048"]:
+            if k in filter_text:
+                target_game = k
+                break
+
+        game_meta = {
+            "aviator": ("🚀 Aviator Rocket Duel", "Multiply coins up to 100x — cash out before the crash!"),
+            "dino": ("🦖 Cyber Dino 60FPS", "Endless neon runner — beat my high score!"),
+            "tetris": ("🧩 Retro Tetris Battle", "Clear lines, make combos, score higher!"),
+            "space_invaders": ("👾 Galaxy Defender", "Defend Sector 7 from alien armadas!"),
+            "knife": ("🗡️ Knife Master 3D", "Hit the spinning log, avoid blades!"),
+            "xo": ("❌ XO Blitz Arena", "Quick 3x3 duel with ranked ELO!"),
+            "2048": ("🔢 2048 Neon Merge", "Merge tiles to 2048 — test your brain!"),
+        }
+        g_name, g_desc = game_meta.get(target_game, game_meta["aviator"])
+        direct_link = (
+            f"https://t.me/{bot_user}?startapp=game_{target_game}"
+            if bot_user
+            else (f"{WEBAPP_URL}?game={target_game}" if WEBAPP_URL else "")
+        )
+
+        btn_row = []
+        if direct_link:
+            btn_row.append(InlineKeyboardButton(f"🚀 Play {g_name.split()[1]}", url=direct_link))
+        btn_row.append(InlineKeyboardButton("⚔️ Challenge Back", switch_inline_query=f"challenge {target_game}"))
+
+        results.append(
+            InlineQueryResultArticle(
+                id=f"chal_{uuid4().hex[:8]}",
+                title=f"⚔️ Challenge: {g_name}",
+                description=g_desc,
+                input_message_content=InputTextMessageContent(
+                    f"⚔️ *GAME CHALLENGE!*\n\n"
+                    f"👤 *{uname}* challenges you to a showdown in *{g_name}*!\n\n"
+                    f"⚡ {g_desc}\n\n"
+                    f"Can you beat their record? Tap below to play directly in Telegram!",
+                    parse_mode="Markdown",
+                ),
+                reply_markup=InlineKeyboardMarkup([btn_row]),
+            )
+        )
 
     # 1. Chess
     if not filter_text or "chess" in filter_text:

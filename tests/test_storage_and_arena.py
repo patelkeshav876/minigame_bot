@@ -137,6 +137,7 @@ def test_miniapp_http_routes(tmp_path, monkeypatch):
             assert (await client.get("/api/rooms")).json()["rooms"][0]["game_type"] == "othello"
             assert (await client.get("/api/profile/u1")).status_code == 200
             assert (await client.get("/api/leaderboard?game_type=othello")).json()["players"] == []
+        await test_arena.stop()
 
     asyncio.run(run_http())
 
@@ -177,6 +178,7 @@ def test_arena_othello_spectator_and_ai(tmp_path):
         assert sum(1 for c in ai_room.state["board"] if c != "") == 2
         # Human chess/ttt ELO stays untouched by AI matches
         assert test_db.get_game_elo("u1", "tictactoe") == 1200.0
+        await mgr.stop()
 
     asyncio.run(run_arena())
 

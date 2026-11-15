@@ -28,6 +28,8 @@ from handlers.menu import (
     handle_successful_payment,
     leaderboard_command,
     play_command,
+    promo_command,
+    promobroadcast_command,
     setchannel_command,
     setupi_command,
     shop_command,
@@ -58,6 +60,9 @@ def build_bot_application() -> Application:
     app.add_handler(CommandHandler("channel", setchannel_command))
     app.add_handler(CommandHandler("broadcast", broadcast_command))
     app.add_handler(CommandHandler("announce", broadcast_command))
+    app.add_handler(CommandHandler("promo", promo_command))
+    app.add_handler(CommandHandler("promobroadcast", promobroadcast_command))
+    app.add_handler(CommandHandler("featured", promo_command))
     app.add_handler(CommandHandler("addgame", addgame_command))
     app.add_handler(PreCheckoutQueryHandler(handle_pre_checkout_query))
     app.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, handle_successful_payment))
