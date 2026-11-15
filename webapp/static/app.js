@@ -1052,6 +1052,7 @@
     const shopBalEl = document.getElementById("shopUserCoins");
     if (shopBalEl) shopBalEl.textContent = `🪙 ${Number(storedCoins).toLocaleString()} Coins`;
     modalStarsShop?.classList.remove("hidden");
+    loadShopConfig();
     if (window.lucide) window.lucide.createIcons();
   }
 
@@ -1140,6 +1141,120 @@
         btn.innerHTML = originalText;
       }
     });
+  });
+
+  // Store Tab Switching (Stars, UPI, Crypto)
+  document.querySelectorAll(".store-tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      haptic("light");
+      document.querySelectorAll(".store-tab-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      const target = btn.dataset.tab;
+      document.getElementById("tabContentStars")?.classList.toggle("active", target === "stars");
+      document.getElementById("tabContentUpi")?.classList.toggle("active", target === "upi");
+      document.getElementById("tabContentCrypto")?.classList.toggle("active", target === "crypto");
+    });
+  });
+
+  // State for UPI deposit
+  let shopConfig = { upi_id: "patelkeshav@upi", upi_name: "Ghost Plays Arena" };
+  let selectedUpiPack = { id: "pack_inr_99", inr: 99, coins: 18000 };
+
+  async function loadShopConfig() {
+    try {
+      const res = await fetch("/api/shop/config");
+      const data = await res.json();
+      shopConfig = data;
+      const upiDisplay = document.getElementById("displayUpiId");
+      if (upiDisplay) upiDisplay.textContent = shopConfig.upi_id;
+      updateUpiDisplay();
+    } catch (_) {}
+  }
+
+  function updateUpiDisplay() {
+    const upiId = shopConfig.upi_id || "patelkeshav@upi";
+    const amount = selectedUpiPack.inr;
+    const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(shopConfig.upi_name || "GhostPlays")}&am=${amount}&cu=INR`;
+    
+    const qrImg = document.getElementById("upiQrImage");
+    if (qrImg) {
+      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUrl)}`;
+    }
+    const amtBadge = document.getElementById("upiAmountBadge");
+    if (amtBadge) amtBadge.textContent = `PAY ₹${amount}`;
+    const intentBtn = document.getElementById("btnPayUpiIntent");
+    if (intentBtn) intentBtn.href = upiUrl;
+  }
+
+  // Handle UPI Pack Selection
+  document.querySelectorAll(".upi-pack-pill").forEach((pill) => {
+    pill.addEventListener("click", () => {
+      haptic("light");
+      document.querySelectorAll(".upi-pack-pill").forEach((p) => p.classList.remove("active"));
+      pill.classList.add("active");
+      selectedUpiPack = {
+        id: pill.dataset.pack,
+        inr: parseInt(pill.dataset.inr, 10),
+        coins: parseInt(pill.dataset.coins, 10),
+      };
+      updateUpiDisplay();
+    });
+  });
+
+  // Copy UPI ID
+  document.getElementById("btnCopyUpiId")?.addEventListener("click", () => {
+    haptic("light");
+    const upiId = shopConfig.upi_id || "patelkeshav@upi";
+    navigator.clipboard?.writeText(upiId).then(() => {
+      alert(`📋 Copied UPI ID: ${upiId}`);
+    });
+  });
+
+  // Submit UTR Reference
+  document.getElementById("formSubmitUtr")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const utrInput = document.getElementById("inputUtrRef");
+    const utr = utrInput.value.trim();
+    if (utr.length < 6) {
+      alert("Please enter a valid 12-digit UPI Reference / UTR Number from your payment receipt.");
+      return;
+    }
+    const btn = document.getElementById("btnSubmitUtr");
+    btn.disabled = true;
+    btn.textContent = "Verifying...";
+
+    try {
+      const res = await fetch("/api/shop/submit-upi-deposit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pack_id: selectedUpiPack.id,
+          utr_ref: utr,
+          init_data: tg?.initData || "",
+          guest_id: state.userId || "guest",
+          guest_name: state.userName || "Player",
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        haptic("heavy");
+        alert(
+          `✅ Deposit Request Submitted!\n\n` +
+          `Pack: ₹${selectedUpiPack.inr} (+${selectedUpiPack.coins.toLocaleString()} Coins)\n` +
+          `UTR Ref: ${utr}\n\n` +
+          `The admin has been notified and will verify your transaction to credit coins within 2-5 minutes!`
+        );
+        utrInput.value = "";
+        closeStarsShop();
+      } else {
+        alert(`Error: ${data.detail || "Could not submit deposit."}`);
+      }
+    } catch (err) {
+      alert("Connection error while submitting UTR.");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Verify";
+    }
   });
 
   // Listen for iframe child game messages (e.g. from Aviator)

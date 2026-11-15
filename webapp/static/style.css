@@ -2452,3 +2452,216 @@ body {
   pointer-events: none;
   z-index: 9999;
 }
+
+/* ============================================================
+   MULTI-PAYMENT STORE TABS (STARS, UPI, CRYPTO)
+   ============================================================ */
+.store-tabs-nav {
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.store-tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-weight: 800;
+  font-size: 0.78rem;
+  padding: 8px 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+.store-tab-btn.active {
+  background: #1e293b;
+  color: #facc15;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.store-tab-content {
+  display: none;
+}
+.store-tab-content.active {
+  display: block;
+}
+
+/* UPI Pack Selection */
+.upi-packs-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.upi-pack-pill {
+  background: #131d34;
+  border: 1.5px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.upi-pack-pill:hover, .upi-pack-pill.active {
+  border-color: #facc15;
+  background: rgba(250, 204, 21, 0.1);
+}
+.upi-pk-name {
+  font-size: 0.82rem;
+  font-weight: 900;
+  color: #fff;
+}
+.upi-pk-price {
+  font-size: 0.82rem;
+  font-weight: 900;
+  color: #facc15;
+  background: rgba(250, 204, 21, 0.15);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+/* UPI Pay Card & QR */
+.upi-pay-card {
+  background: #111a2e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+.upi-qr-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.upi-qr-img {
+  width: 160px;
+  height: 160px;
+  background: #fff;
+  padding: 8px;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+.upi-qr-amount-badge {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 3px 12px;
+  border-radius: 999px;
+}
+.btn-upi-intent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #fff;
+  font-weight: 900;
+  font-size: 0.88rem;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+}
+.upi-id-copy-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+.upi-id-label {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 700;
+}
+.upi-id-text {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #facc15;
+  font-family: monospace;
+}
+.btn-copy-upi {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+/* UTR Form */
+.utr-form {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 12px;
+  text-align: left;
+}
+.utr-form label {
+  display: block;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.utr-input-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.utr-input-row input {
+  flex: 1;
+  background: #0d1527;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.85rem;
+  padding: 10px 12px;
+  outline: none;
+}
+.utr-note {
+  font-size: 0.68rem;
+  color: #64748b;
+}
+
+/* Crypto Pay Card */
+.crypto-pay-card {
+  background: #111a2e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 24px 16px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+.crypto-icon-big {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+}
+.crypto-pay-card h4 {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 6px;
+}
+.crypto-pay-card p {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  line-height: 1.45;
+  margin-bottom: 16px;
+}

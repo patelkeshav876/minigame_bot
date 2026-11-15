@@ -545,18 +545,28 @@
       <iframe id="customGameIframe" src="" allowfullscreen allow="autoplay; fullscreen; gamepad"></iframe>
     </section>
 
-    <!-- ==================== TELEGRAM STARS COIN SHOP MODAL ==================== -->
+    <!-- ==================== GHOST PLAYS MULTI-PAYMENT COIN STORE ==================== -->
     <div id="modalStarsShop" class="modal hidden">
       <div class="modal-card stars-shop-modal-card">
         <div class="modal-header">
           <div class="modal-header-title">
-            <span class="stars-icon-glow">⭐</span>
-            <h3>Telegram Stars Shop</h3>
+            <span class="stars-icon-glow">🪙</span>
+            <h3>Ghost Plays Store</h3>
           </div>
           <button id="btnCloseStarsShop" class="btn small">✖</button>
         </div>
-        <div class="stars-shop-subtitle">
-          Refill your gaming chips instantly using official <strong>Telegram Stars (XTR)</strong>. Fully compliant with Telegram Bot API 8.0!
+
+        <!-- PAYMENT METHOD TABS -->
+        <div class="store-tabs-nav">
+          <button class="store-tab-btn active" data-tab="stars">
+            <span>⭐</span> Stars
+          </button>
+          <button class="store-tab-btn" data-tab="upi">
+            <span>🇮🇳</span> UPI / PhonePe
+          </button>
+          <button class="store-tab-btn" data-tab="crypto">
+            <span>💎</span> Crypto
+          </button>
         </div>
 
         <div class="user-current-chips-box">
@@ -564,49 +574,129 @@
           <span class="ucc-val" id="shopUserCoins">🪙 1,000 Coins</span>
         </div>
 
-        <div class="stars-packs-grid" id="starsPacksGrid">
-          <!-- Tier 1 -->
-          <div class="star-pack-card" data-pack="pack_50">
-            <div class="star-pack-badge starter">STARTER</div>
-            <div class="star-pack-icon">🪙</div>
-            <div class="star-pack-coins">5,000 Coins</div>
-            <div class="star-pack-desc">Standard refill for casual rounds</div>
-            <button class="btn-buy-stars" data-pack="pack_50" data-stars="50" data-coins="5000">
-              <span class="star-sym">⭐</span> 50 XTR
-            </button>
+        <!-- TAB 1: TELEGRAM STARS -->
+        <div id="tabContentStars" class="store-tab-content active">
+          <div class="stars-shop-subtitle">
+            Refill your gaming chips instantly using official <strong>Telegram Stars (XTR)</strong>.
+          </div>
+          <div class="stars-packs-grid" id="starsPacksGrid">
+            <!-- Tier 1 -->
+            <div class="star-pack-card" data-pack="pack_50">
+              <div class="star-pack-badge starter">STARTER</div>
+              <div class="star-pack-icon">🪙</div>
+              <div class="star-pack-coins">5,000 Coins</div>
+              <div class="star-pack-desc">Standard refill for casual rounds</div>
+              <button class="btn-buy-stars" data-pack="pack_50" data-stars="50" data-coins="5000">
+                <span class="star-sym">⭐</span> 50 XTR
+              </button>
+            </div>
+
+            <!-- Tier 2 -->
+            <div class="star-pack-card popular" data-pack="pack_150">
+              <div class="star-pack-badge popular">🔥 MOST POPULAR</div>
+              <div class="star-pack-icon">🚀</div>
+              <div class="star-pack-coins">18,000 Coins</div>
+              <div class="star-pack-bonus">+20% Extra Bonus</div>
+              <button class="btn-buy-stars popular-btn" data-pack="pack_150" data-stars="150" data-coins="18000">
+                <span class="star-sym">⭐</span> 150 XTR
+              </button>
+            </div>
+
+            <!-- Tier 3 -->
+            <div class="star-pack-card" data-pack="pack_500">
+              <div class="star-pack-badge roller">💎 HIGH ROLLER</div>
+              <div class="star-pack-icon">💰</div>
+              <div class="star-pack-coins">75,000 Coins</div>
+              <div class="star-pack-bonus">+50% High Stakes Stash</div>
+              <button class="btn-buy-stars" data-pack="pack_500" data-stars="500" data-coins="75000">
+                <span class="star-sym">⭐</span> 500 XTR
+              </button>
+            </div>
+
+            <!-- Tier 4 -->
+            <div class="star-pack-card vip" data-pack="pack_1000">
+              <div class="star-pack-badge vip">👑 VIP LEGEND</div>
+              <div class="star-pack-icon">🏆</div>
+              <div class="star-pack-coins">200,000 Coins</div>
+              <div class="star-pack-bonus">+100% Double Value</div>
+              <button class="btn-buy-stars vip-btn" data-pack="pack_1000" data-stars="1000" data-coins="200000">
+                <span class="star-sym">⭐</span> 1,000 XTR
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: INDIAN UPI / PHONEPE / GPAY -->
+        <div id="tabContentUpi" class="store-tab-content">
+          <div class="stars-shop-subtitle">
+            Pay with <strong>PhonePe, Google Pay, Paytm, or BHIM</strong> (Indian & International UPI supported).
           </div>
 
-          <!-- Tier 2 -->
-          <div class="star-pack-card popular" data-pack="pack_150">
-            <div class="star-pack-badge popular">🔥 MOST POPULAR</div>
-            <div class="star-pack-icon">🚀</div>
-            <div class="star-pack-coins">18,000 Coins</div>
-            <div class="star-pack-bonus">+20% Extra Bonus</div>
-            <button class="btn-buy-stars popular-btn" data-pack="pack_150" data-stars="150" data-coins="18000">
-              <span class="star-sym">⭐</span> 150 XTR
-            </button>
+          <!-- UPI Pack Selection -->
+          <div class="upi-packs-row">
+            <div class="upi-pack-pill active" data-pack="pack_inr_99" data-inr="99" data-coins="18000">
+              <span class="upi-pk-name">18,000 Coins</span>
+              <span class="upi-pk-price">₹99</span>
+            </div>
+            <div class="upi-pack-pill" data-pack="pack_inr_49" data-inr="49" data-coins="5000">
+              <span class="upi-pk-name">5,000 Coins</span>
+              <span class="upi-pk-price">₹49</span>
+            </div>
+            <div class="upi-pack-pill" data-pack="pack_inr_299" data-inr="299" data-coins="75000">
+              <span class="upi-pk-name">75,000 Coins</span>
+              <span class="upi-pk-price">₹299</span>
+            </div>
+            <div class="upi-pack-pill" data-pack="pack_inr_599" data-inr="599" data-coins="200000">
+              <span class="upi-pk-name">200,000 Coins</span>
+              <span class="upi-pk-price">₹599</span>
+            </div>
           </div>
 
-          <!-- Tier 3 -->
-          <div class="star-pack-card" data-pack="pack_500">
-            <div class="star-pack-badge roller">💎 HIGH ROLLER</div>
-            <div class="star-pack-icon">💰</div>
-            <div class="star-pack-coins">75,000 Coins</div>
-            <div class="star-pack-bonus">+50% High Stakes Stash</div>
-            <button class="btn-buy-stars" data-pack="pack_500" data-stars="500" data-coins="75000">
-              <span class="star-sym">⭐</span> 500 XTR
-            </button>
-          </div>
+          <!-- Dynamic QR & Intent Section -->
+          <div class="upi-pay-card">
+            <div class="upi-qr-wrap">
+              <img id="upiQrImage" src="" alt="UPI QR Code" class="upi-qr-img" />
+              <div class="upi-qr-amount-badge" id="upiAmountBadge">PAY ₹99</div>
+            </div>
 
-          <!-- Tier 4 -->
-          <div class="star-pack-card vip" data-pack="pack_1000">
-            <div class="star-pack-badge vip">👑 VIP LEGEND</div>
-            <div class="star-pack-icon">🏆</div>
-            <div class="star-pack-coins">200,000 Coins</div>
-            <div class="star-pack-bonus">+100% Double Value</div>
-            <button class="btn-buy-stars vip-btn" data-pack="pack_1000" data-stars="1000" data-coins="200000">
-              <span class="star-sym">⭐</span> 1,000 XTR
-            </button>
+            <div class="upi-instructions">
+              <a id="btnPayUpiIntent" href="#" class="btn-upi-intent">
+                <i data-lucide="smartphone" class="lucide-sm"></i> Pay via PhonePe / GPay / Paytm
+              </a>
+
+              <div class="upi-id-copy-box">
+                <span class="upi-id-label">UPI ID:</span>
+                <span class="upi-id-text" id="displayUpiId">loading...</span>
+                <button id="btnCopyUpiId" class="btn-copy-upi" title="Copy UPI ID">📋</button>
+              </div>
+            </div>
+
+            <!-- UTR Input Form -->
+            <form id="formSubmitUtr" class="utr-form">
+              <label for="inputUtrRef">Submit 12-Digit UPI Ref / UTR No.:</label>
+              <div class="utr-input-row">
+                <input id="inputUtrRef" type="text" placeholder="e.g. 432109876543" maxlength="20" required />
+                <button type="submit" id="btnSubmitUtr" class="btn primary small">Verify</button>
+              </div>
+              <div class="utr-note">Coins credited within 2-5 minutes after admin verification.</div>
+            </form>
+          </div>
+        </div>
+
+        <!-- TAB 3: CRYPTO / BINANCE -->
+        <div id="tabContentCrypto" class="store-tab-content">
+          <div class="stars-shop-subtitle">
+            Pay with <strong>USDT, TON, or Bitcoin</strong> via Binance or Telegram CryptoBot.
+          </div>
+          <div class="crypto-pay-card">
+            <div class="crypto-icon-big">💎</div>
+            <h4>Instant Crypto Refill</h4>
+            <p>Send USDT (TRC20/BEP20) or Toncoin directly to receive instant chips credited to your wallet.</p>
+            <div class="crypto-cta-buttons">
+              <a href="https://t.me/patelkeshav876" target="_blank" class="btn primary full">
+                <i data-lucide="send" class="lucide-sm"></i> Contact Admin for Binance Pay / USDT
+              </a>
+            </div>
           </div>
         </div>
 

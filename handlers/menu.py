@@ -350,6 +350,35 @@ async def addgame_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     )
 
 
+async def setupi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Admin command to set or view the UPI ID for player deposits: /setupi <your_upi_id>."""
+    user = update.effective_user
+    if not user:
+        return
+    if ADMIN_USER_IDS and str(user.id) not in ADMIN_USER_IDS:
+        await update.message.reply_text("⛔ Admin only command.")
+        return
+
+    args = context.args or []
+    if not args:
+        current_upi = storage.get_setting("upi_id", "Not configured")
+        await update.message.reply_text(
+            f"🇮🇳 *Current UPI ID for Deposits:*\n`{current_upi}`\n\n"
+            f"To change it, run:\n`/setupi yourname@upi`",
+            parse_mode="Markdown",
+        )
+        return
+
+    new_upi = args[0].strip()
+    storage.set_setting("upi_id", new_upi)
+    await update.message.reply_text(
+        f"✅ *UPI ID Successfully Updated!*\n\n"
+        f"New receiving UPI ID: `{new_upi}`\n"
+        f"All Mini App UPI deposit QR codes will now receive payments at this address.",
+        parse_mode="Markdown",
+    )
+
+
 async def handle_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Route all inline keyboard callbacks."""
     query = update.callback_query
@@ -359,6 +388,59 @@ async def handle_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYP
 
     if data == "noop":
         await query.answer()
+        return
+
+    # Admin approval for UPI deposits
+    if data.startswith("dep_appr:") or data.startswith("dep_rejc:"):
+        if ADMIN_USER_IDS and str(user.id) not in ADMIN_USER_IDS:
+            await query.answer("⛔ Admin only action.", show_alert=True)
+            return
+        action, dep_id_str = data.split(":", 1)
+        dep_id = int(dep_id_str)
+        status = "approved" if action == "dep_appr" else "rejected"
+        res = storage.resolve_pending_deposit(dep_id, status=status, admin_id=str(user.id))
+        if not res:
+            await query.answer("Deposit not found.", show_alert=True)
+            return
+
+        if status == "approved":
+            await query.answer("✅ Deposit approved! Coins credited.", show_alert=True)
+            await query.edit_message_text(
+                f"✅ *UPI Deposit #{dep_id} APPROVED by @{user.username or user.first_name}*\n\n"
+                f"👤 Player: `{res['username']}`\n"
+                f"💰 Amount: `₹{res['amount']}`\n"
+                f"🪙 Credited: `+{res['coins_to_credit']:,} Coins`\n"
+                f"🔢 UTR: `{res['utr_ref']}`",
+                parse_mode="Markdown",
+            )
+            try:
+                await context.bot.send_message(
+                    chat_id=int(res["user_id"]),
+                    text=(
+                        f"🎉 *UPI Deposit Confirmed!*\n\n"
+                        f"₹{res['amount']} has been verified! `+{res['coins_to_credit']:,} Coins` have been credited to your Ghost Plays balance.\n\n"
+                        f"Launch the Mini App now to play Aviator!"
+                    ),
+                    parse_mode="Markdown",
+                )
+            except Exception:
+                pass
+        else:
+            await query.answer("❌ Deposit rejected.", show_alert=True)
+            await query.edit_message_text(
+                f"❌ *UPI Deposit #{dep_id} REJECTED by @{user.username or user.first_name}*\n\n"
+                f"👤 Player: `{res['username']}`\n"
+                f"🔢 UTR: `{res['utr_ref']}`",
+                parse_mode="Markdown",
+            )
+            try:
+                await context.bot.send_message(
+                    chat_id=int(res["user_id"]),
+                    text=f"⚠️ *UPI Deposit Notice*\nYour deposit request for UTR `{res['utr_ref']}` could not be verified.",
+                    parse_mode="Markdown",
+                )
+            except Exception:
+                pass
         return
 
     # Menu navigation

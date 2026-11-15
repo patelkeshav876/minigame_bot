@@ -176,6 +176,28 @@ class GameStorage:
                     pack_id TEXT NOT NULL DEFAULT '',
                     created_at REAL NOT NULL
                 );
+
+                CREATE TABLE IF NOT EXISTS app_settings (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL,
+                    updated_at REAL NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS pending_deposits (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id TEXT NOT NULL,
+                    username TEXT NOT NULL DEFAULT '',
+                    method TEXT NOT NULL DEFAULT 'upi',
+                    pack_id TEXT NOT NULL,
+                    amount REAL NOT NULL,
+                    currency TEXT NOT NULL DEFAULT 'INR',
+                    coins_to_credit INTEGER NOT NULL,
+                    utr_ref TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'pending',
+                    admin_id TEXT NOT NULL DEFAULT '',
+                    created_at REAL NOT NULL,
+                    updated_at REAL NOT NULL
+                );
                 """
             )
             cols = {
@@ -348,6 +370,90 @@ class GameStorage:
                 "new_coins": new_coins,
                 "created_at": now,
             }
+
+    def get_setting(self, key: str, default: str = "") -> str:
+        with self._lock, self._connect() as conn:
+            row = conn.execute("SELECT value FROM app_settings WHERE key = ?", (key,)).fetchone()
+            return str(row["value"]) if row else default
+
+    def set_setting(self, key: str, value: str) -> None:
+        now = time.time()
+        with self._lock, self._connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO app_settings (key, value, updated_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+                """,
+                (key, str(value), now),
+            )
+            conn.commit()
+
+    def create_pending_deposit(
+        self,
+        user_id: int | str,
+        username: str,
+        method: str,
+        pack_id: str,
+        amount: float,
+        currency: str,
+        coins_to_credit: int,
+        utr_ref: str,
+    ) -> int:
+        now = time.time()
+        with self._lock, self._connect() as conn:
+            cur = conn.execute(
+                """
+                INSERT INTO pending_deposits (
+                    user_id, username, method, pack_id, amount, currency, coins_to_credit, utr_ref, status, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+                """,
+                (str(user_id), username, method, pack_id, amount, currency, coins_to_credit, utr_ref.strip(), now, now),
+            )
+            conn.commit()
+            return int(cur.lastrowid)
+
+    def get_pending_deposit(self, deposit_id: int) -> dict[str, Any] | None:
+        with self._lock, self._connect() as conn:
+            row = conn.execute("SELECT * FROM pending_deposits WHERE id = ?", (deposit_id,)).fetchone()
+            return dict(row) if row else None
+
+    def list_pending_deposits(self, status: str = "pending", limit: int = 20) -> list[dict[str, Any]]:
+        with self._lock, self._connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM pending_deposits WHERE status = ? ORDER BY id DESC LIMIT ?",
+                (status, limit),
+            ).fetchall()
+            return [dict(r) for r in rows]
+
+    def resolve_pending_deposit(self, deposit_id: int, status: str, admin_id: str = "") -> dict[str, Any] | None:
+        now = time.time()
+        with self._lock, self._connect() as conn:
+            row = conn.execute("SELECT * FROM pending_deposits WHERE id = ?", (deposit_id,)).fetchone()
+            if not row:
+                return None
+            dep = dict(row)
+            if dep["status"] != "pending":
+                return dep
+
+            conn.execute(
+                "UPDATE pending_deposits SET status = ?, admin_id = ?, updated_at = ? WHERE id = ?",
+                (status, str(admin_id), now, deposit_id),
+            )
+            if status == "approved":
+                conn.execute(
+                    """
+                    INSERT INTO players (user_id, updated_at, coins)
+                    VALUES (?, ?, ?)
+                    ON CONFLICT(user_id) DO UPDATE SET
+                        coins = players.coins + ?,
+                        updated_at = ?
+                    """,
+                    (dep["user_id"], now, 1000 + dep["coins_to_credit"], dep["coins_to_credit"], now),
+                )
+            conn.commit()
+            updated_row = conn.execute("SELECT * FROM pending_deposits WHERE id = ?", (deposit_id,)).fetchone()
+            return dict(updated_row) if updated_row else None
 
     def get_game_elo(self, user_id: int | str, game_type: str) -> float:
         with self._lock, self._connect() as conn:

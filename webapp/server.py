@@ -63,10 +63,48 @@ class StarInvoiceRequest(BaseModel):
     guest_id: str = ""
 
 
-class ClaimMockCoinsRequest(BaseModel):
-    user_id: str
-    coins: int = 1000
-    secret: str = ""
+class UpiDepositRequest(BaseModel):
+    pack_id: str
+    utr_ref: str
+    init_data: str = ""
+    guest_id: str = ""
+    guest_name: str = "Player"
+
+
+INR_PACKS = {
+    "pack_inr_49": {
+        "id": "pack_inr_49",
+        "title": "Starter Stash",
+        "price_inr": 49,
+        "coins": 5000,
+        "badge": "STARTER",
+        "icon": "🪙",
+    },
+    "pack_inr_99": {
+        "id": "pack_inr_99",
+        "title": "Pro Pilot Booster",
+        "price_inr": 99,
+        "coins": 18000,
+        "badge": "MOST POPULAR",
+        "icon": "🔥",
+    },
+    "pack_inr_299": {
+        "id": "pack_inr_299",
+        "title": "High Roller Vault",
+        "price_inr": 299,
+        "coins": 75000,
+        "badge": "HIGH ROLLER",
+        "icon": "💎",
+    },
+    "pack_inr_599": {
+        "id": "pack_inr_599",
+        "title": "VIP Legend Treasury",
+        "price_inr": 599,
+        "coins": 200000,
+        "badge": "VIP LEGEND",
+        "icon": "👑",
+    },
+}
 
 
 STAR_PACKS = {
@@ -241,6 +279,76 @@ async def get_room(room_id: str) -> dict[str, Any]:
 @app.get("/api/stars/packs")
 async def get_star_packs() -> dict[str, Any]:
     return {"packs": list(STAR_PACKS.values())}
+
+
+@app.get("/api/shop/config")
+async def get_shop_config() -> dict[str, Any]:
+    configured_upi = storage.get_setting("upi_id", "patelkeshav@upi")
+    return {
+        "star_packs": list(STAR_PACKS.values()),
+        "inr_packs": list(INR_PACKS.values()),
+        "upi_id": configured_upi,
+        "upi_name": "Ghost Plays Arena",
+        "crypto_contact": "@patelkeshav876",
+    }
+
+
+@app.post("/api/shop/submit-upi-deposit")
+async def submit_upi_deposit(req: UpiDepositRequest) -> dict[str, Any]:
+    pack = INR_PACKS.get(req.pack_id)
+    if not pack:
+        raise HTTPException(status_code=400, detail="Invalid pack selected")
+
+    utr = req.utr_ref.strip()
+    if len(utr) < 6:
+        raise HTTPException(status_code=400, detail="Please enter a valid 12-digit UPI Reference / UTR Number")
+
+    user_info = _resolve_user(req.init_data, req.guest_id, req.guest_name)
+    user_id = str(user_info["profile"]["user_id"])
+    username = user_info["profile"].get("username") or user_info["profile"].get("display_name") or "Player"
+
+    dep_id = storage.create_pending_deposit(
+        user_id=user_id,
+        username=username,
+        method="upi",
+        pack_id=pack["id"],
+        amount=float(pack["price_inr"]),
+        currency="INR",
+        coins_to_credit=pack["coins"],
+        utr_ref=utr,
+    )
+
+    if BOT_TOKEN and ADMIN_USER_IDS:
+        try:
+            from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
+            bot = Bot(token=BOT_TOKEN)
+            text = (
+                f"🔔 *New UPI Deposit Request!* (Deposit #{dep_id})\n\n"
+                f"👤 *Player:* `{username}` (`ID: {user_id}`)\n"
+                f"💰 *Amount:* `₹{pack['price_inr']}`\n"
+                f"🪙 *Coins to Credit:* `+{pack['coins']:,} Coins`\n"
+                f"🔢 *UTR / Ref ID:* `{utr}`\n\n"
+                f"Check your PhonePe / GPay app to verify ₹{pack['price_inr']} received."
+            )
+            markup = InlineKeyboardMarkup([
+                [
+                    InlineKeyboardButton("✅ Approve", callback_data=f"dep_appr:{dep_id}"),
+                    InlineKeyboardButton("❌ Reject", callback_data=f"dep_rejc:{dep_id}"),
+                ]
+            ])
+            for admin_id in ADMIN_USER_IDS:
+                try:
+                    await bot.send_message(chat_id=int(admin_id), text=text, reply_markup=markup, parse_mode="Markdown")
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+    return {
+        "status": "pending",
+        "deposit_id": dep_id,
+        "message": "Deposit submitted! Admin will verify and credit your coins shortly.",
+    }
 
 
 @app.post("/api/stars/create-invoice")
