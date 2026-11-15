@@ -559,10 +559,18 @@
 
   function selectGame(game) {
     state.selectedGame = game;
-    document.querySelectorAll(".game-pill").forEach((b) => {
+    document.querySelectorAll(".arena-mode-card, .game-pill").forEach((b) => {
       b.classList.toggle("selected", b.dataset.game === game);
     });
   }
+
+  // Bind arena mode selection cards
+  document.querySelectorAll(".arena-mode-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      selectGame(card.dataset.game);
+      haptic("medium");
+    });
+  });
 
   // Navigation
   navItems.forEach((item) => {

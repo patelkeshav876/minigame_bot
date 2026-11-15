@@ -33,6 +33,7 @@ from handlers.menu import (
     setchannel_command,
     setupi_command,
     shop_command,
+    twoplayer_command,
 )
 
 logging.basicConfig(
@@ -50,6 +51,8 @@ def build_bot_application() -> Application:
     app.add_handler(CommandHandler("play", play_command))
     app.add_handler(CommandHandler("leaderboard", leaderboard_command))
     app.add_handler(CommandHandler("arena", arena_command))
+    app.add_handler(CommandHandler("twoplayer", twoplayer_command))
+    app.add_handler(CommandHandler("2player", twoplayer_command))
     app.add_handler(CommandHandler("aviator", aviator_command))
     app.add_handler(CommandHandler("flipster", flipster_command))
     app.add_handler(CommandHandler("shop", shop_command))

@@ -66,24 +66,28 @@ def _single_menu_markup() -> InlineKeyboardMarkup:
     )
 
 
-def _two_menu_markup() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        [
-            [
-                InlineKeyboardButton("♟️ Chess", callback_data="start2p:chess"),
-                InlineKeyboardButton("🔴 Connect 4", callback_data="start2p:connect4"),
-            ],
-            [
-                InlineKeyboardButton("❌ Tic-Tac-Toe ⭕", callback_data="start2p:tictactoe"),
-                InlineKeyboardButton("🟦 Dots & Boxes 🟥", callback_data="start2p:dots"),
-            ],
-            [
-                InlineKeyboardButton("✂️ Rock Paper Scissors", callback_data="start2p:rps"),
-            ],
-            [InlineKeyboardButton("💬 Invite via Inline Mode", switch_inline_query="")],
-            [InlineKeyboardButton("⬅️ Main Menu", callback_data="menu:main")],
-        ]
-    )
+def _two_menu_markup(is_private_chat: bool = True) -> InlineKeyboardMarkup:
+    rows = []
+    if WEBAPP_URL and is_private_chat:
+        rows.append([
+            InlineKeyboardButton("🚀 Launch 2P Battle Arena (Mini App)", web_app=WebAppInfo(url=f"{WEBAPP_URL}?tab=battle"))
+        ])
+    rows.append([
+        InlineKeyboardButton("♟️ Grandmaster Chess", callback_data="start2p:chess"),
+        InlineKeyboardButton("🔴 Connect 4 Royale", callback_data="start2p:connect4"),
+    ])
+    rows.append([
+        InlineKeyboardButton("❌ XO Blitz Arena", callback_data="start2p:tictactoe"),
+        InlineKeyboardButton("🟦 Dots & Boxes", callback_data="start2p:dots"),
+    ])
+    rows.append([
+        InlineKeyboardButton("✂️ Rock Paper Scissors", callback_data="start2p:rps"),
+    ])
+    rows.append([
+        InlineKeyboardButton("⚔️ Challenge Friend in Chat", switch_inline_query="challenge"),
+    ])
+    rows.append([InlineKeyboardButton("⬅️ Main Menu", callback_data="menu:main")])
+    return InlineKeyboardMarkup(rows)
 
 
 def _format_leaderboard() -> str:
@@ -347,6 +351,34 @@ async def arena_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             )
         )
         await update.message.reply_text(msg, parse_mode="Markdown")
+
+
+async def twoplayer_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Send 2-player showcase card with banner graphic and game modes."""
+    banner = Path(__file__).resolve().parent.parent / "webapp" / "static" / "banners" / "two_player_showdown.png"
+    caption = (
+        "⚔️ *2-PLAYER HEAD-TO-HEAD BATTLE ARENA*\n\n"
+        "Challenge friends or rivals to competitive 1v1 duels with Ranked ELO ratings!\n\n"
+        "♟️ *Grandmaster Chess* — Full 8x8 Board & 3m Clock\n"
+        "🔴 *Connect 4 Royale* — Drop Discs & Connect 4\n"
+        "❌ *XO Blitz Arena* — 5-Second Rapid Turns\n"
+        "⚫ *Othello Reversi* — Outflank & Capture Grid\n"
+        "🟦 *Dots & Boxes* — Draw Borders & Claim Cells\n"
+        "✂️ *Rock Paper Scissors* — Secret Simultaneous Plays\n\n"
+        "👇 *Choose a game below to play in-chat or launch the Mini App Arena:*"
+    )
+    is_private = bool(update.effective_chat and update.effective_chat.type == "private")
+    markup = _two_menu_markup(is_private)
+
+    if update.message:
+        if banner.exists():
+            try:
+                with open(banner, "rb") as photo:
+                    await update.message.reply_photo(photo=photo, caption=caption, reply_markup=markup, parse_mode="Markdown")
+                    return
+            except Exception:
+                pass
+        await update.message.reply_text(caption, reply_markup=markup, parse_mode="Markdown")
 
 
 async def shop_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -633,13 +665,23 @@ async def handle_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYP
                 parse_mode="Markdown",
             )
         elif section == "two":
-            await safe_edit_message(
-                query,
-                "👥 *Two Player Games (In-Chat)*\n"
-                "Start a board here, or use *Inline Mode* to challenge someone in any chat:",
-                _two_menu_markup(),
-                parse_mode="Markdown",
+            banner = Path(__file__).resolve().parent.parent / "webapp" / "static" / "banners" / "two_player_showdown.png"
+            caption = (
+                "⚔️ *2-PLAYER HEAD-TO-HEAD BATTLE ARENA*\n\n"
+                "Challenge friends or rivals to competitive 1v1 duels with Ranked ELO ratings!\n\n"
+                "♟️ *Grandmaster Chess* — Full 8x8 Board & 3m Clock\n"
+                "🔴 *Connect 4 Royale* — Drop Discs & Connect 4\n"
+                "❌ *XO Blitz Arena* — 5-Second Rapid Turns\n"
+                "⚫ *Othello Reversi* — Outflank & Capture Grid\n"
+                "🟦 *Dots & Boxes* — Draw Borders & Claim Cells\n"
+                "✂️ *Rock Paper Scissors* — Secret Simultaneous Plays\n\n"
+                "👇 *Choose a game below to play in-chat or launch the Mini App Arena:*"
             )
+            markup = _two_menu_markup(is_private)
+            try:
+                await query.edit_message_caption(caption=caption, reply_markup=markup, parse_mode="Markdown")
+            except Exception:
+                await safe_edit_message(query, caption, markup, parse_mode="Markdown")
         elif section == "leaderboard":
             await safe_edit_message(
                 query,

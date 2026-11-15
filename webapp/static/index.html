@@ -298,13 +298,77 @@
     <section id="view-battle" class="view">
       <div class="card">
         <div class="card-head">
-          <h2>Select Arena Mode</h2>
+          <div>
+            <span class="comm-badge" style="margin-bottom: 4px; display:inline-block;">⚔️ 1v1 REAL-TIME ARENA</span>
+            <h2>Choose Your Battle Game</h2>
+          </div>
+          <span class="arena-head-pill">RANKED ELO</span>
         </div>
-        <div class="game-pills" id="gameSelector">
-          <button class="game-pill selected" data-game="chess">♟️ Chess</button>
-          <button class="game-pill" data-game="othello">⚫ Othello</button>
-          <button class="game-pill" data-game="connect4">🔴 Connect 4</button>
-          <button class="game-pill" data-game="tictactoe">❌ XO Blitz</button>
+        
+        <div class="arena-game-cards-grid" id="gameSelector">
+          <!-- 1. Chess -->
+          <div class="arena-mode-card selected" data-game="chess">
+            <div class="arena-card-thumb-wrap">
+              <img src="/static/thumbnails/chess_thumb.png" alt="Grandmaster Chess" class="arena-card-thumb" />
+              <span class="arena-card-tag tag-purple">♟️ 8x8 BOARD</span>
+              <span class="arena-card-timer">⏱️ 3 MIN</span>
+            </div>
+            <div class="arena-card-content">
+              <div class="arena-card-title-row">
+                <span class="arena-card-name">Grandmaster Chess</span>
+                <span class="arena-check-indicator">✓</span>
+              </div>
+              <div class="arena-card-meta">Full 8x8 tactical chess with piece validation & ELO</div>
+            </div>
+          </div>
+
+          <!-- 2. Connect 4 -->
+          <div class="arena-mode-card" data-game="connect4">
+            <div class="arena-card-thumb-wrap">
+              <img src="/static/thumbnails/connect4_thumb.png" alt="Connect 4" class="arena-card-thumb" />
+              <span class="arena-card-tag tag-red">🔴 4-IN-A-ROW</span>
+              <span class="arena-card-timer">⏱️ 30s MOVE</span>
+            </div>
+            <div class="arena-card-content">
+              <div class="arena-card-title-row">
+                <span class="arena-card-name">Connect 4 Royale</span>
+                <span class="arena-check-indicator">✓</span>
+              </div>
+              <div class="arena-card-meta">Drop glowing discs and connect 4 horizontally or diagonally</div>
+            </div>
+          </div>
+
+          <!-- 3. XO Blitz -->
+          <div class="arena-mode-card" data-game="tictactoe">
+            <div class="arena-card-thumb-wrap">
+              <img src="/static/thumbnails/xo_thumb.png" alt="XO Blitz" class="arena-card-thumb" />
+              <span class="arena-card-tag tag-cyan">⚡ 5s BLITZ</span>
+              <span class="arena-card-timer">🔥 FAST</span>
+            </div>
+            <div class="arena-card-content">
+              <div class="arena-card-title-row">
+                <span class="arena-card-name">XO Blitz Arena</span>
+                <span class="arena-check-indicator">✓</span>
+              </div>
+              <div class="arena-card-meta">Ultra-fast 3x3 tactical duels with live timeout forfeits</div>
+            </div>
+          </div>
+
+          <!-- 4. Othello Reversi -->
+          <div class="arena-mode-card" data-game="othello">
+            <div class="arena-card-thumb-wrap">
+              <img src="/static/thumbnails/othello_thumb.png" alt="Othello" class="arena-card-thumb" />
+              <span class="arena-card-tag tag-green">⚫ FLIP BOARD</span>
+              <span class="arena-card-timer">⏱️ 60s MOVE</span>
+            </div>
+            <div class="arena-card-content">
+              <div class="arena-card-title-row">
+                <span class="arena-card-name">Othello Reversi</span>
+                <span class="arena-check-indicator">✓</span>
+              </div>
+              <div class="arena-card-meta">Outflank opposing discs, trap the corners, and dominate</div>
+            </div>
+          </div>
         </div>
 
         <div class="battle-actions">

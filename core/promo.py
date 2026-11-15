@@ -43,6 +43,36 @@ PROMO_GAMES: dict[str, dict[str, Any]] = {
         "button_label": "🦖 Play Cyber Dino",
         "challenge_tag": "dino",
     },
+    "chess": {
+        "title": "♟️ GRANDMASTER CHESS",
+        "badge": "⚔️ RANKED 1v1 STRATEGY",
+        "headline": "Outthink Rivals on the 8x8 Battlefield!",
+        "description": (
+            "Classic chess with full legal move validation, en passant, and castling!\n"
+            "Play with live 3-minute timers and climb the ELO Grandmaster ladder.\n\n"
+            "Who has the sharper tactical vision? Challenge a friend now!"
+        ),
+        "reward": "🏆 Win ranked duels to reach Grandmaster (1600+ ELO)!",
+        "banner_filename": "chess_promo.png",
+        "game_id": "chess",
+        "button_label": "♟️ Play Grandmaster Chess",
+        "challenge_tag": "chess",
+    },
+    "connect4": {
+        "title": "🔴 CONNECT 4 ROYALE",
+        "badge": "🎯 TACTICAL DISC DROPS",
+        "headline": "Line Up 4 Discs Before Your Opponent!",
+        "description": (
+            "The beloved head-to-head vertical grid strategy!\n"
+            "Anticipate your opponent's moves, set up dual traps, and connect 4.\n\n"
+            "One slip-up allows your opponent to drop the winning piece!"
+        ),
+        "reward": "🪙 3-Win Streak grants 3,000 Bonus Coins!",
+        "banner_filename": "connect4_promo.png",
+        "game_id": "connect4",
+        "button_label": "🔴 Play Connect 4",
+        "challenge_tag": "connect4",
+    },
     "tetris": {
         "title": "🧩 RETRO TETRIS BLOCKS",
         "badge": "🏆 TOURNAMENT LIVE",
