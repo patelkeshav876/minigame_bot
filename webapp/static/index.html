@@ -369,6 +369,38 @@
               <div class="arena-card-meta">Outflank opposing discs, trap the corners, and dominate</div>
             </div>
           </div>
+
+          <!-- 5. Knife Master 3D (MPL Style) -->
+          <div class="arena-mode-card" data-game="knife_hit">
+            <div class="arena-card-thumb-wrap">
+              <img src="/static/thumbnails/knife_thumb.png" alt="Knife Master" class="arena-card-thumb" />
+              <span class="arena-card-tag tag-red">🗡️ 15+ LEVELS</span>
+              <span class="arena-card-timer">⏱️ 3 MIN</span>
+            </div>
+            <div class="arena-card-content">
+              <div class="arena-card-title-row">
+                <span class="arena-card-name">Knife Master 3D</span>
+                <span class="arena-check-indicator">✓</span>
+              </div>
+              <div class="arena-card-meta">MPL tournament speed run • Target bosses • 3m round</div>
+            </div>
+          </div>
+
+          <!-- 6. Fruit Slice Blade (MPL Style) -->
+          <div class="arena-mode-card" data-game="fruit_slice">
+            <div class="arena-card-thumb-wrap">
+              <img src="/static/thumbnails/fruit_thumb.png" alt="Fruit Slice" class="arena-card-thumb" />
+              <span class="arena-card-tag tag-green">🍉 3 LIVES</span>
+              <span class="arena-card-timer">⏱️ 3 MIN</span>
+            </div>
+            <div class="arena-card-content">
+              <div class="arena-card-title-row">
+                <span class="arena-card-name">Fruit Slice Blade</span>
+                <span class="arena-check-indicator">✓</span>
+              </div>
+              <div class="arena-card-meta">MPL style 3-min blitz • Combos • Avoid deadly bombs</div>
+            </div>
+          </div>
         </div>
 
         <div class="battle-actions">
@@ -549,6 +581,8 @@
           <button class="filter-pill" data-game="othello">Othello</button>
           <button class="filter-pill" data-game="connect4">Connect 4</button>
           <button class="filter-pill" data-game="tictactoe">Tic-Tac-Toe</button>
+          <button class="filter-pill" data-game="knife_hit">Knife Hit</button>
+          <button class="filter-pill" data-game="fruit_slice">Fruit Slice</button>
         </div>
         <div id="leaderboardList" class="lb-list">Loading rankings...</div>
       </div>
@@ -651,6 +685,17 @@
     <section id="view-player" class="view fullscreen-player">
       <button id="btnCloseGamePlayer" class="player-floating-close" title="Exit to Home">✕</button>
       <div id="gamePlayerTitle" class="game-player-watermark">Ghost Plays</div>
+
+      <!-- Pre-Game Start Overlay Modal -->
+      <div id="playerStartOverlay" class="player-start-overlay">
+        <div class="player-start-box">
+          <div id="psoIcon" class="pso-icon">🎮</div>
+          <h2 id="psoTitle" class="pso-title">Ready to Play?</h2>
+          <p id="psoSubtitle" class="pso-sub">Compete for tournament high scores, earn coins & climb global ranks!</p>
+          <button id="btnPsoStart" class="btn primary full pso-btn">▶ START GAME</button>
+        </div>
+      </div>
+
       <iframe id="customGameIframe" src="" allowfullscreen allow="autoplay; fullscreen; gamepad"></iframe>
     </section>
 

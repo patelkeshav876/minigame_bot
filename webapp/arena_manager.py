@@ -19,12 +19,14 @@ from webapp.ai import (
     pick_tictactoe_move,
 )
 
-VALID_GAMES = {"chess", "othello", "connect4", "tictactoe"}
+VALID_GAMES = {"chess", "othello", "connect4", "tictactoe", "knife_hit", "fruit_slice"}
 INITIAL_CLOCKS = {
-    "chess": 180.0,      # 3:00 blitz
-    "othello": 120.0,    # 2:00 blitz
-    "connect4": 90.0,    # 1:30 bank
-    "tictactoe": 45.0,   # 0:45 speed blitz
+    "chess": 180.0,        # 3:00 blitz
+    "othello": 120.0,      # 2:00 blitz
+    "connect4": 90.0,      # 1:30 bank
+    "tictactoe": 45.0,     # 0:45 speed blitz
+    "knife_hit": 180.0,    # 3:00 tournament round
+    "fruit_slice": 180.0,  # 3:00 tournament round
 }
 OTHELLO_DIRS = [
     (-1, -1), (-1, 0), (-1, 1),
@@ -135,6 +137,12 @@ class ArenaManager:
             return {"board": _init_othello_board(), "last_move": None}, "B"
         if game_type == "connect4":
             return {"board": [["" for _ in range(7)] for _ in range(6)], "last_col": None}, "R"
+        if game_type in ("knife_hit", "fruit_slice"):
+            return {
+                "p1_score": 0, "p2_score": 0,
+                "p1_level": 1, "p2_level": 1,
+                "p1_status": "playing", "p2_status": "playing"
+            }, "P1"
         return {"board": [""] * 9}, "X"
 
     def _roles_for(self, game_type: str) -> tuple[str, str]:
@@ -144,6 +152,8 @@ class ArenaManager:
             return ("B", "W")
         if game_type == "connect4":
             return ("R", "Y")
+        if game_type in ("knife_hit", "fruit_slice"):
+            return ("P1", "P2")
         return ("X", "O")
 
     async def create_or_join_room(
@@ -366,6 +376,17 @@ class ArenaManager:
         elapsed = now - room.last_tick
         room.last_tick = now
 
+        if room.game_type in ("knife_hit", "fruit_slice"):
+            for p in room.players:
+                p.clock = max(0.0, p.clock - elapsed)
+            if room.players[0].clock <= 0.0:
+                p1_s = room.state.get("p1_score", 0)
+                p2_s = room.state.get("p2_score", 0)
+                winner = "P1" if p1_s > p2_s else ("P2" if p2_s > p1_s else "Draw")
+                self._finish_room(room, winner, f"Time Expired! Score: {p1_s} vs {p2_s}")
+                return True
+            return False
+
         for p in room.players:
             if p.role == room.turn_role:
                 if p.is_ai:
@@ -450,6 +471,29 @@ class ArenaManager:
             elif msg_type == "move" and room.status == "active":
                 if not self._update_clock(room):
                     self._apply_move(room, user_id, data)
+            elif msg_type == "score_update" and room.status == "active" and room.game_type in ("knife_hit", "fruit_slice"):
+                player = next((p for p in room.players if p.user_id == user_id), None)
+                if player:
+                    p_prefix = "p1" if player.role == "P1" else "p2"
+                    room.state[f"{p_prefix}_score"] = int(data.get("score", 0))
+                    room.state[f"{p_prefix}_level"] = int(data.get("level", data.get("stage", 1)))
+                    if "lives" in data:
+                        room.state[f"{p_prefix}_lives"] = int(data.get("lives", 3))
+                    if data.get("status") == "game_over":
+                        room.state[f"{p_prefix}_status"] = "game_over"
+
+                    # If playing against AI, make AI gain score proportionally
+                    if room.vs_ai:
+                        p2_curr = room.state.get("p2_score", 0)
+                        room.state["p2_score"] = p2_curr + 12
+                        if p2_curr > room.state.get("p2_level", 1) * 120:
+                            room.state["p2_level"] = room.state.get("p2_level", 1) + 1
+
+                    if room.state.get("p1_status") == "game_over" and (room.vs_ai or room.state.get("p2_status") == "game_over"):
+                        p1_s = room.state.get("p1_score", 0)
+                        p2_s = room.state.get("p2_score", 0)
+                        winner = "P1" if p1_s > p2_s else ("P2" if p2_s > p1_s else "Draw")
+                        self._finish_room(room, winner, f"Match Completed! Final Score: {p1_s} vs {p2_s}")
 
             if room.vs_ai and room.status == "active":
                 ai_player = next((p for p in room.players if p.is_ai), None)

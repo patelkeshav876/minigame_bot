@@ -413,12 +413,63 @@
     document.getElementById("btnRematch").classList.toggle("hidden", isSpectator || room.status !== "finished");
 
     const container = document.getElementById("boardContainer");
-    container.innerHTML = "";
+    if (room.game_type !== "knife_hit" && room.game_type !== "fruit_slice") {
+      container.innerHTML = "";
+    }
 
     if (room.game_type === "chess") renderChessBoard(container, room, selfP, myTurn);
     else if (room.game_type === "othello") renderOthelloBoard(container, room, myTurn);
     else if (room.game_type === "connect4") renderConnect4Board(container, room, myTurn);
+    else if (room.game_type === "knife_hit" || room.game_type === "fruit_slice") renderArcadeArenaGame(container, room, selfP);
     else renderTicTacToeBoard(container, room, myTurn);
+  }
+
+  function renderArcadeArenaGame(container, room, selfP) {
+    const oppP = room.players.find(p => p.user_id !== selfP?.user_id) || { name: "Rival", elo: 1200 };
+    const isP1 = selfP?.role === "P1";
+    const myScore = isP1 ? (room.state.p1_score || 0) : (room.state.p2_score || 0);
+    const oppScore = isP1 ? (room.state.p2_score || 0) : (room.state.p1_score || 0);
+    const myLvl = isP1 ? (room.state.p1_level || 1) : (room.state.p2_level || 1);
+    const oppLvl = isP1 ? (room.state.p2_level || 1) : (room.state.p1_level || 1);
+
+    const existingIframe = document.getElementById("arenaGameIframe");
+    if (existingIframe && existingIframe.dataset.gameType === room.game_type) {
+      const myScoreEl = document.getElementById("arenaMyScore");
+      const oppScoreEl = document.getElementById("arenaOppScore");
+      if (myScoreEl) myScoreEl.textContent = `${myScore} pts (Lvl ${myLvl})`;
+      if (oppScoreEl) oppScoreEl.textContent = `${oppScore} pts (Lvl ${oppLvl})`;
+      if (existingIframe.contentWindow) {
+        existingIframe.contentWindow.postMessage({
+          type: "opp_score_update",
+          score: oppScore,
+          level: oppLvl,
+        }, "*");
+      }
+      return;
+    }
+
+    container.innerHTML = "";
+    const gamePath = room.game_type === "knife_hit" ? "/static/games/knife_hit/index.html" : "/static/games/fruit_slice/index.html";
+    const iframeSrc = `${gamePath}?mode=arena&opp=${encodeURIComponent(oppP.name || "Rival")}`;
+
+    const wrap = document.createElement("div");
+    wrap.className = "arcade-arena-wrapper";
+    wrap.innerHTML = `
+      <div class="arcade-arena-header">
+        <div class="aah-player my-score">
+          <span class="aah-label">YOU (${selfP?.name || "Player"})</span>
+          <span class="aah-val" id="arenaMyScore">${myScore} pts (Lvl ${myLvl})</span>
+        </div>
+        <div class="aah-vs">⚡ 1v1 LIVE ⚡</div>
+        <div class="aah-player opp-score">
+          <span class="aah-label">${oppP.name || "Rival"}</span>
+          <span class="aah-val" id="arenaOppScore">${oppScore} pts (Lvl ${oppLvl})</span>
+        </div>
+      </div>
+      <iframe id="arenaGameIframe" src="${iframeSrc}" data-game-type="${room.game_type}" class="arcade-arena-iframe" allow="autoplay"></iframe>
+    `;
+
+    container.appendChild(wrap);
   }
 
   function renderChessBoard(container, room, selfP, myTurn) {
@@ -846,12 +897,75 @@
     showView("home");
   }
 
+  function playStartChime() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      const ctx = new AC();
+      const t = ctx.currentTime;
+      [523.25, 659.25, 783.99].forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, t + idx * 0.08);
+        g.gain.setValueAtTime(0.2, t + idx * 0.08);
+        g.gain.linearRampToValueAtTime(0.01, t + idx * 0.08 + 0.14);
+        osc.connect(g);
+        g.connect(ctx.destination);
+        osc.start(t + idx * 0.08);
+        osc.stop(t + idx * 0.08 + 0.14);
+      });
+    } catch (_) {}
+  }
+
+  function playGameOverDefeatSound() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      const ctx = new AC();
+      const t = ctx.currentTime;
+      [349.23, 311.13, 261.63, 196.0].forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(freq, t + idx * 0.12);
+        g.gain.setValueAtTime(0.3, t + idx * 0.12);
+        g.gain.linearRampToValueAtTime(0.01, t + idx * 0.12 + 0.22);
+        osc.connect(g);
+        g.connect(ctx.destination);
+        osc.start(t + idx * 0.12);
+        osc.stop(t + idx * 0.12 + 0.22);
+      });
+    } catch (_) {}
+  }
+
   function launchWebGame(title, url, icon = "🎮") {
     state.currentGameUrl = url;
     const titleEl = document.getElementById("gamePlayerTitle");
     if (titleEl) titleEl.textContent = `${title}`;
     const iframe = document.getElementById("customGameIframe");
     if (iframe) iframe.src = url;
+
+    // Show Pre-Game Start Modal Pop-Up
+    const pso = document.getElementById("playerStartOverlay");
+    const psoIcon = document.getElementById("psoIcon");
+    const psoTitle = document.getElementById("psoTitle");
+    const psoSub = document.getElementById("psoSubtitle");
+    if (pso) {
+      if (psoIcon) psoIcon.textContent = icon || "🎮";
+      if (psoTitle) psoTitle.textContent = title;
+      if (psoSub) {
+        if (title.toLowerCase().includes("fruit")) {
+          psoSub.textContent = "⏱️ 3:00 Mins • Slice Fruits & Combos • 3 Lives • AVOID BOMBS!";
+        } else if (title.toLowerCase().includes("knife")) {
+          psoSub.textContent = "⏱️ 3:00 Mins • Hit rotating target • Don't clash blades • 15+ Levels!";
+        } else {
+          psoSub.textContent = "Compete for tournament high scores, earn coins & climb global ranks!";
+        }
+      }
+      pso.classList.remove("hidden");
+    }
+
     state.prevView = "home";
     showView("player");
     try {
@@ -865,6 +979,14 @@
       }
     } catch (_) {}
   }
+
+  // Pre-game Start Button click
+  document.getElementById("btnPsoStart")?.addEventListener("click", () => {
+    haptic("medium");
+    playStartChime();
+    const pso = document.getElementById("playerStartOverlay");
+    if (pso) pso.classList.add("hidden");
+  });
 
   // Hero Sliding Window Carousel Control
   let heroCurrentSlide = 0;
@@ -1282,10 +1404,34 @@
     }
   });
 
-  // Listen for iframe child game messages (e.g. from Aviator)
+  // Listen for iframe child game messages (e.g. from Aviator, Fruit Slice, Knife Hit)
   window.addEventListener("message", (event) => {
-    if (event.data && event.data.type === "OPEN_STARS_SHOP") {
+    const data = event.data;
+    if (!data) return;
+
+    if (data.type === "OPEN_STARS_SHOP") {
       openStarsShop();
+    }
+
+    // Game over sound and heavy haptic feedback
+    if (
+      data.type === "fruit_slice_game_over" ||
+      data.type === "knife_hit_game_over" ||
+      data.type === "game_over"
+    ) {
+      haptic("heavy");
+      playGameOverDefeatSound();
+    }
+
+    // Multiplayer Arena live score bridging
+    if (data.type === "arena_live_score" && state.ws && state.ws.readyState === WebSocket.OPEN) {
+      state.ws.send(JSON.stringify({
+        type: "score_update",
+        score: data.score,
+        level: data.level || data.stage || 1,
+        lives: data.lives,
+        status: data.status,
+      }));
     }
   });
 

@@ -35,24 +35,28 @@ async def handle_inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE
     results: list[InlineQueryResultArticle] = []
     bot_user = BOT_USERNAME or (context.bot.username or "")
 
+    thumb_base = f"{WEBAPP_URL}/static/thumbnails" if WEBAPP_URL else None
+    banner_base = f"{WEBAPP_URL}/static/banners" if WEBAPP_URL else None
+
     # Gamee-style Challenge Cards (e.g. @bot challenge aviator)
-    if "challenge" in filter_text or any(k in filter_text for k in ["aviator", "dino", "tetris", "space", "knife", "2048"]):
+    if "challenge" in filter_text or any(k in filter_text for k in ["aviator", "dino", "tetris", "space", "knife", "fruit", "2048"]):
         target_game = "aviator"
-        for k in ["aviator", "dino", "tetris", "space_invaders", "knife", "xo", "2048"]:
+        for k in ["aviator", "dino", "tetris", "space_invaders", "knife", "fruit", "xo", "2048"]:
             if k in filter_text:
                 target_game = k
                 break
 
         game_meta = {
-            "aviator": ("🚀 Aviator Rocket Duel", "Multiply coins up to 100x — cash out before the crash!"),
-            "dino": ("🦖 Cyber Dino 60FPS", "Endless neon runner — beat my high score!"),
-            "tetris": ("🧩 Retro Tetris Battle", "Clear lines, make combos, score higher!"),
-            "space_invaders": ("👾 Galaxy Defender", "Defend Sector 7 from alien armadas!"),
-            "knife": ("🗡️ Knife Master 3D", "Hit the spinning log, avoid blades!"),
-            "xo": ("❌ XO Blitz Arena", "Quick 3x3 duel with ranked ELO!"),
-            "2048": ("🔢 2048 Neon Merge", "Merge tiles to 2048 — test your brain!"),
+            "aviator": ("🚀 Aviator Rocket Duel", "Multiply coins up to 100x — cash out before the crash!", "aviator_promo.png"),
+            "dino": ("🦖 Cyber Dino 60FPS", "Endless neon runner — beat my high score!", "dino_promo.png"),
+            "tetris": ("🧩 Retro Tetris Battle", "Clear lines, make combos, score higher!", "tetris_promo.png"),
+            "space_invaders": ("👾 Galaxy Defender", "Defend Sector 7 from alien armadas!", "space_promo.png"),
+            "knife": ("🗡️ Knife Master 3D", "Hit the spinning log, avoid blades • 15+ Levels!", "knife_thumb.png"),
+            "fruit": ("🍉 Fruit Slice Blade", "3-min tournament chop • combos & avoid bombs!", "fruit_thumb.png"),
+            "xo": ("❌ XO Blitz Arena", "Quick 3x3 duel with ranked ELO!", "xo_thumb.png"),
+            "2048": ("🔢 2048 Neon Merge", "Merge tiles to 2048 — test your brain!", "puzzle2048_promo.png"),
         }
-        g_name, g_desc = game_meta.get(target_game, game_meta["aviator"])
+        g_name, g_desc, g_img = game_meta.get(target_game, game_meta["aviator"])
         direct_link = (
             f"https://t.me/{bot_user}?startapp=game_{target_game}"
             if bot_user
@@ -64,11 +68,16 @@ async def handle_inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE
             btn_row.append(InlineKeyboardButton(f"🚀 Play {g_name.split()[1]}", url=direct_link))
         btn_row.append(InlineKeyboardButton("⚔️ Challenge Back", switch_inline_query=f"challenge {target_game}"))
 
+        chal_thumb = f"{banner_base}/{g_img}" if banner_base and "promo" in g_img else (f"{thumb_base}/{g_img}" if thumb_base else None)
+
         results.append(
             InlineQueryResultArticle(
                 id=f"chal_{uuid4().hex[:8]}",
                 title=f"⚔️ Challenge: {g_name}",
                 description=g_desc,
+                thumbnail_url=chal_thumb,
+                thumbnail_width=120,
+                thumbnail_height=120,
                 input_message_content=InputTextMessageContent(
                     f"⚔️ *GAME CHALLENGE!*\n\n"
                     f"👤 *{uname}* challenges you to a showdown in *{g_name}*!\n\n"
@@ -90,6 +99,9 @@ async def handle_inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE
                 id=f"ch_{uuid4().hex[:8]}",
                 title="♟️ Chess (2 Players)",
                 description="Full 8x8 interactive Chess right in chat",
+                thumbnail_url=f"{thumb_base}/chess_thumb.png" if thumb_base else None,
+                thumbnail_width=120,
+                thumbnail_height=120,
                 input_message_content=InputTextMessageContent(ch_text, parse_mode="Markdown"),
                 reply_markup=ch_markup,
             )
@@ -105,6 +117,9 @@ async def handle_inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE
                 id=f"c4_{uuid4().hex[:8]}",
                 title="🔴 Connect 4 (2 Players)",
                 description="Drop discs and connect 4 in a row",
+                thumbnail_url=f"{thumb_base}/connect4_thumb.png" if thumb_base else None,
+                thumbnail_width=120,
+                thumbnail_height=120,
                 input_message_content=InputTextMessageContent(c4_text, parse_mode="Markdown"),
                 reply_markup=c4_markup,
             )
@@ -120,6 +135,9 @@ async def handle_inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE
                 id=f"ttt_{uuid4().hex[:8]}",
                 title="❌ Tic-Tac-Toe ⭕",
                 description="Quick classic 3x3 duel",
+                thumbnail_url=f"{thumb_base}/xo_thumb.png" if thumb_base else None,
+                thumbnail_width=120,
+                thumbnail_height=120,
                 input_message_content=InputTextMessageContent(ttt_text, parse_mode="Markdown"),
                 reply_markup=ttt_markup,
             )
@@ -135,6 +153,9 @@ async def handle_inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE
                 id=f"dab_{uuid4().hex[:8]}",
                 title="🟦 Dots & Boxes 🟥",
                 description="Draw lines & claim boxes to score",
+                thumbnail_url=f"{thumb_base}/dots_thumb.png" if thumb_base else None,
+                thumbnail_width=120,
+                thumbnail_height=120,
                 input_message_content=InputTextMessageContent(dab_text, parse_mode="Markdown"),
                 reply_markup=dab_markup,
             )
@@ -150,12 +171,74 @@ async def handle_inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE
                 id=f"rps_{uuid4().hex[:8]}",
                 title="✂️ Rock Paper Scissors",
                 description="Secret simultaneous choices until both lock in",
+                thumbnail_url=f"{thumb_base}/rps_thumb.png" if thumb_base else None,
+                thumbnail_width=120,
+                thumbnail_height=120,
                 input_message_content=InputTextMessageContent(rps_text, parse_mode="Markdown"),
                 reply_markup=rps_markup,
             )
         )
 
-    # 5. Live Mini App Arena Challenge Card
+    # 6. Knife Master 3D (MPL Tournament Mode)
+    if not filter_text or "knife" in filter_text:
+        knife_url = (
+            f"https://t.me/{bot_user}?startapp=game_knife_hit"
+            if bot_user
+            else (f"{WEBAPP_URL}?game=knife_hit" if WEBAPP_URL else "")
+        )
+        results.append(
+            InlineQueryResultArticle(
+                id=f"knife_{uuid4().hex[:8]}",
+                title="🗡️ Knife Master 3D (3m Duel)",
+                description="15+ Levels • Hit target & avoid knives",
+                thumbnail_url=f"{thumb_base}/knife_thumb.png" if thumb_base else None,
+                thumbnail_width=120,
+                thumbnail_height=120,
+                input_message_content=InputTextMessageContent(
+                    f"🗡️ *KNIFE MASTER 3D • TOURNAMENT DUEL*\n\n"
+                    f"👤 *{uname}* invites you to an intense 3-minute target knife duel!\n"
+                    f"• 15+ escalating levels (Can you reach Level 13?)\n"
+                    f"• Avoid clashing blades & cut bonus apples!\n\n"
+                    f"Tap below to play now!",
+                    parse_mode="Markdown",
+                ),
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("🗡️ Play Knife Master", url=knife_url)] if knife_url else [InlineKeyboardButton("⚔️ Challenge Friend", switch_inline_query="challenge knife")]
+                ]),
+            )
+        )
+
+    # 7. Fruit Slice Blade (MPL Tournament Mode)
+    if not filter_text or "fruit" in filter_text or "slice" in filter_text:
+        fruit_url = (
+            f"https://t.me/{bot_user}?startapp=game_fruit_slice"
+            if bot_user
+            else (f"{WEBAPP_URL}?game=fruit_slice" if WEBAPP_URL else "")
+        )
+        results.append(
+            InlineQueryResultArticle(
+                id=f"fruit_{uuid4().hex[:8]}",
+                title="🍉 Fruit Slice Blade (3m Blitz)",
+                description="3 Lives • Avoid deadly bombs • Combo multipliers",
+                thumbnail_url=f"{thumb_base}/fruit_thumb.png" if thumb_base else None,
+                thumbnail_width=120,
+                thumbnail_height=120,
+                input_message_content=InputTextMessageContent(
+                    f"🍉 *FRUIT SLICE BLADE • TOURNAMENT BLITZ*\n\n"
+                    f"👤 *{uname}* invites you to an MPL-style fruit cutting showdown!\n"
+                    f"• 3-minute blitz clock & 3 lives\n"
+                    f"• Multi-fruit combos (x2, x3, x4)\n"
+                    f"• Avoid ticking bombs (1 slice = instant blast!)\n\n"
+                    f"Tap below to play now!",
+                    parse_mode="Markdown",
+                ),
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("🍉 Play Fruit Slice", url=fruit_url)] if fruit_url else [InlineKeyboardButton("⚔️ Challenge Friend", switch_inline_query="challenge fruit")]
+                ]),
+            )
+        )
+
+    # 8. Live Mini App Arena Challenge Card
     bot_user = BOT_USERNAME or (context.bot.username or "")
     if WEBAPP_URL and bot_user and (not filter_text or "arena" in filter_text or "mini" in filter_text):
         room_code = secrets.token_hex(3).upper()

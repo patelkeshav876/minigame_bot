@@ -453,12 +453,9 @@
     });
 
     // =========================================================================
-    // CSPRNG CRYPTOGRAPHICALLY UNPREDICTABLE CRASH GENERATOR
+    // FAIR UNPREDICTABLE CRASH GENERATOR
     // =========================================================================
-    // Uses hardware-grade OS entropy pool via Web Cryptography API.
-    // Mathematical proof: uniform float distribution U(0,1) with inverse CDF
-    // guarantees unpredictable crash multiplier immune to any AI or ML model.
-    function generateCryptographicCrashPoint() {
+    function generateFairCrashPoint() {
       const buffer = new Uint32Array(1);
       window.crypto.getRandomValues(buffer);
       // Map 32-bit unsigned integer to uniform float in (0, 1)
@@ -820,8 +817,8 @@
       blastShockwaves = [];
       screenShake = 0;
 
-      // CSPRNG Hardware Unpredictable Crash Point
-      crashPoint = generateCryptographicCrashPoint();
+      // Fair Unpredictable Crash Point
+      crashPoint = generateFairCrashPoint();
       rivalName = rivals[Math.floor(Math.random() * rivals.length)];
       rivalCashout = parseFloat((1.2 + Math.random() * (crashPoint * 0.8)).toFixed(2));
       if (rivalCashout >= crashPoint) rivalCashout = 0;

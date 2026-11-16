@@ -103,6 +103,21 @@ PROMO_GAMES: dict[str, dict[str, Any]] = {
         "button_label": "👾 Play Galaxy Defender",
         "challenge_tag": "space_invaders",
     },
+    "fruit_slice": {
+        "title": "🍉 FRUIT SLICE BLADE",
+        "badge": "⚡ MPL TOURNAMENT BLITZ",
+        "headline": "3-Minute Fruit Cutting Frenzy — Avoid Deadly Bombs!",
+        "description": (
+            "Fast-paced tournament fruit cutting with multi-fruit combos!\n"
+            "Slice juicy watermelons, oranges, and apples across 15+ levels.\n\n"
+            "Watch out for ticking bombs — 1 slice and it's instant game over!"
+        ),
+        "reward": "🪙 Score 2,500+ points to win 5,000 Bonus Coins!",
+        "banner_filename": "fruit_promo.png",
+        "game_id": "fruit_slice",
+        "button_label": "🍉 Play Fruit Slice",
+        "challenge_tag": "fruit",
+    },
     "knife_hit": {
         "title": "🗡️ KNIFE MASTER 3D",
         "badge": "🎯 PRECISION & REFLEXES",
@@ -169,6 +184,8 @@ def get_promo_card(
         key = "space_invaders"
     elif key in ("knife", "knives"):
         key = "knife_hit"
+    elif key in ("fruit", "fruits", "slice", "chop"):
+        key = "fruit_slice"
     elif key in ("xo", "ttt", "tic_tac_toe"):
         key = "tictactoe"
 

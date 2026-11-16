@@ -84,6 +84,10 @@ def _two_menu_markup(is_private_chat: bool = True) -> InlineKeyboardMarkup:
         InlineKeyboardButton("✂️ Rock Paper Scissors", callback_data="start2p:rps"),
     ])
     rows.append([
+        InlineKeyboardButton("🗡️ Knife Master 3D", callback_data="start2p:knife_hit"),
+        InlineKeyboardButton("🍉 Fruit Slice Blade", callback_data="start2p:fruit_slice"),
+    ])
+    rows.append([
         InlineKeyboardButton("⚔️ Challenge Friend in Chat", switch_inline_query="challenge"),
     ])
     rows.append([InlineKeyboardButton("⬅️ Main Menu", callback_data="menu:main")])
@@ -149,7 +153,7 @@ async def aviator_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     caption = (
         "🚀 *AVIATOR • Rocket Multiplier Duel*\n\n"
         "Watch the rocket soar into the sky! Ride the multiplier curve, duel opponents live, and cash out before the sudden blast!\n\n"
-        "• *Cryptographically Unpredictable Crash*\n"
+        "• *Provably Fair & Dynamic Multiplier Curve*\n"
         "• *Live Rocket Flight & Blast Effects*\n"
         "• *Daily Midnight Coin Refills & High-Stakes Duels*"
     )
@@ -364,7 +368,9 @@ async def twoplayer_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         "❌ *XO Blitz Arena* — 5-Second Rapid Turns\n"
         "⚫ *Othello Reversi* — Outflank & Capture Grid\n"
         "🟦 *Dots & Boxes* — Draw Borders & Claim Cells\n"
-        "✂️ *Rock Paper Scissors* — Secret Simultaneous Plays\n\n"
+        "✂️ *Rock Paper Scissors* — Secret Simultaneous Plays\n"
+        "🗡️ *Knife Master 3D* — 3m Tournament • 15+ Levels\n"
+        "🍉 *Fruit Slice Blade* — 3m Blitz • Combos • Avoid Bombs\n\n"
         "👇 *Choose a game below to play in-chat or launch the Mini App Arena:*"
     )
     is_private = bool(update.effective_chat and update.effective_chat.type == "private")
@@ -674,7 +680,9 @@ async def handle_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYP
                 "❌ *XO Blitz Arena* — 5-Second Rapid Turns\n"
                 "⚫ *Othello Reversi* — Outflank & Capture Grid\n"
                 "🟦 *Dots & Boxes* — Draw Borders & Claim Cells\n"
-                "✂️ *Rock Paper Scissors* — Secret Simultaneous Plays\n\n"
+                "✂️ *Rock Paper Scissors* — Secret Simultaneous Plays\n"
+                "🗡️ *Knife Master 3D* — 3m Tournament • 15+ Levels\n"
+                "🍉 *Fruit Slice Blade* — 3m Blitz • Combos • Avoid Bombs\n\n"
                 "👇 *Choose a game below to play in-chat or launch the Mini App Arena:*"
             )
             markup = _two_menu_markup(is_private)
@@ -805,6 +813,18 @@ async def handle_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             state = init_rps_state(user.id, uname, mode="chat")
             mid = storage.create_match("rps", state, mode="chat")
             text, markup = render_rps(state, mid)
+        elif game in ("knife_hit", "fruit_slice"):
+            bot_name = BOT_USERNAME or (context.bot.username or "")
+            caption, banner_path, markup = get_promo_card(game, bot_username=bot_name, webapp_url=WEBAPP_URL)
+            try:
+                if banner_path and banner_path.exists():
+                    with open(banner_path, "rb") as photo:
+                        await query.message.reply_photo(photo=photo, caption=caption, reply_markup=markup, parse_mode="Markdown")
+                        return
+            except Exception:
+                pass
+            await safe_edit_message(query, caption, markup, parse_mode="Markdown")
+            return
         else:
             await safe_edit_message(query, "🛠️ Unknown game.")
             return

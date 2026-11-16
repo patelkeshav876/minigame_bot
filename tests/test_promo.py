@@ -10,8 +10,20 @@ def test_list_promo_keys():
     assert "tetris" in keys
     assert "space_invaders" in keys
     assert "knife_hit" in keys
+    assert "fruit_slice" in keys
     assert "tictactoe" in keys
     assert "2048" in keys
+
+
+def test_get_promo_card_fruit_slice():
+    caption, banner, markup = get_promo_card("fruit_slice", bot_username="GhostPlaysBot", webapp_url="https://ghost.app")
+    assert "FRUIT SLICE" in caption
+    assert banner is not None
+    assert banner.name == "fruit_promo.png"
+    assert banner.exists()
+    rows = markup.inline_keyboard
+    assert len(rows) >= 3
+    assert "https://ghost.app?game=fruit_slice" in rows[0][0].web_app.url
 
 
 def test_get_promo_card_aviator():
