@@ -55,7 +55,16 @@
       if (el) el.classList.toggle("active", k === name);
     });
     navItems.forEach((n) => n.classList.toggle("active", n.dataset.view === name));
-    document.getElementById("bottomNav").classList.toggle("hidden", name === "match" || name === "player");
+    
+    const isFullscreen = name === "match" || name === "player";
+    document.getElementById("bottomNav")?.classList.toggle("hidden", isFullscreen);
+    document.querySelector(".topbar")?.classList.toggle("hidden", isFullscreen);
+
+    if (isFullscreen || name === "battle") {
+      try { tg?.expand(); } catch (_) {}
+      try { if (tg?.requestFullscreen) tg.requestFullscreen(); } catch (_) {}
+    }
+
     if (window.lucide) {
       setTimeout(() => { window.lucide.createIcons(); }, 10);
     }
@@ -412,15 +421,18 @@
     document.getElementById("btnResign").classList.toggle("hidden", isSpectator || room.status !== "active");
     document.getElementById("btnRematch").classList.toggle("hidden", isSpectator || room.status !== "finished");
 
+    const isArcade = room.game_type === "knife_hit" || room.game_type === "fruit_slice";
+    views.match.classList.toggle("arena-mode-arcade", isArcade);
+
     const container = document.getElementById("boardContainer");
-    if (room.game_type !== "knife_hit" && room.game_type !== "fruit_slice") {
+    if (!isArcade) {
       container.innerHTML = "";
     }
 
     if (room.game_type === "chess") renderChessBoard(container, room, selfP, myTurn);
     else if (room.game_type === "othello") renderOthelloBoard(container, room, myTurn);
     else if (room.game_type === "connect4") renderConnect4Board(container, room, myTurn);
-    else if (room.game_type === "knife_hit" || room.game_type === "fruit_slice") renderArcadeArenaGame(container, room, selfP);
+    else if (isArcade) renderArcadeArenaGame(container, room, selfP);
     else renderTicTacToeBoard(container, room, myTurn);
   }
 
@@ -456,6 +468,7 @@
     wrap.className = "arcade-arena-wrapper";
     wrap.innerHTML = `
       <div class="arcade-arena-header">
+        <button id="btnLeaveArcadeMatch" class="btn-leave-arcade" title="Leave Match">✕</button>
         <div class="aah-player my-score">
           <span class="aah-label">YOU (${selfP?.name || "Player"})</span>
           <span class="aah-val" id="arenaMyScore">${myScore} pts (Lvl ${myLvl})</span>
@@ -466,10 +479,19 @@
           <span class="aah-val" id="arenaOppScore">${oppScore} pts (Lvl ${oppLvl})</span>
         </div>
       </div>
-      <iframe id="arenaGameIframe" src="${iframeSrc}" data-game-type="${room.game_type}" class="arcade-arena-iframe" allow="autoplay"></iframe>
+      <iframe id="arenaGameIframe" src="${iframeSrc}" data-game-type="${room.game_type}" class="arcade-arena-iframe" allow="autoplay; fullscreen; gamepad"></iframe>
     `;
 
     container.appendChild(wrap);
+
+    document.getElementById("btnLeaveArcadeMatch")?.addEventListener("click", () => {
+      haptic("medium");
+      if (confirm("Leave this active match and return to Arena?")) {
+        sendWs({ type: "resign" });
+        state.room = null;
+        showView("battle");
+      }
+    });
   }
 
   function renderChessBoard(container, room, selfP, myTurn) {
@@ -996,18 +1018,36 @@
   function setHeroSlide(idx) {
     heroCurrentSlide = (idx + heroTotalSlides) % heroTotalSlides;
     const wrapper = document.getElementById("heroSlidesWrapper");
-    const carousel = document.getElementById("heroCarousel");
     if (wrapper) {
-      const slideW = carousel ? (carousel.clientWidth || carousel.offsetWidth) : 0;
-      if (slideW > 0) {
-        wrapper.style.transform = `translateX(-${heroCurrentSlide * slideW}px)`;
-      } else {
-        wrapper.style.transform = `translateX(-${heroCurrentSlide * 100}%)`;
-      }
+      wrapper.style.transform = `translateX(-${heroCurrentSlide * 100}%)`;
     }
     document.querySelectorAll(".carousel-dot").forEach((dot, dIdx) => {
       dot.classList.toggle("active", dIdx === heroCurrentSlide);
     });
+  }
+
+  // Smooth touch swipe support for mobile & Telegram
+  const heroCarouselEl = document.getElementById("heroCarousel");
+  if (heroCarouselEl) {
+    let startX = 0;
+    let endX = 0;
+    heroCarouselEl.addEventListener("touchstart", (e) => {
+      startX = e.touches[0].clientX;
+      if (heroAutoSlideInterval) clearInterval(heroAutoSlideInterval);
+    }, { passive: true });
+
+    heroCarouselEl.addEventListener("touchend", (e) => {
+      endX = e.changedTouches[0].clientX;
+      const diff = endX - startX;
+      if (Math.abs(diff) > 35) {
+        if (diff < 0) {
+          setHeroSlide(heroCurrentSlide + 1);
+        } else {
+          setHeroSlide(heroCurrentSlide - 1);
+        }
+      }
+      startHeroAutoSlide();
+    }, { passive: true });
   }
 
   window.addEventListener("resize", () => {
