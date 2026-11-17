@@ -131,10 +131,21 @@ async def play_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "Tap below to launch Ghost Plays in full screen!"
     )
     markup = _main_menu_markup(is_private_chat=is_private)
+    welcome_banner = Path(__file__).resolve().parent.parent / "webapp" / "static" / "banners" / "welcome_banner.jpg"
     if update.message:
+        if welcome_banner.exists():
+            try:
+                with open(welcome_banner, "rb") as photo:
+                    await update.message.reply_photo(photo=photo, caption=text, reply_markup=markup, parse_mode="Markdown")
+                    return
+            except Exception:
+                pass
         await update.message.reply_text(text, reply_markup=markup, parse_mode="Markdown")
     elif update.callback_query:
-        await safe_edit_message(update.callback_query, text, markup, parse_mode="Markdown")
+        try:
+            await update.callback_query.edit_message_caption(caption=text, reply_markup=markup, parse_mode="Markdown")
+        except Exception:
+            await safe_edit_message(update.callback_query, text, markup, parse_mode="Markdown")
 
 
 async def aviator_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
