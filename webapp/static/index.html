@@ -719,6 +719,59 @@
       <iframe id="customGameIframe" src="" allowfullscreen allow="autoplay; fullscreen; gamepad"></iframe>
     </section>
 
+    <!-- ==================== ARENA MATCH OPTIONS POP-UP MODAL ==================== -->
+    <div id="modalArenaMatchOptions" class="modal hidden">
+      <div class="modal-card arena-options-modal-card">
+        <div class="modal-header">
+          <div class="modal-header-title">
+            <span id="arenaModalIcon" class="arena-modal-icon">⚔️</span>
+            <div>
+              <h3 id="arenaModalTitle">Grandmaster Chess</h3>
+              <span id="arenaModalTag" class="arena-modal-sub">Ranked 1v1 PvP Duel</span>
+            </div>
+          </div>
+          <button id="btnCloseArenaModal" class="btn small">✖</button>
+        </div>
+
+        <div class="arena-modal-preview">
+          <img id="arenaModalThumb" src="/static/thumbnails/chess_thumb.png" alt="Game Preview" class="arena-modal-art" />
+          <div class="arena-modal-details">
+            <div id="arenaModalDesc" class="arena-modal-desc">Full 8x8 tactical chess with piece validation & competitive ELO ratings!</div>
+            <div class="arena-modal-pills">
+              <span class="comm-badge" id="arenaModalTimer">⏱️ 3 MIN CLOCK</span>
+              <span class="arena-head-pill">RANKED ELO</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="arena-modal-actions">
+          <button id="btnModalQuickMatch" class="btn primary full arena-action-btn">
+            <span class="aab-icon">⚡</span>
+            <div class="aab-text">
+              <span class="aab-title">Quick Match (Ranked PvP)</span>
+              <span class="aab-sub">Auto-match instantly with an online opponent</span>
+            </div>
+          </button>
+
+          <button id="btnModalVsAi" class="btn accent-outline full arena-action-btn">
+            <span class="aab-icon">🤖</span>
+            <div class="aab-text">
+              <span class="aab-title">Practice with Computer</span>
+              <span class="aab-sub">Play offline training match against AI</span>
+            </div>
+          </button>
+
+          <button id="btnModalCreateRoom" class="btn secondary full arena-action-btn">
+            <span class="aab-icon">🔗</span>
+            <div class="aab-text">
+              <span class="aab-title">Invite Friends (Room Code)</span>
+              <span class="aab-sub">Create a private duel room & share in chat</span>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- ==================== GHOST PLAYS MULTI-PAYMENT COIN STORE ==================== -->
     <div id="modalStarsShop" class="modal hidden">
       <div class="modal-card stars-shop-modal-card">
@@ -897,9 +950,24 @@
           <label>Game Website Link (HTTPS)</label>
           <input id="inputGameUrl" type="url" placeholder="https://yourgame.com" required />
           
+          <label>Game Profile Picture / Logo</label>
+          <div class="logo-upload-group">
+            <div class="logo-preview-box" id="logoPreviewBox">
+              <span id="previewEmoji" class="preview-emoji">🎮</span>
+              <img id="previewLogoImg" src="" alt="Preview" class="preview-logo-img hidden" />
+            </div>
+            <div class="logo-inputs-col">
+              <input id="inputGameLogoUrl" type="url" placeholder="Logo Image URL (https://... or upload)" />
+              <label class="btn-file-upload">
+                <i data-lucide="image" class="lucide-sm"></i> Upload Game Logo
+                <input id="inputGameLogoFile" type="file" accept="image/*" class="hidden-file-input" />
+              </label>
+            </div>
+          </div>
+
           <div class="form-row-2">
             <div>
-              <label>Icon / Emoji</label>
+              <label>Icon / Fallback Emoji</label>
               <input id="inputGameIcon" type="text" placeholder="🚀" maxlength="4" value="🎮" />
             </div>
             <div>

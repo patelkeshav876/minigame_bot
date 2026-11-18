@@ -43,45 +43,45 @@ def compute_level(xp: int) -> tuple[int, int, int]:
     return lvl, rem, xp_for_level(lvl)
 
 
-DEFAULT_HTML5_GAMES: list[tuple[str, str, str, str]] = [
+DEFAULT_HTML5_GAMES: list[tuple[str, str, str, str, str]] = [
     # ⚡ High-Stakes Duel & Personal Wager
-    ("Aviator Rocket", "/static/games/aviator/index.html", "🚀", "High-stakes rocket multiplier curve! Cash out before the blast"),
+    ("Aviator Rocket", "/static/games/aviator/index.html", "🚀", "High-stakes rocket multiplier curve! Cash out before the blast", "/static/banners/aviator_promo.png"),
 
     # 🕹️ Arcade Classics (Self-Hosted & 100% Working)
-    ("Neon Snake", "/static/games/snake/index.html", "🐍", "Classic retro snake with smooth controls"),
-    ("Flappy Ghost", "/static/games/flappy/index.html", "👻", "Tap to flap and dodge obstacles"),
-    ("Brick Breaker", "/static/games/breakout/index.html", "🧱", "Smash neon bricks with bouncing ball"),
-    ("Retro Tetris", "/static/games/tetris/index.html", "🧩", "Falling tetromino block puzzle"),
-    ("T-Rex Desert Run", "/static/games/dino/index.html", "🦖", "Endless runner cactus jumping challenge"),
-    ("Neon Pong", "/static/games/pong/index.html", "🏓", "Fast table tennis rally against AI"),
-    ("Space Invaders", "/static/games/space_invaders/index.html", "👾", "Defend galaxy from alien waves"),
-    ("Asteroid Blaster", "/static/games/asteroids/index.html", "🚀", "Space vector rock shooter with thrusters"),
-    ("Fruit Slicer", "/static/games/fruit_slice/index.html", "🍉", "Slice flying fruits with swipe blades"),
-    ("Knife Master", "/static/games/knife_hit/index.html", "🗡️", "Throw knives into rotating target log"),
-    ("Whack-a-Ghost", "/static/games/whack_a_mole/index.html", "🔨", "Test reaction time whacking popping ghosts"),
-    ("Helix Drop", "/static/games/helix_jump/index.html", "🌀", "Bounce ball through gaps in rotating tower"),
-    ("Tower Stack", "/static/games/tower_stack/index.html", "🏢", "Slice and stack tower blocks as high as you can"),
-    ("Neon Pinball", "/static/games/pinball/index.html", "🪩", "Arcade pinball with flippers & bumpers"),
-    ("Ghost Clicker", "/static/games/cookie_clicker/index.html", "🍪", "Idle tap clicker with auto-ghost upgrades"),
-    ("Hextris Rotation", "/static/games/hextris/index.html", "🔷", "Hexagonal rotation match puzzle"),
+    ("Neon Snake", "/static/games/snake/index.html", "🐍", "Classic retro snake with smooth controls", ""),
+    ("Flappy Ghost", "/static/games/flappy/index.html", "👻", "Tap to flap and dodge obstacles", ""),
+    ("Brick Breaker", "/static/games/breakout/index.html", "🧱", "Smash neon bricks with bouncing ball", ""),
+    ("Retro Tetris", "/static/games/tetris/index.html", "🧩", "Falling tetromino block puzzle", "/static/banners/tetris_promo.png"),
+    ("T-Rex Desert Run", "/static/games/dino/index.html", "🦖", "Endless runner cactus jumping challenge", "/static/banners/dino_promo.png"),
+    ("Neon Pong", "/static/games/pong/index.html", "🏓", "Fast table tennis rally against AI", ""),
+    ("Space Invaders", "/static/games/space_invaders/index.html", "👾", "Defend galaxy from alien waves", "/static/banners/space_promo.png"),
+    ("Asteroid Blaster", "/static/games/asteroids/index.html", "🚀", "Space vector rock shooter with thrusters", ""),
+    ("Fruit Slicer", "/static/games/fruit_slice/index.html", "🍉", "Slice flying fruits with swipe blades", "/static/thumbnails/fruit_thumb.png"),
+    ("Knife Master", "/static/games/knife_hit/index.html", "🗡️", "Throw knives into rotating target log", "/static/thumbnails/knife_thumb.png"),
+    ("Whack-a-Ghost", "/static/games/whack_a_mole/index.html", "🔨", "Test reaction time whacking popping ghosts", ""),
+    ("Helix Drop", "/static/games/helix_jump/index.html", "🌀", "Bounce ball through gaps in rotating tower", ""),
+    ("Tower Stack", "/static/games/tower_stack/index.html", "🏢", "Slice and stack tower blocks as high as you can", ""),
+    ("Neon Pinball", "/static/games/pinball/index.html", "🪩", "Arcade pinball with flippers & bumpers", ""),
+    ("Ghost Clicker", "/static/games/cookie_clicker/index.html", "🍪", "Idle tap clicker with auto-ghost upgrades", ""),
+    ("Hextris Rotation", "/static/games/hextris/index.html", "🔷", "Hexagonal rotation match puzzle", ""),
 
     # 🧩 Puzzle & Brain (Self-Hosted)
-    ("2048 Classic", "/static/games/2048/index.html", "🔢", "Slide tiles to merge and reach 2048!"),
-    ("Minesweeper Retro", "/static/games/minesweeper/index.html", "💣", "Clear the minefield without detonating bombs"),
-    ("Wordle Guess", "/static/games/wordle/index.html", "🟩", "Guess secret 5-letter word in 6 attempts"),
-    ("Sudoku Master", "/static/games/sudoku/index.html", "🧩", "Classic 9x9 number placement logic grid"),
-    ("15-Puzzle Slider", "/static/games/sliding_puzzle/index.html", "🔲", "Classic sliding numbered block puzzle"),
-    ("Color Flood", "/static/games/color_flood/index.html", "🎨", "Flood-fill the board with one color"),
-    ("Emoji Memory", "/static/games/memory/index.html", "🧠", "Flip and match pairs of hidden cards"),
-    ("Simon Memory", "/static/games/simon/index.html", "🔔", "Repeat growing sequence of lights & sounds"),
+    ("2048 Classic", "/static/games/2048/index.html", "🔢", "Slide tiles to merge and reach 2048!", "/static/banners/puzzle2048_promo.png"),
+    ("Minesweeper Retro", "/static/games/minesweeper/index.html", "💣", "Clear the minefield without detonating bombs", ""),
+    ("Wordle Guess", "/static/games/wordle/index.html", "🟩", "Guess secret 5-letter word in 6 attempts", ""),
+    ("Sudoku Master", "/static/games/sudoku/index.html", "🧩", "Classic 9x9 number placement logic grid", ""),
+    ("15-Puzzle Slider", "/static/games/sliding_puzzle/index.html", "🔲", "Classic sliding numbered block puzzle", ""),
+    ("Color Flood", "/static/games/color_flood/index.html", "🎨", "Flood-fill the board with one color", ""),
+    ("Emoji Memory", "/static/games/memory/index.html", "🧠", "Flip and match pairs of hidden cards", ""),
+    ("Simon Memory", "/static/games/simon/index.html", "🔔", "Repeat growing sequence of lights & sounds", ""),
 
     # 🃏 Cards & Board Classics (Self-Hosted)
-    ("8-Ball Billiards", "/static/games/billiards/index.html", "🎱", "Pocket balls with realistic pool physics"),
-    ("Connect 4 Arena", "/static/games/connect4/index.html", "🔴", "Align 4 chips in a row against AI"),
-    ("Checkers Classic", "/static/games/checkers/index.html", "⚪", "Jump and capture enemy checkers to king"),
-    ("Neon Tic-Tac-Toe", "/static/games/tictactoe/index.html", "❌", "Glowing neon 3x3 XO against unbeatable AI"),
-    ("Klondike Solitaire", "/static/games/solitaire/index.html", "🃏", "World's most popular single-player card game"),
-    ("Cyber Speed Typer", "/static/games/speed_typer/index.html", "⌨️", "Test and improve your words-per-minute typing"),
+    ("8-Ball Billiards", "/static/games/billiards/index.html", "🎱", "Pocket balls with realistic pool physics", ""),
+    ("Connect 4 Arena", "/static/games/connect4/index.html", "🔴", "Align 4 chips in a row against AI", "/static/thumbnails/connect4_thumb.png"),
+    ("Checkers Classic", "/static/games/checkers/index.html", "⚪", "Jump and capture enemy checkers to king", ""),
+    ("Neon Tic-Tac-Toe", "/static/games/tictactoe/index.html", "❌", "Glowing neon 3x3 XO against unbeatable AI", "/static/thumbnails/xo_thumb.png"),
+    ("Klondike Solitaire", "/static/games/solitaire/index.html", "🃏", "World's most popular single-player card game", ""),
+    ("Cyber Speed Typer", "/static/games/speed_typer/index.html", "⌨️", "Test and improve your words-per-minute typing", ""),
 ]
 
 
@@ -210,6 +210,12 @@ class GameStorage:
             if "stars_spent" not in cols:
                 conn.execute("ALTER TABLE players ADD COLUMN stars_spent INTEGER NOT NULL DEFAULT 0")
 
+            cg_cols = {
+                r["name"] for r in conn.execute("PRAGMA table_info(custom_games)").fetchall()
+            }
+            if "image_url" not in cg_cols:
+                conn.execute("ALTER TABLE custom_games ADD COLUMN image_url TEXT NOT NULL DEFAULT ''")
+
             count = conn.execute("SELECT COUNT(*) AS c FROM custom_games").fetchone()["c"]
             if count == 0:
                 self._seed_default_custom_games(conn)
@@ -220,17 +226,20 @@ class GameStorage:
 
     def _sync_games(self, conn: sqlite3.Connection) -> None:
         now = time.time()
-        for title, url, icon, desc in DEFAULT_HTML5_GAMES:
-            row = conn.execute("SELECT id FROM custom_games WHERE title = ? OR url = ?", (title, url)).fetchone()
+        for entry in DEFAULT_HTML5_GAMES:
+            title, url, icon, desc = entry[0], entry[1], entry[2], entry[3]
+            img = entry[4] if len(entry) > 4 else ""
+            row = conn.execute("SELECT id, image_url FROM custom_games WHERE title = ? OR url = ?", (title, url)).fetchone()
             if row:
+                current_img = row["image_url"] if (row["image_url"] and row["image_url"].strip()) else img
                 conn.execute(
-                    "UPDATE custom_games SET url = ?, icon = ?, description = ? WHERE id = ?",
-                    (url, icon, desc, row["id"]),
+                    "UPDATE custom_games SET url = ?, icon = ?, description = ?, image_url = ? WHERE id = ?",
+                    (url, icon, desc, current_img, row["id"]),
                 )
             else:
                 conn.execute(
-                    "INSERT INTO custom_games (title, url, icon, description, is_active, created_at) VALUES (?, ?, ?, ?, 1, ?)",
-                    (title, url, icon, desc, now),
+                    "INSERT INTO custom_games (title, url, icon, description, image_url, is_active, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)",
+                    (title, url, icon, desc, img, now),
                 )
         broken = ["helixjump2", "canvaspool", "cardgames.io", "funhtml5games", "fruitninjafree", "monkeytype", "playtictactoe", "playsnake", "orteil.dashnet"]
         for b in broken:
@@ -238,13 +247,15 @@ class GameStorage:
 
     def _seed_default_custom_games(self, conn: sqlite3.Connection) -> None:
         now = time.time()
-        for title, url, icon, desc in DEFAULT_HTML5_GAMES:
+        for entry in DEFAULT_HTML5_GAMES:
+            title, url, icon, desc = entry[0], entry[1], entry[2], entry[3]
+            img = entry[4] if len(entry) > 4 else ""
             conn.execute(
                 """
-                INSERT INTO custom_games (title, url, icon, description, is_active, created_at)
-                VALUES (?, ?, ?, ?, 1, ?)
+                INSERT INTO custom_games (title, url, icon, description, image_url, is_active, created_at)
+                VALUES (?, ?, ?, ?, ?, 1, ?)
                 """,
-                (title, url, icon, desc, now),
+                (title, url, icon, desc, img, now),
             )
 
     def _enrich_player(self, conn: sqlite3.Connection, row: sqlite3.Row) -> dict[str, Any]:
@@ -761,19 +772,21 @@ class GameStorage:
         url: str,
         icon: str = "🎮",
         description: str = "",
+        image_url: str = "",
     ) -> dict[str, Any]:
         now = time.time()
         clean_title = (title or "Custom Game").strip()[:64]
         clean_url = (url or "").strip()
         clean_icon = (icon or "🎮").strip()[:8]
         clean_desc = (description or "").strip()[:200]
+        clean_img = (image_url or "").strip()
         with self._lock, self._connect() as conn:
             cur = conn.execute(
                 """
-                INSERT INTO custom_games (title, url, icon, description, is_active, created_at)
-                VALUES (?, ?, ?, ?, 1, ?)
+                INSERT INTO custom_games (title, url, icon, description, image_url, is_active, created_at)
+                VALUES (?, ?, ?, ?, ?, 1, ?)
                 """,
-                (clean_title, clean_url, clean_icon, clean_desc, now),
+                (clean_title, clean_url, clean_icon, clean_desc, clean_img, now),
             )
             conn.commit()
             row = conn.execute("SELECT * FROM custom_games WHERE id = ?", (cur.lastrowid,)).fetchone()

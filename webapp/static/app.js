@@ -637,12 +637,101 @@
     });
   }
 
-  // Bind arena mode selection cards
+  const arenaGamesMeta = {
+    chess: {
+      title: "Grandmaster Chess",
+      tag: "Ranked 1v1 PvP Duel",
+      icon: "♟️",
+      thumb: "/static/thumbnails/chess_thumb.png",
+      desc: "Full 8x8 tactical chess with piece validation & competitive ELO ratings!",
+      timer: "⏱️ 3 MIN CLOCK",
+    },
+    connect4: {
+      title: "Connect 4 Royale",
+      tag: "Tactical Disc Drop Duel",
+      icon: "🔴",
+      thumb: "/static/thumbnails/connect4_thumb.png",
+      desc: "Drop glowing discs and line up 4 horizontally, vertically, or diagonally!",
+      timer: "⏱️ 30s PER MOVE",
+    },
+    tictactoe: {
+      title: "XO Blitz Arena",
+      tag: "Ultra-Fast 3x3 Showdown",
+      icon: "❌",
+      thumb: "/static/thumbnails/xo_thumb.png",
+      desc: "Rapid 3x3 tactical duel with 5-second blitz turns and ranked ELO!",
+      timer: "🔥 5s BLITZ",
+    },
+    othello: {
+      title: "Othello Reversi",
+      tag: "Tactical Flank & Flip Duel",
+      icon: "⚫",
+      thumb: "/static/thumbnails/othello_thumb.png",
+      desc: "Outflank opposing discs, trap the 4 corners, and dominate the board!",
+      timer: "⏱️ 60s PER MOVE",
+    },
+    knife_hit: {
+      title: "Knife Master 3D",
+      tag: "MPL Tournament Blitz",
+      icon: "🗡️",
+      thumb: "/static/thumbnails/knife_thumb.png",
+      desc: "3-minute tournament speed run • 15+ escalating levels • avoid clashing blades!",
+      timer: "⏱️ 3 MIN CLOCK",
+    },
+    fruit_slice: {
+      title: "Fruit Slice Blade",
+      tag: "MPL Tournament Slicer",
+      icon: "🍉",
+      thumb: "/static/thumbnails/fruit_thumb.png",
+      desc: "3-minute blitz frenzy • 3 lives • swipe multi-combos and avoid deadly bombs!",
+      timer: "🍉 3 LIVES • 3 MIN",
+    },
+  };
+
+  function openArenaGameModal(gameKey) {
+    selectGame(gameKey);
+    const meta = arenaGamesMeta[gameKey] || arenaGamesMeta["chess"];
+    const modal = document.getElementById("modalArenaMatchOptions");
+    if (!modal) return;
+    document.getElementById("arenaModalTitle").textContent = meta.title;
+    document.getElementById("arenaModalTag").textContent = meta.tag;
+    document.getElementById("arenaModalIcon").textContent = meta.icon;
+    document.getElementById("arenaModalThumb").src = meta.thumb;
+    document.getElementById("arenaModalDesc").textContent = meta.desc;
+    document.getElementById("arenaModalTimer").textContent = meta.timer;
+    modal.classList.remove("hidden");
+    haptic("medium");
+  }
+
+  function closeArenaGameModal() {
+    document.getElementById("modalArenaMatchOptions")?.classList.add("hidden");
+  }
+
+  // Bind arena mode selection cards to open pop-up options modal
   document.querySelectorAll(".arena-mode-card").forEach((card) => {
     card.addEventListener("click", () => {
-      selectGame(card.dataset.game);
-      haptic("medium");
+      openArenaGameModal(card.dataset.game);
     });
+  });
+
+  document.getElementById("btnCloseArenaModal")?.addEventListener("click", closeArenaGameModal);
+  document.getElementById("modalArenaMatchOptions")?.addEventListener("click", (e) => {
+    if (e.target.id === "modalArenaMatchOptions") closeArenaGameModal();
+  });
+
+  document.getElementById("btnModalQuickMatch")?.addEventListener("click", () => {
+    closeArenaGameModal();
+    startRoomRequest({ quick_match: true });
+  });
+
+  document.getElementById("btnModalVsAi")?.addEventListener("click", () => {
+    closeArenaGameModal();
+    startRoomRequest({ vs_ai: true });
+  });
+
+  document.getElementById("btnModalCreateRoom")?.addEventListener("click", () => {
+    closeArenaGameModal();
+    startRoomRequest({ quick_match: false });
   });
 
   // Navigation
@@ -771,7 +860,9 @@
         (g) => `
       <button class="custom-game-card" data-url="${encodeURI(g.url)}" data-title="${g.title}" data-icon="${g.icon}">
         <div class="cgc-top">
-          <div class="cgc-icon">${g.icon || "🎮"}</div>
+          <div class="cgc-icon">
+            ${g.image_url ? `<img src="${g.image_url}" class="cgc-box-img" alt="${g.title}" />` : (g.icon || "🎮")}
+          </div>
           <span class="cgc-play-badge">PLAY</span>
         </div>
         <div class="cgc-body">
@@ -822,7 +913,7 @@
     row.innerHTML = displayList.map(g => `
       <button class="carousel-game-card" data-url="${encodeURI(g.url)}" data-title="${g.title}" data-icon="${g.icon}">
         <div class="cgc-thumb-wrap">
-          <span class="cgc-art">${g.icon || "🎮"}</span>
+          ${g.image_url ? `<img src="${g.image_url}" class="cgc-thumb-img" alt="${g.title}" />` : `<span class="cgc-art">${g.icon || "🎮"}</span>`}
         </div>
         <div class="cgc-card-title">${g.title}</div>
         <div class="cgc-card-tag">${classifyGameCategory(g).toUpperCase()}</div>
@@ -856,7 +947,9 @@
     list.innerHTML = trendingList.map((g, idx) => `
       <div class="trending-game-card" data-url="${encodeURI(g.url)}" data-title="${g.title}" data-icon="${g.icon}">
         <div class="tgc-left">
-          <div class="tgc-thumb">${g.icon || "🎮"}</div>
+          <div class="tgc-thumb">
+            ${g.image_url ? `<img src="${g.image_url}" class="tgc-thumb-img" alt="${g.title}" />` : (g.icon || "🎮")}
+          </div>
           <div class="tgc-info">
             <div class="tgc-title">${g.title}</div>
             <div class="tgc-mission">${missions[idx % missions.length]}</div>
@@ -879,6 +972,47 @@
       });
     });
   }
+
+  // View All buttons navigation & focus
+  document.getElementById("linkViewAllQuests")?.addEventListener("click", () => {
+    haptic("light");
+    const qEl = document.getElementById("activeQuestCard");
+    if (qEl) {
+      qEl.scrollIntoView({ behavior: "smooth", block: "center" });
+      qEl.classList.add("highlight-pulse");
+      setTimeout(() => qEl.classList.remove("highlight-pulse"), 1200);
+    }
+  });
+
+  document.getElementById("linkViewAllContinue")?.addEventListener("click", () => {
+    haptic("light");
+    document.getElementById("sectionAllGames")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  document.getElementById("linkViewAllTournaments")?.addEventListener("click", () => {
+    haptic("light");
+    showView("battle");
+  });
+
+  document.getElementById("linkViewAllTrending")?.addEventListener("click", () => {
+    haptic("light");
+    document.getElementById("sectionAllGames")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  document.querySelectorAll(".chunky-cat-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      haptic("light");
+      const cat = card.dataset.cat;
+      if (cat) {
+        state.gameFilterCat = cat;
+        document.querySelectorAll(".cat-filter-btn").forEach((b) => {
+          b.classList.toggle("active", b.dataset.cat === cat);
+        });
+        renderFilteredGames();
+        document.getElementById("sectionAllGames")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  });
 
   async function loadCustomGames() {
     const el = document.getElementById("customGamesGrid");
@@ -1569,11 +1703,16 @@
     const secret = document.getElementById("inputAdminSecret").value || "";
     listEl.innerHTML = data.games
       .map(
-        (g) => `
+        (g) => {
+          const logoEl = g.image_url
+            ? `<img src="${g.image_url}" style="width:24px;height:24px;border-radius:6px;object-fit:cover;vertical-align:middle;margin-right:6px;" alt="">`
+            : `<span style="font-size:1.1rem;margin-right:6px;">${g.icon || "🎮"}</span>`;
+          return `
       <div class="admin-game-row">
-        <span>${g.icon} <strong>${g.title}</strong></span>
+        <span>${logoEl} <strong>${g.title}</strong></span>
         <button class="btn small danger" data-del="${g.id}">🗑️</button>
-      </div>`
+      </div>`;
+        }
       )
       .join("");
 
@@ -1635,13 +1774,97 @@
     }
   });
 
+  const inputGameLogoFile = document.getElementById("inputGameLogoFile");
+  const inputGameLogoUrl = document.getElementById("inputGameLogoUrl");
+  const previewLogoImg = document.getElementById("previewLogoImg");
+  const previewEmoji = document.getElementById("previewEmoji");
+
+  function updateLogoPreview(src) {
+    if (src) {
+      if (previewLogoImg) {
+        previewLogoImg.src = src;
+        previewLogoImg.classList.remove("hidden");
+      }
+      if (previewEmoji) previewEmoji.classList.add("hidden");
+    } else {
+      if (previewLogoImg) {
+        previewLogoImg.src = "";
+        previewLogoImg.classList.add("hidden");
+      }
+      if (previewEmoji) previewEmoji.classList.remove("hidden");
+    }
+  }
+
+  inputGameLogoUrl?.addEventListener("input", (e) => {
+    const val = e.target.value.trim();
+    updateLogoPreview(val);
+  });
+
+  inputGameLogoFile?.addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const base64Data = evt.target.result;
+      updateLogoPreview(base64Data);
+
+      const admin_secret = document.getElementById("inputAdminSecret")?.value.trim() || "";
+      try {
+        const res = await fetch("/api/admin/upload-logo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            image_base64: base64Data,
+            filename: file.name,
+            user_id: state.userId || "",
+            admin_secret: admin_secret,
+          }),
+        });
+        if (res.ok) {
+          const d = await res.json();
+          if (d.image_url) {
+            if (inputGameLogoUrl) inputGameLogoUrl.value = d.image_url;
+            updateLogoPreview(d.image_url);
+          }
+        }
+      } catch (err) {
+        console.warn("Logo auto-upload failed, preview retained:", err);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+
   document.getElementById("formAddGame").addEventListener("submit", async (e) => {
     e.preventDefault();
     const title = document.getElementById("inputGameTitle").value.trim();
     const url = document.getElementById("inputGameUrl").value.trim();
     const icon = document.getElementById("inputGameIcon").value.trim() || "🎮";
+    const logoUrl = document.getElementById("inputGameLogoUrl")?.value.trim() || "";
     const description = document.getElementById("inputGameDesc").value.trim();
     const admin_secret = document.getElementById("inputAdminSecret").value.trim();
+
+    let finalImageUrl = logoUrl;
+    if (!finalImageUrl && previewLogoImg && previewLogoImg.src && previewLogoImg.src.startsWith("data:")) {
+      try {
+        const upRes = await fetch("/api/admin/upload-logo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            image_base64: previewLogoImg.src,
+            filename: "custom_logo.png",
+            user_id: state.userId || "",
+            admin_secret: admin_secret,
+          }),
+        });
+        if (upRes.ok) {
+          const upData = await upRes.json();
+          finalImageUrl = upData.image_url || "";
+        }
+      } catch (err) {
+        console.error("Failed to upload logo on submit:", err);
+      }
+    }
 
     const res = await fetch("/api/admin/games", {
       method: "POST",
@@ -1650,6 +1873,7 @@
         title,
         url,
         icon,
+        image_url: finalImageUrl,
         description,
         user_id: state.userId,
         admin_secret,
@@ -1659,6 +1883,9 @@
       document.getElementById("inputGameTitle").value = "";
       document.getElementById("inputGameUrl").value = "";
       document.getElementById("inputGameDesc").value = "";
+      if (inputGameLogoUrl) inputGameLogoUrl.value = "";
+      if (inputGameLogoFile) inputGameLogoFile.value = "";
+      updateLogoPreview("");
       loadAdminGamesList();
       loadCustomGames();
       alert("✅ Game successfully added to Mini App!");

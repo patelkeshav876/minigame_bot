@@ -53,6 +53,14 @@ class CustomGameRequest(BaseModel):
     url: str
     icon: str = "🎮"
     description: str = ""
+    image_url: str = ""
+    user_id: str = ""
+    admin_secret: str = ""
+
+
+class LogoUploadRequest(BaseModel):
+    image_base64: str
+    filename: str = "game_logo.png"
     user_id: str = ""
     admin_secret: str = ""
 
@@ -216,8 +224,42 @@ async def add_custom_game(req: CustomGameRequest) -> dict[str, Any]:
         url=clean_url,
         icon=req.icon or "🎮",
         description=req.description,
+        image_url=req.image_url or "",
     )
     return {"game": game}
+
+
+@app.post("/api/admin/upload-logo")
+async def upload_game_logo(req: LogoUploadRequest) -> dict[str, str]:
+    if not _is_admin(req.user_id, req.admin_secret):
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+
+    import base64
+    import re
+    from uuid import uuid4
+
+    data = req.image_base64
+    if "," in data:
+        data = data.split(",", 1)[1]
+
+    try:
+        raw_bytes = base64.b64decode(data)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid base64 image data")
+
+    clean_ext = ".png"
+    if req.filename.lower().endswith(".jpg") or req.filename.lower().endswith(".jpeg"):
+        clean_ext = ".jpg"
+    elif req.filename.lower().endswith(".webp"):
+        clean_ext = ".webp"
+
+    safe_name = f"custom_logo_{uuid4().hex[:8]}{clean_ext}"
+    dest_path = STATIC_DIR / "thumbnails" / safe_name
+    dest_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(dest_path, "wb") as f:
+        f.write(raw_bytes)
+
+    return {"image_url": f"/static/thumbnails/{safe_name}"}
 
 
 @app.delete("/api/admin/games/{game_id}")
