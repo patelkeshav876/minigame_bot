@@ -16,5 +16,6 @@ WEBAPP_URL: str = os.getenv("WEBAPP_URL", "").strip().rstrip("/")
 WEB_HOST: str = os.getenv("WEB_HOST", "0.0.0.0").strip()
 WEB_PORT: int = int(os.getenv("PORT") or os.getenv("WEB_PORT", "8000"))
 DB_PATH: Path = DATA_DIR / "minigame_bot.db"
+DATABASE_URL: str = os.getenv("DATABASE_URL", "").strip()
 ADMIN_USER_IDS: set[str] = {x.strip() for x in os.getenv("ADMIN_USER_IDS", "").split(",") if x.strip()}
 ADMIN_SECRET: str = os.getenv("ADMIN_SECRET", "admin123").strip()
