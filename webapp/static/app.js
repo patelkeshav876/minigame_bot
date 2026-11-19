@@ -1824,8 +1824,9 @@
         if (res.ok) {
           const d = await res.json();
           if (d.image_url) {
-            if (inputGameLogoUrl) inputGameLogoUrl.value = d.image_url;
-            updateLogoPreview(d.image_url);
+            const fullUrl = d.image_url.startsWith("http") ? d.image_url : (window.location.origin + d.image_url);
+            if (inputGameLogoUrl) inputGameLogoUrl.value = fullUrl;
+            updateLogoPreview(fullUrl);
           }
         }
       } catch (err) {
