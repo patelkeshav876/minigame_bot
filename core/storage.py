@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import secrets
 import sqlite3
 import threading
@@ -10,7 +11,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from config import DB_PATH
+from config import DATABASE_URL, DB_PATH
 
 RANK_TIERS = [
     (1800, "Master", "👑"),
@@ -85,8 +86,72 @@ DEFAULT_HTML5_GAMES: list[tuple[str, str, str, str, str]] = [
 ]
 
 
+class PostgresCursorWrapper:
+    def __init__(self, raw_cursor: Any) -> None:
+        self.cursor = raw_cursor
+        self.lastrowid: int | None = None
+
+    def execute(self, sql: str, params: tuple = ()) -> PostgresCursorWrapper:
+        adapted_sql = sql.replace("?", "%s")
+        adapted_sql = re.sub(r'INSERT\s+OR\s+IGNORE\s+INTO\s+game_ratings', 'INSERT INTO game_ratings', adapted_sql, flags=re.I)
+        if "ON CONFLICT" not in adapted_sql and "INSERT INTO game_ratings" in adapted_sql:
+            adapted_sql += " ON CONFLICT (user_id, game_type) DO NOTHING"
+
+        needs_returning = False
+        upper = adapted_sql.strip().upper()
+        if upper.startswith("INSERT INTO") and "RETURNING" not in upper:
+            for table in ("custom_games", "pending_deposits", "match_history", "star_payments"):
+                if f"INSERT INTO {table}" in adapted_sql or f"insert into {table}" in adapted_sql:
+                    adapted_sql += " RETURNING id"
+                    needs_returning = True
+                    break
+
+        self.cursor.execute(adapted_sql, params)
+        if needs_returning:
+            row = self.cursor.fetchone()
+            if row:
+                self.lastrowid = row["id"] if (isinstance(row, dict) or hasattr(row, "__getitem__")) else row[0]
+        return self
+
+    def fetchone(self) -> Any:
+        return self.cursor.fetchone()
+
+    def fetchall(self) -> list[Any]:
+        return self.cursor.fetchall()
+
+
+class PostgresConnectionWrapper:
+    def __init__(self, raw_conn: Any) -> None:
+        self.conn = raw_conn
+
+    def __enter__(self) -> PostgresConnectionWrapper:
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        if exc_type is None:
+            self.conn.commit()
+        else:
+            self.conn.rollback()
+        self.conn.close()
+
+    def execute(self, sql: str, params: tuple = ()) -> PostgresCursorWrapper:
+        cur = self.conn.cursor()
+        wrapper = PostgresCursorWrapper(cur)
+        return wrapper.execute(sql, params)
+
+    def executescript(self, script: str) -> None:
+        cur = self.conn.cursor()
+        cur.execute(script)
+
+    def commit(self) -> None:
+        self.conn.commit()
+
+    def close(self) -> None:
+        self.conn.close()
+
+
 class GameStorage:
-    """Thread-safe SQLite store shared by Telegram bot handlers and the Mini App API."""
+    """Thread-safe storage supporting both SQLite and PostgreSQL (Supabase)."""
 
     def __init__(self, db_path: Path | str = DB_PATH) -> None:
         self.db_path = Path(db_path)
@@ -94,13 +159,130 @@ class GameStorage:
         self._lock = threading.RLock()
         self._init_schema()
 
-    def _connect(self) -> sqlite3.Connection:
+    @property
+    def is_postgres(self) -> bool:
+        return bool(DATABASE_URL)
+
+    def _connect(self) -> Any:
+        if self.is_postgres:
+            import psycopg2
+            from psycopg2.extras import RealDictCursor
+            raw = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+            return PostgresConnectionWrapper(raw)
         conn = sqlite3.connect(self.db_path, check_same_thread=False, timeout=10.0)
         conn.row_factory = sqlite3.Row
         return conn
 
     def _init_schema(self) -> None:
         with self._lock, self._connect() as conn:
+            if self.is_postgres:
+                conn.executescript(
+                    """
+                    CREATE TABLE IF NOT EXISTS players (
+                        user_id TEXT PRIMARY KEY,
+                        username TEXT NOT NULL DEFAULT '',
+                        display_name TEXT NOT NULL DEFAULT 'Player',
+                        elo REAL NOT NULL DEFAULT 1200.0,
+                        xp INTEGER NOT NULL DEFAULT 0,
+                        coins INTEGER NOT NULL DEFAULT 1000,
+                        stars_spent INTEGER NOT NULL DEFAULT 0,
+                        wins INTEGER NOT NULL DEFAULT 0,
+                        losses INTEGER NOT NULL DEFAULT 0,
+                        draws INTEGER NOT NULL DEFAULT 0,
+                        updated_at REAL NOT NULL
+                    );
+
+                    CREATE TABLE IF NOT EXISTS game_ratings (
+                        user_id TEXT NOT NULL,
+                        game_type TEXT NOT NULL,
+                        elo REAL NOT NULL DEFAULT 1200.0,
+                        wins INTEGER NOT NULL DEFAULT 0,
+                        losses INTEGER NOT NULL DEFAULT 0,
+                        draws INTEGER NOT NULL DEFAULT 0,
+                        updated_at REAL NOT NULL,
+                        PRIMARY KEY (user_id, game_type)
+                    );
+
+                    CREATE TABLE IF NOT EXISTS match_history (
+                        id SERIAL PRIMARY KEY,
+                        match_id TEXT NOT NULL,
+                        game_type TEXT NOT NULL,
+                        mode TEXT NOT NULL,
+                        player1_id TEXT NOT NULL,
+                        player1_name TEXT NOT NULL,
+                        player2_id TEXT NOT NULL,
+                        player2_name TEXT NOT NULL,
+                        winner_id TEXT,
+                        reason TEXT NOT NULL DEFAULT '',
+                        p1_elo_delta REAL NOT NULL DEFAULT 0.0,
+                        p2_elo_delta REAL NOT NULL DEFAULT 0.0,
+                        created_at REAL NOT NULL
+                    );
+
+                    CREATE TABLE IF NOT EXISTS matches (
+                        match_id TEXT PRIMARY KEY,
+                        game_type TEXT NOT NULL,
+                        mode TEXT NOT NULL,
+                        status TEXT NOT NULL,
+                        state_json TEXT NOT NULL,
+                        winner_id TEXT,
+                        result_recorded INTEGER NOT NULL DEFAULT 0,
+                        created_at REAL NOT NULL,
+                        updated_at REAL NOT NULL
+                    );
+
+                    CREATE TABLE IF NOT EXISTS custom_games (
+                        id SERIAL PRIMARY KEY,
+                        title TEXT NOT NULL,
+                        url TEXT NOT NULL,
+                        icon TEXT NOT NULL DEFAULT '🎮',
+                        description TEXT NOT NULL DEFAULT '',
+                        image_url TEXT NOT NULL DEFAULT '',
+                        is_active INTEGER NOT NULL DEFAULT 1,
+                        created_at REAL NOT NULL
+                    );
+
+                    CREATE TABLE IF NOT EXISTS star_payments (
+                        id SERIAL PRIMARY KEY,
+                        user_id TEXT NOT NULL,
+                        charge_id TEXT NOT NULL,
+                        stars_amount INTEGER NOT NULL,
+                        coins_credited INTEGER NOT NULL,
+                        pack_id TEXT NOT NULL DEFAULT '',
+                        created_at REAL NOT NULL
+                    );
+
+                    CREATE TABLE IF NOT EXISTS app_settings (
+                        key TEXT PRIMARY KEY,
+                        value TEXT NOT NULL,
+                        updated_at REAL NOT NULL
+                    );
+
+                    CREATE TABLE IF NOT EXISTS pending_deposits (
+                        id SERIAL PRIMARY KEY,
+                        user_id TEXT NOT NULL,
+                        username TEXT NOT NULL DEFAULT '',
+                        method TEXT NOT NULL DEFAULT 'upi',
+                        pack_id TEXT NOT NULL,
+                        amount REAL NOT NULL,
+                        currency TEXT NOT NULL DEFAULT 'INR',
+                        coins_to_credit INTEGER NOT NULL,
+                        utr_ref TEXT NOT NULL,
+                        status TEXT NOT NULL DEFAULT 'pending',
+                        admin_id TEXT NOT NULL DEFAULT '',
+                        created_at REAL NOT NULL,
+                        updated_at REAL NOT NULL
+                    );
+                    """
+                )
+                count = conn.execute("SELECT COUNT(*) AS c FROM custom_games").fetchone()["c"]
+                if count == 0:
+                    self._seed_default_custom_games(conn)
+                else:
+                    self._sync_games(conn)
+                conn.commit()
+                return
+
             conn.executescript(
                 """
                 PRAGMA journal_mode=WAL;
