@@ -336,7 +336,6 @@
             <div class="arena-card-content">
               <div class="arena-card-title-row">
                 <span class="arena-card-name">Grandmaster Chess</span>
-                <span class="arena-check-indicator">✓</span>
               </div>
               <div class="arena-card-meta">Full 8x8 tactical chess with piece validation & ELO</div>
             </div>
@@ -352,7 +351,6 @@
             <div class="arena-card-content">
               <div class="arena-card-title-row">
                 <span class="arena-card-name">Connect 4 Royale</span>
-                <span class="arena-check-indicator">✓</span>
               </div>
               <div class="arena-card-meta">Drop glowing discs and connect 4 horizontally or diagonally</div>
             </div>
@@ -368,7 +366,6 @@
             <div class="arena-card-content">
               <div class="arena-card-title-row">
                 <span class="arena-card-name">XO Blitz Arena</span>
-                <span class="arena-check-indicator">✓</span>
               </div>
               <div class="arena-card-meta">Ultra-fast 3x3 tactical duels with live timeout forfeits</div>
             </div>
@@ -384,7 +381,6 @@
             <div class="arena-card-content">
               <div class="arena-card-title-row">
                 <span class="arena-card-name">Othello Reversi</span>
-                <span class="arena-check-indicator">✓</span>
               </div>
               <div class="arena-card-meta">Outflank opposing discs, trap the corners, and dominate</div>
             </div>
@@ -400,7 +396,6 @@
             <div class="arena-card-content">
               <div class="arena-card-title-row">
                 <span class="arena-card-name">Knife Master 3D</span>
-                <span class="arena-check-indicator">✓</span>
               </div>
               <div class="arena-card-meta">MPL tournament speed run • Target bosses • 3m round</div>
             </div>
@@ -416,27 +411,10 @@
             <div class="arena-card-content">
               <div class="arena-card-title-row">
                 <span class="arena-card-name">Fruit Slice Blade</span>
-                <span class="arena-check-indicator">✓</span>
               </div>
               <div class="arena-card-meta">MPL style 3-min blitz • Combos • Avoid deadly bombs</div>
             </div>
           </div>
-        </div>
-
-        <div class="battle-actions">
-          <button id="btnQuickMatch" class="btn primary full">⚡ Quick Match (Ranked PvP)</button>
-          <div class="actions-2col">
-            <button id="btnVsAi" class="btn accent-outline">🤖 Practice vs AI</button>
-            <button id="btnCreateRoom" class="btn secondary">🔗 Invite Friend</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>Join or Spectate by Room Code</h3>
-        <div class="join-row">
-          <input id="roomCodeInput" type="text" maxlength="10" placeholder="CODE (E.G. A1B2C3)" />
-          <button id="btnJoinRoom" class="btn primary">Enter</button>
         </div>
       </div>
     </section>
@@ -768,6 +746,15 @@
               <span class="aab-sub">Create a private duel room & share in chat</span>
             </div>
           </button>
+
+          <!-- Join by Room Code Section -->
+          <div class="arena-modal-join-section">
+            <div class="amj-divider"><span>OR JOIN PRIVATE ROOM</span></div>
+            <div class="arena-modal-join-row">
+              <input id="modalRoomCodeInput" type="text" maxlength="10" placeholder="ENTER ROOM CODE (E.G. A1B2)" />
+              <button id="btnModalJoinRoom" class="btn primary">Join</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -962,6 +949,31 @@
                 <i data-lucide="image" class="lucide-sm"></i> Upload Game Logo
                 <input id="inputGameLogoFile" type="file" accept="image/*" class="hidden-file-input" />
               </label>
+            </div>
+          </div>
+
+          <!-- Logo Crop & Focal Position Option for Admin -->
+          <div class="logo-focus-control">
+            <div class="lfc-header">
+              <label style="margin: 0; font-size: 0.8rem; font-weight: 700; color: var(--text);">🎯 Logo Focus / Crop Portion</label>
+              <span id="lblFocalValue" class="lfc-badge">Center (50% 50%)</span>
+            </div>
+            <div class="lfc-btn-group">
+              <button type="button" class="btn-lfc active" data-fx="50" data-fy="50">Center</button>
+              <button type="button" class="btn-lfc" data-fx="80" data-fy="50">Right (Action)</button>
+              <button type="button" class="btn-lfc" data-fx="20" data-fy="50">Left</button>
+              <button type="button" class="btn-lfc" data-fx="50" data-fy="20">Top</button>
+              <button type="button" class="btn-lfc" data-fx="50" data-fy="80">Bottom</button>
+            </div>
+            <div class="lfc-sliders-row">
+              <div class="lfc-slider-item">
+                <span class="lfc-slider-lbl">Horizontal: <b id="valFocalX">50%</b></span>
+                <input type="range" id="sliderFocalX" min="0" max="100" value="50" class="focus-slider" />
+              </div>
+              <div class="lfc-slider-item">
+                <span class="lfc-slider-lbl">Vertical: <b id="valFocalY">50%</b></span>
+                <input type="range" id="sliderFocalY" min="0" max="100" value="50" class="focus-slider" />
+              </div>
             </div>
           </div>
 

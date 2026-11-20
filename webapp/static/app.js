@@ -621,11 +621,17 @@
     }
     el.innerHTML = data.players
       .map(
-        (p, idx) => `
+        (p, idx) => {
+          const rankNum = idx + 1;
+          const badgeEl = rankNum <= 6
+            ? `<img src="/static/badges/badge_${rankNum}.png" class="lb-badge-icon" alt="#${rankNum}">`
+            : `<span style="font-weight:700;color:var(--muted);margin-right:6px;">#${rankNum}</span>`;
+          return `
       <div class="lb-row">
-        <span>#${idx + 1} ${p.tier?.icon || "🥉"} <strong>${p.display_name}</strong> (Lv${p.level || 1})</span>
+        <span>${badgeEl} ${p.tier?.icon || "🥉"} <strong>${p.display_name}</strong> (Lv${p.level || 1})</span>
         <span>${Math.round(p.elo)} ELO • ${p.wins}W/${p.losses}L</span>
-      </div>`
+      </div>`;
+        }
       )
       .join("");
   }
@@ -699,6 +705,8 @@
     document.getElementById("arenaModalThumb").src = meta.thumb;
     document.getElementById("arenaModalDesc").textContent = meta.desc;
     document.getElementById("arenaModalTimer").textContent = meta.timer;
+    const inputCode = document.getElementById("modalRoomCodeInput");
+    if (inputCode) inputCode.value = "";
     modal.classList.remove("hidden");
     haptic("medium");
   }
@@ -732,6 +740,23 @@
   document.getElementById("btnModalCreateRoom")?.addEventListener("click", () => {
     closeArenaGameModal();
     startRoomRequest({ quick_match: false });
+  });
+
+  document.getElementById("btnModalJoinRoom")?.addEventListener("click", () => {
+    const code = document.getElementById("modalRoomCodeInput")?.value.trim().toUpperCase();
+    if (!code) {
+      alert("Please enter a valid room code (e.g. A1B2)!");
+      return;
+    }
+    closeArenaGameModal();
+    joinRoom(code);
+  });
+
+  document.getElementById("modalRoomCodeInput")?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      document.getElementById("btnModalJoinRoom")?.click();
+    }
   });
 
   // Navigation
@@ -1779,10 +1804,84 @@
   const previewLogoImg = document.getElementById("previewLogoImg");
   const previewEmoji = document.getElementById("previewEmoji");
 
+  let logoFocal = { x: 50, y: 50 };
+  let originalRawLogoSrc = "";
+
+  const sliderFocalX = document.getElementById("sliderFocalX");
+  const sliderFocalY = document.getElementById("sliderFocalY");
+  const valFocalX = document.getElementById("valFocalX");
+  const valFocalY = document.getElementById("valFocalY");
+  const lblFocalValue = document.getElementById("lblFocalValue");
+
+  function setLogoFocal(x, y) {
+    logoFocal.x = Math.max(0, Math.min(100, x));
+    logoFocal.y = Math.max(0, Math.min(100, y));
+    if (sliderFocalX) sliderFocalX.value = logoFocal.x;
+    if (sliderFocalY) sliderFocalY.value = logoFocal.y;
+    if (valFocalX) valFocalX.textContent = `${logoFocal.x}%`;
+    if (valFocalY) valFocalY.textContent = `${logoFocal.y}%`;
+    if (lblFocalValue) lblFocalValue.textContent = `${logoFocal.x}% ${logoFocal.y}%`;
+    if (previewLogoImg) {
+      previewLogoImg.style.objectPosition = `${logoFocal.x}% ${logoFocal.y}%`;
+    }
+    document.querySelectorAll(".btn-lfc").forEach((btn) => {
+      const bx = parseInt(btn.dataset.fx, 10);
+      const by = parseInt(btn.dataset.fy, 10);
+      btn.classList.toggle("active", bx === logoFocal.x && by === logoFocal.y);
+    });
+  }
+
+  document.querySelectorAll(".btn-lfc").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const fx = parseInt(btn.dataset.fx, 10) || 50;
+      const fy = parseInt(btn.dataset.fy, 10) || 50;
+      setLogoFocal(fx, fy);
+    });
+  });
+
+  sliderFocalX?.addEventListener("input", (e) => {
+    setLogoFocal(parseInt(e.target.value, 10), logoFocal.y);
+  });
+  sliderFocalY?.addEventListener("input", (e) => {
+    setLogoFocal(logoFocal.x, parseInt(e.target.value, 10));
+  });
+
+  function cropImageWithFocal(imgSrc, fx, fy) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          const targetSize = 512;
+          canvas.width = targetSize;
+          canvas.height = targetSize;
+          const ctx = canvas.getContext("2d");
+
+          const srcW = img.naturalWidth || img.width;
+          const srcH = img.naturalHeight || img.height;
+          const side = Math.min(srcW, srcH);
+
+          const cropX = ((srcW - side) * fx) / 100;
+          const cropY = ((srcH - side) * fy) / 100;
+
+          ctx.drawImage(img, cropX, cropY, side, side, 0, 0, targetSize, targetSize);
+          resolve(canvas.toDataURL("image/png"));
+        } catch (e) {
+          console.warn("Canvas crop fallback:", e);
+          resolve(imgSrc);
+        }
+      };
+      img.onerror = () => resolve(imgSrc);
+      img.src = imgSrc;
+    });
+  }
+
   function updateLogoPreview(src) {
     if (src) {
       if (previewLogoImg) {
         previewLogoImg.src = src;
+        previewLogoImg.style.objectPosition = `${logoFocal.x}% ${logoFocal.y}%`;
         previewLogoImg.classList.remove("hidden");
       }
       if (previewEmoji) previewEmoji.classList.add("hidden");
@@ -1797,6 +1896,7 @@
 
   inputGameLogoUrl?.addEventListener("input", (e) => {
     const val = e.target.value.trim();
+    originalRawLogoSrc = val;
     updateLogoPreview(val);
   });
 
@@ -1807,6 +1907,7 @@
     const reader = new FileReader();
     reader.onload = async (evt) => {
       const base64Data = evt.target.result;
+      originalRawLogoSrc = base64Data;
       updateLogoPreview(base64Data);
 
       const admin_secret = document.getElementById("inputAdminSecret")?.value.trim() || "";
@@ -1826,11 +1927,10 @@
           if (d.image_url) {
             const fullUrl = d.image_url.startsWith("http") ? d.image_url : (window.location.origin + d.image_url);
             if (inputGameLogoUrl) inputGameLogoUrl.value = fullUrl;
-            updateLogoPreview(fullUrl);
           }
         }
       } catch (err) {
-        console.warn("Logo auto-upload failed, preview retained:", err);
+        console.warn("Logo auto-upload preview retained:", err);
       }
     };
     reader.readAsDataURL(file);
@@ -1846,13 +1946,15 @@
     const admin_secret = document.getElementById("inputAdminSecret").value.trim();
 
     let finalImageUrl = logoUrl;
-    if (!finalImageUrl && previewLogoImg && previewLogoImg.src && previewLogoImg.src.startsWith("data:")) {
+    const sourceImage = originalRawLogoSrc || (previewLogoImg && previewLogoImg.src ? previewLogoImg.src : "");
+    if (sourceImage && (sourceImage.startsWith("data:") || sourceImage.startsWith("blob:") || !finalImageUrl)) {
       try {
+        const croppedBase64 = await cropImageWithFocal(sourceImage, logoFocal.x, logoFocal.y);
         const upRes = await fetch("/api/admin/upload-logo", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            image_base64: previewLogoImg.src,
+            image_base64: croppedBase64,
             filename: "custom_logo.png",
             user_id: state.userId || "",
             admin_secret: admin_secret,
@@ -1860,10 +1962,10 @@
         });
         if (upRes.ok) {
           const upData = await upRes.json();
-          finalImageUrl = upData.image_url || "";
+          finalImageUrl = upData.image_url || finalImageUrl;
         }
       } catch (err) {
-        console.error("Failed to upload logo on submit:", err);
+        console.error("Failed to crop/upload logo on submit:", err);
       }
     }
 
@@ -1886,6 +1988,8 @@
       document.getElementById("inputGameDesc").value = "";
       if (inputGameLogoUrl) inputGameLogoUrl.value = "";
       if (inputGameLogoFile) inputGameLogoFile.value = "";
+      originalRawLogoSrc = "";
+      setLogoFocal(50, 50);
       updateLogoPreview("");
       loadAdminGamesList();
       loadCustomGames();
