@@ -184,6 +184,11 @@ async def index() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
 
 
+@app.get("/favicon.ico")
+async def favicon() -> FileResponse:
+    return FileResponse(STATIC_DIR / "bot_avatar.jpg", media_type="image/jpeg")
+
+
 @app.get("/api/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}

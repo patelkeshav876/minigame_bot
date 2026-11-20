@@ -796,19 +796,22 @@
     });
   });
 
-  document.getElementById("btnQuickMatch").addEventListener("click", () => startRoomRequest({ quick_match: true }));
-  document.getElementById("btnVsAi").addEventListener("click", () => startRoomRequest({ vs_ai: true }));
-  document.getElementById("btnCreateRoom").addEventListener("click", () => startRoomRequest({ quick_match: false }));
-  document.getElementById("btnJoinRoom").addEventListener("click", () => joinRoom(document.getElementById("roomCodeInput").value));
+  document.getElementById("btnQuickMatch")?.addEventListener("click", () => startRoomRequest({ quick_match: true }));
+  document.getElementById("btnVsAi")?.addEventListener("click", () => startRoomRequest({ vs_ai: true }));
+  document.getElementById("btnCreateRoom")?.addEventListener("click", () => startRoomRequest({ quick_match: false }));
+  document.getElementById("btnJoinRoom")?.addEventListener("click", () => {
+    const inp = document.getElementById("roomCodeInput");
+    if (inp) joinRoom(inp.value);
+  });
 
-  document.getElementById("btnLeaveRoom").addEventListener("click", () => {
+  document.getElementById("btnLeaveRoom")?.addEventListener("click", () => {
     if (state.ws) state.ws.close();
     if (state.clockTimer) clearInterval(state.clockTimer);
     showView(state.prevView || "home");
     refreshLiveRooms();
   });
 
-  document.getElementById("btnCopyInvite").addEventListener("click", async () => {
+  document.getElementById("btnCopyInvite")?.addEventListener("click", async () => {
     if (!state.room) return;
     const code = state.room.room_id;
     const shareUrl = state.botUsername
@@ -816,18 +819,21 @@
       : `${window.location.origin}/?room=${code}`;
     try {
       await navigator.clipboard.writeText(shareUrl);
-      document.getElementById("btnCopyInvite").textContent = "✅ Copied";
-      setTimeout(() => { document.getElementById("btnCopyInvite").textContent = "📤 Invite"; }, 1500);
+      const btn = document.getElementById("btnCopyInvite");
+      if (btn) {
+        btn.textContent = "✅ Copied";
+        setTimeout(() => { btn.textContent = "📤 Invite"; }, 1500);
+      }
     } catch (_) {
       alert(`Room Code: ${code}\nLink: ${shareUrl}`);
     }
   });
 
-  document.getElementById("btnResign").addEventListener("click", () => sendWs({ type: "resign" }));
-  document.getElementById("btnRematch").addEventListener("click", () => sendWs({ type: "rematch" }));
-  document.getElementById("btnRefreshLb").addEventListener("click", loadLeaderboard);
-  document.getElementById("btnRefreshLive").addEventListener("click", refreshLiveRooms);
-  document.getElementById("btnRefreshProfile").addEventListener("click", refreshProfileAndHistory);
+  document.getElementById("btnResign")?.addEventListener("click", () => sendWs({ type: "resign" }));
+  document.getElementById("btnRematch")?.addEventListener("click", () => sendWs({ type: "rematch" }));
+  document.getElementById("btnRefreshLb")?.addEventListener("click", loadLeaderboard);
+  document.getElementById("btnRefreshLive")?.addEventListener("click", refreshLiveRooms);
+  document.getElementById("btnRefreshProfile")?.addEventListener("click", refreshProfileAndHistory);
 
   // Theme toggle (3D Clay Pastel <-> Dark Esports)
   function applyTheme(theme) {
@@ -1955,7 +1961,7 @@
     reader.readAsDataURL(file);
   });
 
-  document.getElementById("formAddGame").addEventListener("submit", async (e) => {
+  document.getElementById("formAddGame")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const title = document.getElementById("inputGameTitle").value.trim();
     const url = document.getElementById("inputGameUrl").value.trim();
