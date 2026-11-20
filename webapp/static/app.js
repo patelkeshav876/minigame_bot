@@ -1039,33 +1039,52 @@
     });
   });
 
+  const FALLBACK_DEFAULT_GAMES = [
+    { title: "Aviator Rocket", url: "/static/games/aviator/index.html", icon: "🚀", description: "High-stakes rocket multiplier curve! Cash out before blast", image_url: "/static/banners/aviator_promo.png" },
+    { title: "Knife Master", url: "/static/games/knife_hit/index.html", icon: "🗡️", description: "Throw knives into rotating target log", image_url: "/static/thumbnails/knife_thumb.png" },
+    { title: "Fruit Slicer", url: "/static/games/fruit_slice/index.html", icon: "🍉", description: "Slice flying fruits with swipe blades", image_url: "/static/thumbnails/fruit_thumb.png" },
+    { title: "2048 Classic", url: "/static/games/2048/index.html", icon: "🔢", description: "Slide tiles to merge and reach 2048!", image_url: "/static/banners/puzzle2048_promo.png" },
+    { title: "Retro Tetris", url: "/static/games/tetris/index.html", icon: "🧩", description: "Falling tetromino block puzzle", image_url: "/static/banners/tetris_promo.png" },
+    { title: "T-Rex Desert Run", url: "/static/games/dino/index.html", icon: "🦖", description: "Endless runner cactus jumping challenge", image_url: "/static/banners/dino_promo.png" },
+    { title: "Neon Snake", url: "/static/games/snake/index.html", icon: "🐍", description: "Classic retro snake with smooth controls", image_url: "" },
+    { title: "Space Invaders", url: "/static/games/space_invaders/index.html", icon: "👾", description: "Defend galaxy from alien waves", image_url: "/static/banners/space_promo.png" },
+    { title: "Connect 4 Arena", url: "/static/games/connect4/index.html", icon: "🔴", description: "Align 4 chips in a row against AI", image_url: "/static/thumbnails/connect4_thumb.png" },
+    { title: "Neon Tic-Tac-Toe", url: "/static/games/tictactoe/index.html", icon: "❌", description: "Glowing neon 3x3 XO against unbeatable AI", image_url: "/static/thumbnails/xo_thumb.png" },
+  ];
+
   async function loadCustomGames() {
     const el = document.getElementById("customGamesGrid");
     try {
-      const res = await fetch("/api/custom-games");
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 3500);
+      const res = await fetch("/api/custom-games", { signal: controller.signal });
+      clearTimeout(timer);
       const data = await res.json();
-      state.allCustomGames = data.games || [];
-      renderFilteredGames();
-      renderContinuePlayingCarousel();
-      renderTrendingGamesList();
-
-      if (window.lucide) {
-        setTimeout(() => { window.lucide.createIcons(); }, 20);
-      }
-
-      // Check if user launched via Telegram bot /aviator or /flipster command
-      const urlParams = new URLSearchParams(window.location.search);
-      const targetGame = urlParams.get("game");
-      if (targetGame === "aviator" || targetGame === "flipster") {
-        const aviator = state.allCustomGames.find(g => g.title.toLowerCase().includes("aviator") || g.title.toLowerCase().includes("flipster"));
-        if (aviator) {
-          launchWebGame(aviator.title, aviator.url, aviator.icon);
-        } else {
-          launchWebGame("Aviator Rocket", "/static/games/aviator/index.html", "🚀");
-        }
-      }
+      state.allCustomGames = data.games && data.games.length ? data.games : FALLBACK_DEFAULT_GAMES;
     } catch (_) {
-      if (el) el.textContent = "Could not load web games.";
+      if (!state.allCustomGames || !state.allCustomGames.length) {
+        state.allCustomGames = FALLBACK_DEFAULT_GAMES;
+      }
+    }
+
+    renderFilteredGames();
+    renderContinuePlayingCarousel();
+    renderTrendingGamesList();
+
+    if (window.lucide) {
+      setTimeout(() => { window.lucide.createIcons(); }, 20);
+    }
+
+    // Check if user launched via Telegram bot /aviator or /flipster command
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetGame = urlParams.get("game");
+    if (targetGame === "aviator" || targetGame === "flipster") {
+      const aviator = (state.allCustomGames || []).find(g => g.title.toLowerCase().includes("aviator") || g.title.toLowerCase().includes("flipster"));
+      if (aviator) {
+        launchWebGame(aviator.title, aviator.url, aviator.icon);
+      } else {
+        launchWebGame("Aviator Rocket", "/static/games/aviator/index.html", "🚀");
+      }
     }
   }
 

@@ -198,7 +198,7 @@ def _parse_postgres_kwargs(url: str) -> dict[str, Any]:
         "password": raw_password,
         "dbname": dbname,
         "sslmode": sslmode,
-        "connect_timeout": 10,
+        "connect_timeout": 3,
     }
 
 
