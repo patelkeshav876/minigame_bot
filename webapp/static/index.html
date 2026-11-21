@@ -776,6 +776,213 @@
       <iframe id="customGameIframe" src="about:blank" allowfullscreen allow="autoplay; fullscreen; gamepad"></iframe>
     </section>
 
+    <!-- ==================== 8. GAME STUDIO & ADMIN MANAGEMENT PAGE ==================== -->
+    <section id="view-add-game" class="view">
+      <div class="studio-page-header">
+        <button class="btn-page-back" id="btnBackFromStudio" title="Back to Arcade">
+          <i data-lucide="arrow-left" class="lucide-sm"></i> Back
+        </button>
+        <div class="studio-header-titles">
+          <h2 class="studio-page-title">⚙️ Game Studio & Promos</h2>
+          <p class="studio-page-subtitle">Add games, customize logos, and edit sliding hero banners</p>
+        </div>
+      </div>
+
+      <!-- Studio Navigation Tabs -->
+      <div class="studio-tabs-row">
+        <button class="studio-tab-btn active" id="tabBtnAddGame" data-tab="tabAddGame">
+          <i data-lucide="plus-circle" class="lucide-xs"></i> ➕ Add & Manage Games
+        </button>
+        <button class="studio-tab-btn" id="tabBtnPromoBanners" data-tab="tabPromoBanners">
+          <i data-lucide="sparkles" class="lucide-xs"></i> 🎠 Sliding Window / Banners
+        </button>
+      </div>
+
+      <!-- TAB 1: ADD & EDIT GAME -->
+      <div class="studio-tab-content active" id="tabContentAddGame">
+        <div class="card studio-form-card">
+          <div class="studio-section-header">
+            <div>
+              <h3 class="studio-section-title" id="adminGameFormTitle">➕ Add New Game</h3>
+              <p class="studio-section-sub">Publish a custom HTML5 or WebGL game to the arcade catalog</p>
+            </div>
+            <button type="button" id="btnCancelEditGame" class="btn small outline hidden">↩️ Cancel Edit</button>
+          </div>
+          <form id="formAddGame" class="modal-form">
+            <label>Game Title</label>
+            <input id="inputGameTitle" type="text" placeholder="e.g. Space Shooter" required />
+            
+            <label>Game Website Link (HTTPS or /static/...)</label>
+            <input id="inputGameUrl" type="text" placeholder="https://yourgame.com or /static/games/..." required />
+            
+            <label>Game Profile Picture / Logo</label>
+            <div class="logo-upload-group">
+              <div class="logo-preview-box" id="logoPreviewBox">
+                <span id="previewEmoji" class="preview-emoji">🎮</span>
+                <img id="previewLogoImg" src="" alt="Preview" class="preview-logo-img hidden" />
+              </div>
+              <div class="logo-inputs-col">
+                <input id="inputGameLogoUrl" type="text" placeholder="Logo Image URL (https://... or upload)" />
+                <label class="btn-file-upload">
+                  <i data-lucide="image" class="lucide-sm"></i> Upload Game Logo
+                  <input id="inputGameLogoFile" type="file" accept="image/*" class="hidden-file-input" />
+                </label>
+              </div>
+            </div>
+
+            <!-- Logo Crop & Focal Position Option for Admin -->
+            <div class="logo-focus-control">
+              <div class="lfc-header">
+                <label style="margin: 0; font-size: 0.8rem; font-weight: 700; color: var(--text);">🎯 Logo Focus & Zoom Crop</label>
+                <span id="lblFocalValue" class="lfc-badge">Center (50% 50%)</span>
+              </div>
+              <div class="lfc-btn-group">
+                <button type="button" class="btn-lfc active" data-fx="50" data-fy="50">Center</button>
+                <button type="button" class="btn-lfc" data-fx="80" data-fy="50">Right (Action)</button>
+                <button type="button" class="btn-lfc" data-fx="20" data-fy="50">Left</button>
+                <button type="button" class="btn-lfc" data-fx="50" data-fy="20">Top</button>
+                <button type="button" class="btn-lfc" data-fx="50" data-fy="80">Bottom</button>
+              </div>
+              <div class="lfc-sliders-row">
+                <div class="lfc-slider-item">
+                  <span class="lfc-slider-lbl">Horizontal: <b id="valFocalX">50%</b></span>
+                  <input type="range" id="sliderFocalX" min="0" max="100" value="50" class="focus-slider" />
+                </div>
+                <div class="lfc-slider-item">
+                  <span class="lfc-slider-lbl">Vertical: <b id="valFocalY">50%</b></span>
+                  <input type="range" id="sliderFocalY" min="0" max="100" value="50" class="focus-slider" />
+                </div>
+                <div class="lfc-slider-item">
+                  <span class="lfc-slider-lbl">Zoom / Crop Size: <b id="valFocalZoom">1.0x</b></span>
+                  <input type="range" id="sliderFocalZoom" min="100" max="250" value="100" class="focus-slider" />
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div>
+                <label>Icon / Fallback Emoji</label>
+                <input id="inputGameIcon" type="text" placeholder="🚀" maxlength="4" value="🎮" />
+              </div>
+              <div>
+                <label>Admin Secret (optional)</label>
+                <input id="inputAdminSecret" type="password" placeholder="admin secret" />
+              </div>
+            </div>
+
+            <label>Short Description</label>
+            <input id="inputGameDesc" type="text" placeholder="e.g. Fast-paced arcade shooter" />
+
+            <button type="submit" id="btnSubmitAddGame" class="btn primary full">🚀 Add Game to Mini App</button>
+          </form>
+        </div>
+
+        <div class="card studio-list-card">
+          <h3 class="studio-section-title">🎮 Arcade Game Catalog</h3>
+          <p class="studio-section-sub">Edit details, replace logos, or remove games</p>
+          <div id="adminGamesList" class="admin-games-list">Loading...</div>
+        </div>
+      </div>
+
+      <!-- TAB 2: SLIDING WINDOW (HERO PROMO BANNERS) -->
+      <div class="studio-tab-content hidden" id="tabContentPromoBanners">
+        <div class="card studio-form-card">
+          <div class="studio-section-header">
+            <div>
+              <h3 class="studio-section-title" id="bannerFormTitle">✨ Customize Sliding Window Banner</h3>
+              <p class="studio-section-sub">Promote newly built games on the home screen carousel with custom titles, badges, and artwork</p>
+            </div>
+            <button type="button" id="btnCancelEditBanner" class="btn small outline hidden">↩️ Cancel Edit</button>
+          </div>
+          
+          <form id="formPromoBanner" class="modal-form">
+            <input type="hidden" id="editBannerId" value="" />
+            
+            <label>Select Game to Promote</label>
+            <select id="bannerSelectGame" class="studio-select">
+              <option value="">-- Choose from Arcade Catalog (Auto-fills) --</option>
+            </select>
+            <span class="field-hint" style="font-size:0.75rem; color:#94a3b8; margin-top:-6px; margin-bottom:8px; display:block;">
+              💡 Selecting a game auto-fills title, launch URL, icon, and latest game logo!
+            </span>
+
+            <div class="form-row-2">
+              <div>
+                <label>Banner Big Title *</label>
+                <input id="bannerTitle" type="text" placeholder="e.g. CYBER T-REX RUN" required />
+              </div>
+              <div>
+                <label>Card Color Glow Theme</label>
+                <select id="bannerTheme" class="studio-select">
+                  <option value="slide-aviator">Red High Stakes Glow</option>
+                  <option value="slide-speedway">Blue Speedway Glow</option>
+                  <option value="slide-invaders">Purple Sci-Fi Glow</option>
+                  <option value="slide-tetris">Green Retro Glow</option>
+                  <option value="slide-gold">Gold Tournament Glow</option>
+                  <option value="slide-cyan">Cyan Neon Glow</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div>
+                <label>Primary Badge</label>
+                <input id="bannerBadge" type="text" placeholder="e.g. 🔥 NEW RELEASE or ⚡ TOP SPEED" />
+              </div>
+              <div>
+                <label>Secondary Badge</label>
+                <input id="bannerBadge2" type="text" placeholder="e.g. ● 3D WEBGL or ● RANKED" />
+              </div>
+            </div>
+
+            <label>Description / Hook</label>
+            <input id="bannerDesc" type="text" placeholder="e.g. Sprint across the neon dunes and dodge cyber obstacles!" />
+
+            <label>Banner Image / Visual Artwork</label>
+            <div class="banner-image-preview-row">
+              <div class="banner-img-thumb-wrap" id="bannerImgThumbWrap">
+                <img id="bannerImgPreview" src="/static/banners/aviator_promo.png" alt="Preview" />
+              </div>
+              <div class="banner-img-inputs">
+                <input type="text" id="inputBannerImageUrl" placeholder="Banner Image URL (/static/banners/... or upload)" />
+                <label class="btn-file-upload">
+                  <i data-lucide="image" class="lucide-sm"></i> Upload Custom Banner Art
+                  <input type="file" id="inputBannerFile" accept="image/*" class="hidden-file-input" />
+                </label>
+                <span class="field-hint" style="font-size:0.73rem; color:#94a3b8; margin-top:3px; display:block;">
+                  💡 Leave blank to use the game's latest logo automatically!
+                </span>
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div>
+                <label>Launch Game URL *</label>
+                <input id="bannerGameUrl" type="text" placeholder="/static/games/dino/index.html" required />
+              </div>
+              <div>
+                <label>Game Title / CTA Label</label>
+                <input id="bannerGameTitle" type="text" placeholder="Play Cyber Dino" />
+              </div>
+            </div>
+
+            <button type="submit" id="btnSubmitBanner" class="btn primary full">💾 Save Sliding Window Banner</button>
+          </form>
+        </div>
+
+        <div class="card studio-list-card">
+          <div class="studio-section-header">
+            <div>
+              <h3 class="studio-section-title">🎠 Active Sliding Window Banners</h3>
+              <p class="studio-section-sub">These slides rotate automatically on the home screen</p>
+            </div>
+            <button type="button" id="btnNewBanner" class="btn small primary">+ New Banner</button>
+          </div>
+          <div id="adminBannersList" class="admin-banners-list">Loading banners...</div>
+        </div>
+      </div>
+    </section>
+
     <!-- ==================== ARENA MATCH OPTIONS POP-UP MODAL ==================== -->
     <div id="modalArenaMatchOptions" class="modal hidden">
       <div class="modal-card arena-options-modal-card">
@@ -1001,88 +1208,6 @@
 
     <!-- FULLSCREEN CONFETTI CANVAS -->
     <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
-
-    <!-- ADMIN MODAL: MANAGE / ADD WEB GAMES -->
-    <div id="modalAddGame" class="modal hidden">
-      <div class="modal-card">
-        <div class="modal-header">
-          <h3 id="adminModalTitle">⚙️ Manage Web Games</h3>
-          <button id="btnCloseModal" class="btn small">✖</button>
-        </div>
-        <button type="button" id="btnCancelEditGame" class="btn small outline hidden" style="margin-bottom: 10px; width: 100%;">↩️ Switch Back to Add New Game</button>
-        <form id="formAddGame" class="modal-form">
-          <label>Game Title</label>
-          <input id="inputGameTitle" type="text" placeholder="e.g. Space Shooter" required />
-          
-          <label>Game Website Link (HTTPS or /static/...)</label>
-          <input id="inputGameUrl" type="text" placeholder="https://yourgame.com or /static/games/..." required />
-          
-          <label>Game Profile Picture / Logo</label>
-          <div class="logo-upload-group">
-            <div class="logo-preview-box" id="logoPreviewBox">
-              <span id="previewEmoji" class="preview-emoji">🎮</span>
-              <img id="previewLogoImg" src="" alt="Preview" class="preview-logo-img hidden" />
-            </div>
-            <div class="logo-inputs-col">
-              <input id="inputGameLogoUrl" type="text" placeholder="Logo Image URL (https://... or upload)" />
-              <label class="btn-file-upload">
-                <i data-lucide="image" class="lucide-sm"></i> Upload Game Logo
-                <input id="inputGameLogoFile" type="file" accept="image/*" class="hidden-file-input" />
-              </label>
-            </div>
-          </div>
-
-          <!-- Logo Crop & Focal Position Option for Admin -->
-          <div class="logo-focus-control">
-            <div class="lfc-header">
-              <label style="margin: 0; font-size: 0.8rem; font-weight: 700; color: var(--text);">🎯 Logo Focus & Zoom Crop</label>
-              <span id="lblFocalValue" class="lfc-badge">Center (50% 50%)</span>
-            </div>
-            <div class="lfc-btn-group">
-              <button type="button" class="btn-lfc active" data-fx="50" data-fy="50">Center</button>
-              <button type="button" class="btn-lfc" data-fx="80" data-fy="50">Right (Action)</button>
-              <button type="button" class="btn-lfc" data-fx="20" data-fy="50">Left</button>
-              <button type="button" class="btn-lfc" data-fx="50" data-fy="20">Top</button>
-              <button type="button" class="btn-lfc" data-fx="50" data-fy="80">Bottom</button>
-            </div>
-            <div class="lfc-sliders-row">
-              <div class="lfc-slider-item">
-                <span class="lfc-slider-lbl">Horizontal: <b id="valFocalX">50%</b></span>
-                <input type="range" id="sliderFocalX" min="0" max="100" value="50" class="focus-slider" />
-              </div>
-              <div class="lfc-slider-item">
-                <span class="lfc-slider-lbl">Vertical: <b id="valFocalY">50%</b></span>
-                <input type="range" id="sliderFocalY" min="0" max="100" value="50" class="focus-slider" />
-              </div>
-              <div class="lfc-slider-item">
-                <span class="lfc-slider-lbl">Zoom / Crop Size: <b id="valFocalZoom">1.0x</b></span>
-                <input type="range" id="sliderFocalZoom" min="100" max="250" value="100" class="focus-slider" />
-              </div>
-            </div>
-          </div>
-
-          <div class="form-row-2">
-            <div>
-              <label>Icon / Fallback Emoji</label>
-              <input id="inputGameIcon" type="text" placeholder="🚀" maxlength="4" value="🎮" />
-            </div>
-            <div>
-              <label>Admin Secret (optional)</label>
-              <input id="inputAdminSecret" type="password" placeholder="admin secret" />
-            </div>
-          </div>
-
-          <label>Short Description</label>
-          <input id="inputGameDesc" type="text" placeholder="e.g. Fast-paced arcade shooter" />
-
-          <button type="submit" id="btnSubmitAddGame" class="btn primary full">🚀 Add Game to Mini App</button>
-        </form>
-
-        <div class="modal-divider"></div>
-        <h4>Existing Web Games (Edit Logo / Remove)</h4>
-        <div id="adminGamesList" class="admin-games-list">Loading...</div>
-      </div>
-    </div>
 
     <!-- DOCKED BOTTOM NAVIGATION WITH COMMUNITY TAB -->
     <nav class="bottom-nav" id="bottomNav">

@@ -48,15 +48,19 @@
     profile: document.getElementById("view-profile"),
     community: document.getElementById("view-community"),
     player: document.getElementById("view-player"),
+    addGame: document.getElementById("view-add-game"),
   };
 
   function showView(name) {
+    if (name !== "addGame" && name !== "player" && name !== "match") {
+      state.prevView = name;
+    }
     Object.entries(views).forEach(([k, el]) => {
       if (el) el.classList.toggle("active", k === name);
     });
     navItems.forEach((n) => n.classList.toggle("active", n.dataset.view === name));
     
-    const isFullscreen = name === "match" || name === "player";
+    const isFullscreen = name === "match" || name === "player" || name === "addGame";
     document.getElementById("bottomNav")?.classList.toggle("hidden", isFullscreen);
     document.querySelector(".topbar")?.classList.toggle("hidden", isFullscreen);
 
@@ -1631,12 +1635,13 @@
     exitGameToHome();
   });
 
-  // Hero Sliding Window Carousel Control
+  // Hero Sliding Window Carousel Control (Dynamic with Admin Manager)
   let heroCurrentSlide = 0;
-  const heroTotalSlides = 4;
+  let heroTotalSlides = 1;
   let heroAutoSlideInterval = null;
 
   function setHeroSlide(idx) {
+    if (heroTotalSlides <= 0) return;
     heroCurrentSlide = (idx + heroTotalSlides) % heroTotalSlides;
     const wrapper = document.getElementById("heroSlidesWrapper");
     if (wrapper) {
@@ -1677,38 +1682,105 @@
 
   function startHeroAutoSlide() {
     if (heroAutoSlideInterval) clearInterval(heroAutoSlideInterval);
+    if (heroTotalSlides <= 1) return;
     heroAutoSlideInterval = setInterval(() => {
       setHeroSlide(heroCurrentSlide + 1);
     }, 4500);
   }
 
-  document.querySelectorAll(".carousel-dot").forEach((dot) => {
-    dot.addEventListener("click", () => {
-      haptic("light");
-      const idx = parseInt(dot.dataset.index, 10);
-      setHeroSlide(idx);
-      startHeroAutoSlide();
-    });
-  });
-  startHeroAutoSlide();
+  async function loadHeroCarouselBanners() {
+    const wrapper = document.getElementById("heroSlidesWrapper");
+    const dotsWrap = document.querySelector(".carousel-nav-dots");
+    if (!wrapper) return;
 
-  // Hero Play buttons for each slide
-  document.getElementById("btnPlayAviatorHero")?.addEventListener("click", () => {
-    haptic("heavy");
-    launchWebGame("Aviator Rocket", "/static/games/aviator/index.html", "🚀");
-  });
-  document.getElementById("btnPlaySpeedwayHero")?.addEventListener("click", () => {
-    haptic("heavy");
-    launchWebGame("T-Rex Desert Run", "/static/games/dino/index.html", "🦖");
-  });
-  document.getElementById("btnPlayInvadersHero")?.addEventListener("click", () => {
-    haptic("heavy");
-    launchWebGame("Space Invaders", "/static/games/space_invaders/index.html", "👾");
-  });
-  document.getElementById("btnPlayTetrisHero")?.addEventListener("click", () => {
-    haptic("heavy");
-    launchWebGame("Retro Tetris", "/static/games/tetris/index.html", "🧩");
-  });
+    try {
+      const res = await fetch("/api/promo-banners");
+      if (!res.ok) return;
+      const data = await res.json();
+      const banners = (data.banners && data.banners.length) ? data.banners : [];
+      if (!banners.length) return;
+
+      heroTotalSlides = banners.length;
+      wrapper.innerHTML = "";
+      if (dotsWrap) dotsWrap.innerHTML = "";
+
+      banners.forEach((b, idx) => {
+        const theme = b.bg_theme || "slide-aviator";
+        let glowClass = "red-glow";
+        let ctaClass = "red-cta";
+        if (theme.includes("speedway") || theme.includes("blue")) { glowClass = "blue-glow"; ctaClass = "blue-cta"; }
+        else if (theme.includes("invaders") || theme.includes("purple")) { glowClass = "purple-glow"; ctaClass = "purple-cta"; }
+        else if (theme.includes("tetris") || theme.includes("green")) { glowClass = "green-glow"; ctaClass = "green-cta"; }
+        else if (theme.includes("gold")) { glowClass = "gold-glow"; ctaClass = "gold-cta"; }
+        else if (theme.includes("cyan")) { glowClass = "cyan-glow"; ctaClass = "cyan-cta"; }
+
+        // Live artwork: use banner's image_url, or fallback to game_current_image
+        const artSrc = b.image_url || b.game_current_image || "/static/banners/welcome_banner.jpg";
+
+        const slide = document.createElement("div");
+        slide.className = `hero-slide ${idx === 0 ? "active" : ""}`;
+        slide.dataset.slide = idx;
+        slide.innerHTML = `
+          <div class="hero-feature-card ${theme}">
+            <div class="hero-feature-glow ${glowClass}"></div>
+            <div class="hero-feature-body">
+              <div class="hero-feature-content">
+                <div class="hero-badge-row">
+                  ${b.badge ? `<span class="hero-badge featured">${escapeHtml(b.badge)}</span>` : ""}
+                  ${b.badge2 ? `<span class="hero-badge live">${escapeHtml(b.badge2)}</span>` : ""}
+                </div>
+                <div class="hero-feature-title">${escapeHtml(b.title)}</div>
+                <div class="hero-feature-desc">${escapeHtml(b.description || "")}</div>
+                <div class="hero-feature-cta-row">
+                  <button class="btn-hero-play ${ctaClass}" data-url="${escapeHtml(b.game_url)}" data-title="${escapeHtml(b.game_title || b.title)}" data-icon="${escapeHtml(b.game_icon || "🎮")}">
+                    <i data-lucide="play" class="btn-icon-xs"></i> Play ${escapeHtml(b.game_title || "Now")}
+                  </button>
+                </div>
+              </div>
+              <div class="hero-feature-visual">
+                <img src="${artSrc}" alt="${escapeHtml(b.title)}" class="hero-slide-art" onerror="this.src='/static/banners/welcome_banner.jpg'" />
+              </div>
+            </div>
+          </div>
+        `;
+
+        wrapper.appendChild(slide);
+
+        // Indicator dot
+        if (dotsWrap) {
+          const dot = document.createElement("div");
+          dot.className = `carousel-dot ${idx === 0 ? "active" : ""}`;
+          dot.dataset.index = idx;
+          dot.addEventListener("click", () => {
+            haptic("light");
+            setHeroSlide(idx);
+            startHeroAutoSlide();
+          });
+          dotsWrap.appendChild(dot);
+        }
+      });
+
+      // Attach play click listeners
+      wrapper.querySelectorAll(".btn-hero-play").forEach(btn => {
+        btn.addEventListener("click", () => {
+          haptic("heavy");
+          launchWebGame(btn.dataset.title, btn.dataset.url, btn.dataset.icon);
+        });
+      });
+
+      if (window.lucide) {
+        window.lucide.createIcons();
+      }
+
+      setHeroSlide(0);
+      startHeroAutoSlide();
+    } catch (e) {
+      console.warn("Failed to load promo banners:", e);
+    }
+  }
+
+  // Initial load of sliding window banners
+  loadHeroCarouselBanners();
 
   document.getElementById("btnPlayQuest")?.addEventListener("click", () => {
     haptic("medium");
@@ -2275,44 +2347,50 @@
     exitGameToHome();
   });
 
-  const modalAddGame = document.getElementById("modalAddGame");
   const btnOpenAddGameModal = document.getElementById("btnOpenAddGameModal");
   const btnNavAddGame = document.getElementById("btnNavAddGame");
   const btnShortcutAddGame = document.getElementById("btnShortcutAddGame");
-  const btnCloseModal = document.getElementById("btnCloseModal");
 
-  function closeModal() {
-    if (modalAddGame) modalAddGame.classList.add("hidden");
-  }
-
-  function openAddGameModal() {
+  function openAddGameStudio() {
     if (!state.isAdmin) {
-      if (typeof showToast === "function") showToast("Admin access required to manage games");
-      else alert("Admin access required to manage games");
+      if (typeof showToast === "function") showToast("Admin access required to open Game Studio");
+      else alert("Admin access required to open Game Studio");
       return;
     }
-    modalAddGame?.classList.remove("hidden");
+    showView("addGame");
     loadAdminGamesList();
+    loadAdminBannersList();
+    populateBannerGameSelect();
   }
 
-  btnOpenAddGameModal?.addEventListener("click", openAddGameModal);
-  btnNavAddGame?.addEventListener("click", openAddGameModal);
-  btnShortcutAddGame?.addEventListener("click", openAddGameModal);
+  btnOpenAddGameModal?.addEventListener("click", openAddGameStudio);
+  btnNavAddGame?.addEventListener("click", openAddGameStudio);
+  btnShortcutAddGame?.addEventListener("click", openAddGameStudio);
 
-  btnCloseModal?.addEventListener("click", closeModal);
-
-  // Close when clicking outside the modal content (on the backdrop)
-  modalAddGame?.addEventListener("click", (e) => {
-    if (e.target === modalAddGame) {
-      closeModal();
-    }
+  document.getElementById("btnBackFromStudio")?.addEventListener("click", () => {
+    showView(state.prevView || "home");
   });
 
-  // Close on Escape key press
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      closeModal();
-    }
+  // Studio tabs switching (Add/Manage Games vs Sliding Window Banners)
+  const tabBtnAddGame = document.getElementById("tabBtnAddGame");
+  const tabBtnPromoBanners = document.getElementById("tabBtnPromoBanners");
+  const tabContentAddGame = document.getElementById("tabContentAddGame");
+  const tabContentPromoBanners = document.getElementById("tabContentPromoBanners");
+
+  tabBtnAddGame?.addEventListener("click", () => {
+    tabBtnAddGame.classList.add("active");
+    tabBtnPromoBanners?.classList.remove("active");
+    tabContentAddGame?.classList.remove("hidden");
+    tabContentPromoBanners?.classList.add("hidden");
+  });
+
+  tabBtnPromoBanners?.addEventListener("click", () => {
+    tabBtnPromoBanners.classList.add("active");
+    tabBtnAddGame?.classList.remove("active");
+    tabContentPromoBanners?.classList.remove("hidden");
+    tabContentAddGame?.classList.add("hidden");
+    loadAdminBannersList();
+    populateBannerGameSelect();
   });
 
   const inputGameLogoFile = document.getElementById("inputGameLogoFile");
@@ -2525,10 +2603,290 @@
       resetAdminGameForm();
       loadAdminGamesList();
       loadCustomGames();
+      loadHeroCarouselBanners(); // Live update home carousel with updated game logo
+      populateBannerGameSelect();
       alert(isEdit ? "✅ Game logo & details successfully updated!" : "✅ Game successfully added to Mini App!");
     } else {
       const err = await res.json();
       alert(`Error: ${err.detail || "Could not save game."}`);
+    }
+  });
+
+  // --- Sliding Window Banner Studio (Admin) ---
+  function populateBannerGameSelect() {
+    const sel = document.getElementById("bannerSelectGame");
+    if (!sel) return;
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="">-- Choose from Arcade Catalog (Auto-fills) --</option>';
+
+    // Collect all games from state.arcadeGames and customGames
+    const allGames = [...DEFAULT_ARCADE_GAMES, ...(state.customGames || [])];
+    const seen = new Set();
+    allGames.forEach((g) => {
+      const u = (g.url || "").trim();
+      if (!u || seen.has(u)) return;
+      seen.add(u);
+      const opt = document.createElement("option");
+      opt.value = u;
+      opt.textContent = `${g.icon || "🎮"} ${g.title}`;
+      opt.dataset.title = g.title;
+      opt.dataset.icon = g.icon || "🎮";
+      opt.dataset.image = g.image_url || "";
+      opt.dataset.desc = g.description || "";
+      sel.appendChild(opt);
+    });
+    if (currentVal) sel.value = currentVal;
+  }
+
+  document.getElementById("bannerSelectGame")?.addEventListener("change", (e) => {
+    const sel = e.target;
+    const opt = sel.options[sel.selectedIndex];
+    if (!opt || !opt.value) return;
+
+    const bTitle = document.getElementById("bannerTitle");
+    if (bTitle) bTitle.value = (opt.dataset.title || "").toUpperCase();
+
+    const gUrl = document.getElementById("bannerGameUrl");
+    if (gUrl) gUrl.value = opt.value;
+
+    const gTitle = document.getElementById("bannerGameTitle");
+    if (gTitle) gTitle.value = opt.dataset.title || "";
+
+    const bDesc = document.getElementById("bannerDesc");
+    if (bDesc && opt.dataset.desc) bDesc.value = opt.dataset.desc;
+
+    const imgUrl = opt.dataset.image;
+    if (imgUrl) {
+      const inputImg = document.getElementById("inputBannerImageUrl");
+      if (inputImg) inputImg.value = imgUrl;
+      const preview = document.getElementById("bannerImgPreview");
+      if (preview) preview.src = imgUrl;
+    }
+  });
+
+  const inputBannerFile = document.getElementById("inputBannerFile");
+  const inputBannerImageUrl = document.getElementById("inputBannerImageUrl");
+  const bannerImgPreview = document.getElementById("bannerImgPreview");
+
+  inputBannerFile?.addEventListener("change", (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const b64 = ev.target.result;
+      if (inputBannerImageUrl) inputBannerImageUrl.value = b64;
+      if (bannerImgPreview) bannerImgPreview.src = b64;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  inputBannerImageUrl?.addEventListener("input", (e) => {
+    const val = e.target.value.trim();
+    if (bannerImgPreview) {
+      bannerImgPreview.src = val || "/static/banners/welcome_banner.jpg";
+    }
+  });
+
+  function resetBannerForm() {
+    const editId = document.getElementById("editBannerId");
+    if (editId) editId.value = "";
+    const bTitle = document.getElementById("bannerTitle");
+    if (bTitle) bTitle.value = "";
+    const bBadge = document.getElementById("bannerBadge");
+    if (bBadge) bBadge.value = "";
+    const bBadge2 = document.getElementById("bannerBadge2");
+    if (bBadge2) bBadge2.value = "";
+    const bDesc = document.getElementById("bannerDesc");
+    if (bDesc) bDesc.value = "";
+    if (inputBannerImageUrl) inputBannerImageUrl.value = "";
+    const bGUrl = document.getElementById("bannerGameUrl");
+    if (bGUrl) bGUrl.value = "";
+    const bGTitle = document.getElementById("bannerGameTitle");
+    if (bGTitle) bGTitle.value = "";
+    const bTheme = document.getElementById("bannerTheme");
+    if (bTheme) bTheme.value = "slide-aviator";
+    if (inputBannerFile) inputBannerFile.value = "";
+    if (bannerImgPreview) bannerImgPreview.src = "/static/banners/welcome_banner.jpg";
+    const bannerSelectGame = document.getElementById("bannerSelectGame");
+    if (bannerSelectGame) bannerSelectGame.value = "";
+    const titleEl = document.getElementById("bannerFormTitle");
+    if (titleEl) titleEl.textContent = "✨ Customize Sliding Window Banner";
+    const submitBtn = document.getElementById("btnSubmitBanner");
+    if (submitBtn) submitBtn.textContent = "💾 Save Sliding Window Banner";
+    document.getElementById("btnCancelEditBanner")?.classList.add("hidden");
+  }
+
+  function editBanner(b) {
+    const editId = document.getElementById("editBannerId");
+    if (editId) editId.value = b.id;
+    const bTitle = document.getElementById("bannerTitle");
+    if (bTitle) bTitle.value = b.title || "";
+    const bBadge = document.getElementById("bannerBadge");
+    if (bBadge) bBadge.value = b.badge || "";
+    const bBadge2 = document.getElementById("bannerBadge2");
+    if (bBadge2) bBadge2.value = b.badge2 || "";
+    const bDesc = document.getElementById("bannerDesc");
+    if (bDesc) bDesc.value = b.description || "";
+    if (inputBannerImageUrl) inputBannerImageUrl.value = b.image_url || "";
+    const bGUrl = document.getElementById("bannerGameUrl");
+    if (bGUrl) bGUrl.value = b.game_url || "";
+    const bGTitle = document.getElementById("bannerGameTitle");
+    if (bGTitle) bGTitle.value = b.game_title || "";
+    const bTheme = document.getElementById("bannerTheme");
+    if (bTheme) bTheme.value = b.bg_theme || "slide-aviator";
+    if (bannerImgPreview) {
+      bannerImgPreview.src = b.image_url || b.game_current_image || "/static/banners/welcome_banner.jpg";
+    }
+
+    const titleEl = document.getElementById("bannerFormTitle");
+    if (titleEl) titleEl.textContent = `✏️ Edit Banner: ${b.title}`;
+    const submitBtn = document.getElementById("btnSubmitBanner");
+    if (submitBtn) submitBtn.textContent = "💾 Update Sliding Banner";
+    document.getElementById("btnCancelEditBanner")?.classList.remove("hidden");
+
+    // Scroll smoothly to banner form
+    document.getElementById("tabContentPromoBanners")?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  async function deleteBanner(id) {
+    if (!confirm("Are you sure you want to remove this slide from the home carousel?")) return;
+    const secret = document.getElementById("inputAdminSecret")?.value.trim() || "";
+    try {
+      const res = await fetch(`/api/admin/promo-banners/${id}?user_id=${encodeURIComponent(state.userId)}&admin_secret=${encodeURIComponent(secret)}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        loadAdminBannersList();
+        loadHeroCarouselBanners();
+        if (typeof showToast === "function") showToast("Banner deleted from sliding window");
+      } else {
+        alert("Failed to delete banner. Check admin permissions.");
+      }
+    } catch (e) {
+      alert("Error deleting banner: " + e.message);
+    }
+  }
+
+  document.getElementById("btnNewBanner")?.addEventListener("click", resetBannerForm);
+  document.getElementById("btnCancelEditBanner")?.addEventListener("click", resetBannerForm);
+
+  async function loadAdminBannersList() {
+    const listEl = document.getElementById("adminBannersList");
+    if (!listEl) return;
+    listEl.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;padding:12px;">Loading sliding banners...</div>';
+
+    const secret = document.getElementById("inputAdminSecret")?.value.trim() || "";
+    try {
+      const res = await fetch(`/api/admin/promo-banners?user_id=${encodeURIComponent(state.userId)}&admin_secret=${encodeURIComponent(secret)}`);
+      if (!res.ok) {
+        listEl.innerHTML = '<div style="color:#ef4444;font-size:0.85rem;padding:12px;">Failed to load banners (Admin access required)</div>';
+        return;
+      }
+      const data = await res.json();
+      const banners = data.banners || [];
+      if (!banners.length) {
+        listEl.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;padding:12px;">No sliding banners created yet.</div>';
+        return;
+      }
+
+      listEl.innerHTML = "";
+      banners.forEach((b) => {
+        const row = document.createElement("div");
+        row.className = "admin-banner-card";
+        const art = b.image_url || b.game_current_image || "/static/banners/welcome_banner.jpg";
+        row.innerHTML = `
+          <img src="${art}" class="admin-banner-art" alt="${escapeHtml(b.title)}" onerror="this.src='/static/banners/welcome_banner.jpg'" />
+          <div class="admin-banner-info">
+            <div class="admin-banner-title">${escapeHtml(b.title)}</div>
+            <div class="admin-banner-meta">
+              <span>${b.badge ? escapeHtml(b.badge) : "Banner"}</span> • <span>${escapeHtml(b.game_title || b.game_url)}</span>
+            </div>
+          </div>
+          <div class="admin-banner-actions">
+            <button type="button" class="btn small edit-banner-btn" style="padding:4px 8px;">✏️</button>
+            <button type="button" class="btn small danger delete-banner-btn" style="padding:4px 8px;">🗑️</button>
+          </div>
+        `;
+
+        row.querySelector(".edit-banner-btn")?.addEventListener("click", () => editBanner(b));
+        row.querySelector(".delete-banner-btn")?.addEventListener("click", () => deleteBanner(b.id));
+
+        listEl.appendChild(row);
+      });
+    } catch (e) {
+      listEl.innerHTML = `<div style="color:#ef4444;font-size:0.85rem;padding:12px;">Error: ${e.message}</div>`;
+    }
+  }
+
+  document.getElementById("formPromoBanner")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const bannerId = document.getElementById("editBannerId").value;
+    const isEdit = Boolean(bannerId);
+    const title = document.getElementById("bannerTitle").value.trim();
+    const bg_theme = document.getElementById("bannerTheme").value;
+    const badge = document.getElementById("bannerBadge").value.trim();
+    const badge2 = document.getElementById("bannerBadge2").value.trim();
+    const description = document.getElementById("bannerDesc").value.trim();
+    let image_url = document.getElementById("inputBannerImageUrl").value.trim();
+    const game_url = document.getElementById("bannerGameUrl").value.trim();
+    const game_title = document.getElementById("bannerGameTitle").value.trim();
+    const admin_secret = document.getElementById("inputAdminSecret")?.value.trim() || "";
+
+    // Upload base64 image if present
+    if (image_url.startsWith("data:image/")) {
+      try {
+        const upRes = await fetch("/api/admin/upload-logo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            image_base64: image_url,
+            filename: `banner_${Date.now()}.png`,
+            user_id: state.userId,
+            admin_secret: admin_secret,
+          }),
+        });
+        if (upRes.ok) {
+          const upData = await upRes.json();
+          image_url = upData.image_url;
+        }
+      } catch (_) {}
+    }
+
+    const payload = {
+      title,
+      badge,
+      badge2,
+      description,
+      image_url,
+      game_url,
+      game_title,
+      bg_theme,
+      user_id: state.userId,
+      admin_secret,
+    };
+
+    const endpoint = isEdit ? `/api/admin/promo-banners/${bannerId}` : "/api/admin/promo-banners";
+    const method = isEdit ? "PUT" : "POST";
+
+    try {
+      const res = await fetch(endpoint, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.detail || "Failed to save banner");
+        return;
+      }
+
+      resetBannerForm();
+      loadAdminBannersList();
+      loadHeroCarouselBanners();
+      alert(isEdit ? "✅ Sliding banner updated successfully!" : "✅ New promo banner added to home slider!");
+    } catch (err) {
+      alert("Error saving banner: " + err.message);
     }
   });
 

@@ -75,3 +75,48 @@ def test_fallback_when_no_webapp_url():
     rows = markup.inline_keyboard
     # Deep link when webapp_url is empty
     assert rows[0][0].url == "https://t.me/GhostPlaysBot?startapp=game_tetris"
+
+
+def test_promo_banners_storage_crud():
+    from core.storage import storage
+
+    banners = storage.list_promo_banners()
+    assert len(banners) >= 4
+    # Check default seeded banners exist
+    titles = [b["title"] for b in banners]
+    assert "AVIATOR" in titles
+    assert "DESERT RUNNER" in titles
+
+    # Add a custom promo banner
+    new_b = storage.add_promo_banner(
+        title="SHEEP FIGHT 3D",
+        badge="🔥 NEW RELEASE",
+        badge2="● LIVE DUEL",
+        description="Push opponent rams into their barn to win!",
+        image_url="/static/thumbnails/sheep_thumb.png",
+        game_url="/static/games/sheep_fight/index.html",
+        game_title="Sheep Fight Royale",
+        game_icon="🐑",
+        bg_theme="slide-gold",
+    )
+    assert new_b["id"] is not None
+    assert new_b["title"] == "SHEEP FIGHT 3D"
+
+    # Verify update
+    updated = storage.update_promo_banner(
+        new_b["id"],
+        title="SHEEP FIGHT ROYALE",
+        badge="🏆 TOURNAMENT",
+        description="Updated description",
+        image_url="/static/thumbnails/sheep_thumb.png",
+        game_url="/static/games/sheep_fight/index.html",
+        game_title="Sheep Fight Royale",
+        game_icon="🐑",
+        bg_theme="slide-cyan",
+    )
+    assert updated["title"] == "SHEEP FIGHT ROYALE"
+    assert updated["bg_theme"] == "slide-cyan"
+
+    # Delete
+    deleted = storage.delete_promo_banner(new_b["id"])
+    assert deleted is True

@@ -63,6 +63,22 @@ class CustomGameRequest(BaseModel):
     admin_secret: str = ""
 
 
+class PromoBannerRequest(BaseModel):
+    title: str
+    badge: str = ""
+    badge2: str = ""
+    description: str = ""
+    image_url: str = ""
+    game_url: str = ""
+    game_title: str = ""
+    game_icon: str = "🎮"
+    bg_theme: str = "slide-aviator"
+    order_idx: int = 0
+    is_active: int = 1
+    user_id: str = ""
+    admin_secret: str = ""
+
+
 class LogoUploadRequest(BaseModel):
     image_base64: str
     filename: str = "game_logo.png"
@@ -320,6 +336,79 @@ async def delete_custom_game(
     if not success:
         raise HTTPException(status_code=404, detail="Game not found")
     return {"status": "deleted", "game_id": game_id}
+
+
+# --- Sliding Window / Hero Promo Banners API ---
+@app.get("/api/promo-banners")
+async def get_promo_banners() -> dict[str, Any]:
+    return {"banners": storage.list_promo_banners(only_active=True)}
+
+
+@app.get("/api/admin/promo-banners")
+async def get_all_admin_promo_banners(
+    user_id: str = Query(default=""),
+    admin_secret: str = Query(default=""),
+) -> dict[str, Any]:
+    if not _is_admin(user_id, admin_secret):
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    return {"banners": storage.list_promo_banners(only_active=False)}
+
+
+@app.post("/api/admin/promo-banners")
+async def add_promo_banner(req: PromoBannerRequest) -> dict[str, Any]:
+    if not _is_admin(req.user_id, req.admin_secret):
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    banner = storage.add_promo_banner(
+        title=req.title,
+        badge=req.badge,
+        badge2=req.badge2,
+        description=req.description,
+        image_url=req.image_url,
+        game_url=req.game_url,
+        game_title=req.game_title,
+        game_icon=req.game_icon,
+        bg_theme=req.bg_theme,
+        order_idx=req.order_idx,
+        is_active=req.is_active,
+    )
+    return {"banner": banner}
+
+
+@app.put("/api/admin/promo-banners/{banner_id}")
+async def update_promo_banner(banner_id: int, req: PromoBannerRequest) -> dict[str, Any]:
+    if not _is_admin(req.user_id, req.admin_secret):
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    banner = storage.update_promo_banner(
+        banner_id=banner_id,
+        title=req.title,
+        badge=req.badge,
+        badge2=req.badge2,
+        description=req.description,
+        image_url=req.image_url,
+        game_url=req.game_url,
+        game_title=req.game_title,
+        game_icon=req.game_icon,
+        bg_theme=req.bg_theme,
+        order_idx=req.order_idx,
+        is_active=req.is_active,
+    )
+    if not banner:
+        raise HTTPException(status_code=404, detail="Banner not found")
+    return {"banner": banner}
+
+
+@app.delete("/api/admin/promo-banners/{banner_id}")
+async def delete_promo_banner(
+    banner_id: int,
+    user_id: str = Query(default=""),
+    admin_secret: str = Query(default=""),
+) -> dict[str, Any]:
+    if not _is_admin(user_id, admin_secret):
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    success = storage.delete_promo_banner(banner_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Banner not found")
+    return {"status": "deleted", "banner_id": banner_id}
 
 
 @app.get("/api/profile/{user_id}")

@@ -89,6 +89,57 @@ DEFAULT_HTML5_GAMES: list[tuple[str, str, str, str, str]] = [
     ("Cyber Speed Typer", "/static/games/speed_typer/index.html", "⌨️", "Test and improve your words-per-minute typing", ""),
 ]
 
+DEFAULT_PROMO_BANNERS = [
+    (
+        "AVIATOR",
+        "🔥 HIGH STAKES",
+        "● 32 FLYING",
+        "Ride the rocket & cash out before the crash to win multipliers!",
+        "/static/banners/aviator_promo.png",
+        "/static/games/aviator/index.html",
+        "Aviator Rocket",
+        "🚀",
+        "slide-aviator",
+        0,
+    ),
+    (
+        "DESERT RUNNER",
+        "⚡ TOP SPEED",
+        "● ARCADE",
+        "Dodge desert cacti & laser pterodactyls in this turbo reflex sprint!",
+        "/static/banners/dino_promo.png",
+        "/static/games/dino/index.html",
+        "T-Rex Cyber Run",
+        "🦖",
+        "slide-speedway",
+        1,
+    ),
+    (
+        "SPACE INVADERS",
+        "👾 CLASSIC",
+        "● SCI-FI",
+        "Defend your fleet from alien armadas with retro plasma cannons!",
+        "/static/banners/space_promo.png",
+        "/static/games/space_invaders/index.html",
+        "Galaxy Defender 3D",
+        "👾",
+        "slide-invaders",
+        2,
+    ),
+    (
+        "RETRO TETRIS",
+        "🧩 BRAIN PUZZLE",
+        "● RANKED",
+        "Rotate falling tetromino blocks to clear lines & shatter high scores!",
+        "/static/banners/tetris_promo.png",
+        "/static/games/tetris/index.html",
+        "Retro Tetris",
+        "🧩",
+        "slide-tetris",
+        3,
+    ),
+]
+
 
 class PostgresCursorWrapper:
     def __init__(self, raw_cursor: Any) -> None:
@@ -340,6 +391,22 @@ class GameStorage:
                                 created_at REAL NOT NULL,
                                 updated_at REAL NOT NULL
                             );
+
+                            CREATE TABLE IF NOT EXISTS promo_banners (
+                                id SERIAL PRIMARY KEY,
+                                title TEXT NOT NULL,
+                                badge TEXT NOT NULL DEFAULT '',
+                                badge2 TEXT NOT NULL DEFAULT '',
+                                description TEXT NOT NULL DEFAULT '',
+                                image_url TEXT NOT NULL DEFAULT '',
+                                game_url TEXT NOT NULL DEFAULT '',
+                                game_title TEXT NOT NULL DEFAULT '',
+                                game_icon TEXT NOT NULL DEFAULT '🎮',
+                                bg_theme TEXT NOT NULL DEFAULT 'slide-aviator',
+                                order_idx INTEGER NOT NULL DEFAULT 0,
+                                is_active INTEGER NOT NULL DEFAULT 1,
+                                created_at REAL NOT NULL
+                            );
                             """
                         )
                         count = conn.execute("SELECT COUNT(*) AS c FROM custom_games").fetchone()["c"]
@@ -347,6 +414,10 @@ class GameStorage:
                             self._seed_default_custom_games(conn)
                         else:
                             self._sync_games(conn)
+
+                        pb_count = conn.execute("SELECT COUNT(*) AS c FROM promo_banners").fetchone()["c"]
+                        if pb_count == 0:
+                            self._seed_default_promo_banners(conn)
                         conn.commit()
                         return
                 except Exception as e:
@@ -451,6 +522,22 @@ class GameStorage:
                     created_at REAL NOT NULL,
                     updated_at REAL NOT NULL
                 );
+
+                CREATE TABLE IF NOT EXISTS promo_banners (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL,
+                    badge TEXT NOT NULL DEFAULT '',
+                    badge2 TEXT NOT NULL DEFAULT '',
+                    description TEXT NOT NULL DEFAULT '',
+                    image_url TEXT NOT NULL DEFAULT '',
+                    game_url TEXT NOT NULL DEFAULT '',
+                    game_title TEXT NOT NULL DEFAULT '',
+                    game_icon TEXT NOT NULL DEFAULT '🎮',
+                    bg_theme TEXT NOT NULL DEFAULT 'slide-aviator',
+                    order_idx INTEGER NOT NULL DEFAULT 0,
+                    is_active INTEGER NOT NULL DEFAULT 1,
+                    created_at REAL NOT NULL
+                );
                 """
             )
             cols = {
@@ -474,6 +561,10 @@ class GameStorage:
                 self._seed_default_custom_games(conn)
             else:
                 self._sync_games(conn)
+
+            pb_count = conn.execute("SELECT COUNT(*) AS c FROM promo_banners").fetchone()["c"]
+            if pb_count == 0:
+                self._seed_default_promo_banners(conn)
 
             conn.commit()
 
@@ -524,6 +615,17 @@ class GameStorage:
                 VALUES (?, ?, ?, ?, ?, 1, ?)
                 """,
                 (title, url, icon, desc, img, now),
+            )
+
+    def _seed_default_promo_banners(self, conn: sqlite3.Connection) -> None:
+        now = time.time()
+        for b in DEFAULT_PROMO_BANNERS:
+            conn.execute(
+                """
+                INSERT INTO promo_banners (title, badge, badge2, description, image_url, game_url, game_title, game_icon, bg_theme, order_idx, is_active, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+                """,
+                (b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9], now),
             )
 
     def _enrich_player(self, conn: sqlite3.Connection, row: sqlite3.Row) -> dict[str, Any]:
@@ -1124,6 +1226,112 @@ class GameStorage:
     def get_custom_game(self, game_id: int | str) -> dict[str, Any] | None:
         with self._lock, self._connect() as conn:
             row = conn.execute("SELECT * FROM custom_games WHERE id = ?", (int(game_id),)).fetchone()
+            return dict(row) if row else None
+
+    # --- Promotional Hero Banners / Sliding Window ---
+    def list_promo_banners(self, only_active: bool = True) -> list[dict[str, Any]]:
+        with self._lock, self._connect() as conn:
+            query = "SELECT * FROM promo_banners"
+            if only_active:
+                query += " WHERE is_active = 1"
+            query += " ORDER BY order_idx ASC, id ASC"
+            rows = conn.execute(query).fetchall()
+            if not rows:
+                self._seed_default_promo_banners(conn)
+                conn.commit()
+                rows = conn.execute(query).fetchall()
+
+            # Map game_url to custom_games for live logo synchronization
+            cg_map = {}
+            for cg in conn.execute("SELECT url, title, icon, image_url FROM custom_games").fetchall():
+                u = (cg["url"] or "").strip().rstrip("/").lower()
+                if u:
+                    cg_map[u] = dict(cg)
+
+            banners = []
+            for r in rows:
+                b = dict(r)
+                g_url = (b.get("game_url") or "").strip().rstrip("/").lower()
+                cg = cg_map.get(g_url)
+                if cg:
+                    b["game_current_image"] = cg.get("image_url", "")
+                    b["game_current_title"] = cg.get("title", "")
+                    b["game_current_icon"] = cg.get("icon", "")
+                    # If banner's image_url is empty OR if the game has an updated custom logo, synchronize!
+                    if not b.get("image_url"):
+                        b["image_url"] = cg.get("image_url", "")
+                    elif cg.get("image_url") and (cg["image_url"].startswith("data:image/") or "/static/thumbnails/" in cg["image_url"]):
+                        # Auto-propagate newly changed game logos to the sliding banner unless specifically overridden
+                        b["image_url"] = cg["image_url"]
+                banners.append(b)
+            return banners
+
+    def add_promo_banner(
+        self,
+        title: str,
+        badge: str = "",
+        badge2: str = "",
+        description: str = "",
+        image_url: str = "",
+        game_url: str = "",
+        game_title: str = "",
+        game_icon: str = "🎮",
+        bg_theme: str = "slide-aviator",
+        order_idx: int = 0,
+        is_active: int = 1,
+    ) -> dict[str, Any]:
+        now = time.time()
+        clean_title = (title or "Featured Game").strip()[:64]
+        with self._lock, self._connect() as conn:
+            cur = conn.execute(
+                """
+                INSERT INTO promo_banners (title, badge, badge2, description, image_url, game_url, game_title, game_icon, bg_theme, order_idx, is_active, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (clean_title, badge.strip()[:48], badge2.strip()[:48], description.strip()[:240], image_url.strip(), game_url.strip(), game_title.strip()[:64], (game_icon or "🎮").strip()[:8], bg_theme.strip()[:32], int(order_idx), int(is_active), now),
+            )
+            conn.commit()
+            row = conn.execute("SELECT * FROM promo_banners WHERE id = ?", (cur.lastrowid,)).fetchone()
+            return dict(row)
+
+    def update_promo_banner(
+        self,
+        banner_id: int | str,
+        title: str,
+        badge: str = "",
+        badge2: str = "",
+        description: str = "",
+        image_url: str = "",
+        game_url: str = "",
+        game_title: str = "",
+        game_icon: str = "🎮",
+        bg_theme: str = "slide-aviator",
+        order_idx: int = 0,
+        is_active: int = 1,
+    ) -> dict[str, Any] | None:
+        clean_title = (title or "Featured Game").strip()[:64]
+        with self._lock, self._connect() as conn:
+            conn.execute(
+                """
+                UPDATE promo_banners
+                SET title = ?, badge = ?, badge2 = ?, description = ?, image_url = ?, game_url = ?, game_title = ?, game_icon = ?, bg_theme = ?, order_idx = ?, is_active = ?
+                WHERE id = ?
+                """,
+                (clean_title, badge.strip()[:48], badge2.strip()[:48], description.strip()[:240], image_url.strip(), game_url.strip(), game_title.strip()[:64], (game_icon or "🎮").strip()[:8], bg_theme.strip()[:32], int(order_idx), int(is_active), int(banner_id)),
+            )
+            conn.commit()
+            row = conn.execute("SELECT * FROM promo_banners WHERE id = ?", (int(banner_id),)).fetchone()
+            return dict(row) if row else None
+
+    def delete_promo_banner(self, banner_id: int | str) -> bool:
+        with self._lock, self._connect() as conn:
+            cur = conn.execute("DELETE FROM promo_banners WHERE id = ?", (int(banner_id),))
+            conn.commit()
+            return cur.rowcount > 0
+
+    def get_promo_banner(self, banner_id: int | str) -> dict[str, Any] | None:
+        with self._lock, self._connect() as conn:
+            row = conn.execute("SELECT * FROM promo_banners WHERE id = ?", (int(banner_id),)).fetchone()
             return dict(row) if row else None
 
 
