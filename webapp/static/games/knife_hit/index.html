@@ -880,15 +880,18 @@ function drawGame() {
   }
 }
 
+let animFrameId = null;
+
 function gameLoop() {
+  if (gameState === 'stopped') return;
   if (gameState === 'playing') {
     updateTargetRotation();
     checkKnifeHit();
   }
   drawGame();
-  requestAnimationFrame(gameLoop);
+  animFrameId = requestAnimationFrame(gameLoop);
 }
-requestAnimationFrame(gameLoop);
+animFrameId = requestAnimationFrame(gameLoop);
 
 // --- Game Flow & Modals ---
 function startGame() {
@@ -988,10 +991,53 @@ function broadcastArenaScore(isFinal = false) {
   } catch (_) {}
 }
 
+function stopEntireGame() {
+  gameState = 'stopped';
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  if (animFrameId) {
+    cancelAnimationFrame(animFrameId);
+    animFrameId = null;
+  }
+  if (AudioEngine.ctx) {
+    try {
+      AudioEngine.ctx.suspend();
+      AudioEngine.ctx.close();
+    } catch (_) {}
+    AudioEngine.ctx = null;
+  }
+}
+
 window.addEventListener('message', e => {
-  if (e.data && e.data.type === 'opp_score_update') {
+  const act = e.data?.action || e.data?.type || e.data?.cmd;
+  if (act === 'destroy' || act === 'stop' || act === 'close') {
+    stopEntireGame();
+  } else if (act === 'pause' || act === 'PAUSE_GAME') {
+    if (gameState === 'playing') gameState = 'paused';
+    if (AudioEngine.ctx && AudioEngine.ctx.state === 'running') {
+      try { AudioEngine.ctx.suspend(); } catch(_) {}
+    }
+  } else if (act === 'resume' || act === 'RESUME_GAME') {
+    if (gameState === 'paused') {
+      gameState = 'playing';
+      if (AudioEngine.ctx && AudioEngine.ctx.state === 'suspended') {
+        try { AudioEngine.ctx.resume(); } catch(_) {}
+      }
+    }
+  } else if (e.data && e.data.type === 'opp_score_update') {
     document.getElementById('oppScore').textContent = `${e.data.score || 0} pts`;
     document.getElementById('oppStg').textContent = e.data.stage || 1;
+  }
+});
+
+window.addEventListener('pagehide', stopEntireGame);
+window.addEventListener('unload', stopEntireGame);
+window.addEventListener('beforeunload', stopEntireGame);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && AudioEngine.ctx && AudioEngine.ctx.state === 'running') {
+    try { AudioEngine.ctx.suspend(); } catch(_) {}
   }
 });
 </script>

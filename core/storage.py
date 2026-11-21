@@ -576,11 +576,8 @@ class GameStorage:
             row = conn.execute("SELECT id, image_url FROM custom_games WHERE title = ? OR url = ?", (title, url)).fetchone()
             if row:
                 saved = row["image_url"] if (row["image_url"] and row["image_url"].strip()) else ""
-                # Auto-heal ephemeral logo paths wiped in previous ephemeral container deploys
-                if "custom_logo_" in saved:
-                    current_img = img if img else saved
-                else:
-                    current_img = saved if saved else img
+                # Strictly preserve user-edited logos (whether base64 data URI, upload, or custom URL)
+                current_img = saved if saved else img
                 conn.execute(
                     "UPDATE custom_games SET url = ?, icon = ?, description = ?, image_url = ? WHERE id = ?",
                     (url, icon, desc, current_img, row["id"]),
@@ -597,9 +594,9 @@ class GameStorage:
         for b in removed:
             conn.execute("DELETE FROM custom_games WHERE url LIKE ?", (f"%{b}%",))
         try:
-            conn.execute("UPDATE custom_games SET title = 'T-Rex Cyber Run', image_url = '/static/thumbnails/dino_thumb.png' WHERE url LIKE '%/dino/%'")
-            conn.execute("UPDATE custom_games SET title = 'Galaxy Defender 3D', icon = '🚀', image_url = '/static/thumbnails/galaxy_thumb.png' WHERE url LIKE '%/space_invaders/%'")
-            conn.execute("UPDATE custom_games SET title = 'Neon Snake 3D', image_url = '/static/thumbnails/snake_thumb.png' WHERE url LIKE '%/snake/%'")
+            conn.execute("UPDATE custom_games SET title = 'T-Rex Cyber Run' WHERE url LIKE '%/dino/%'")
+            conn.execute("UPDATE custom_games SET title = 'Galaxy Defender 3D', icon = '🚀' WHERE url LIKE '%/space_invaders/%'")
+            conn.execute("UPDATE custom_games SET title = 'Neon Snake 3D' WHERE url LIKE '%/snake/%'")
             conn.execute("DELETE FROM custom_games WHERE id NOT IN (SELECT MIN(id) FROM custom_games GROUP BY url)")
         except Exception:
             pass

@@ -688,6 +688,9 @@ function broadcastScore(isFinal = false) {
 
 function finishGame() {
   gameState = 'gameover';
+  if (Sound.ctx && Sound.ctx.state === 'running') {
+    try { Sound.ctx.suspend(); } catch(_) {}
+  }
 
   broadcastScore(true);
 

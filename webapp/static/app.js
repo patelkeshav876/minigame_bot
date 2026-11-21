@@ -51,7 +51,28 @@
     addGame: document.getElementById("view-add-game"),
   };
 
+  function teardownArenaIframe() {
+    const iframe = document.getElementById("arenaGameIframe");
+    if (iframe) {
+      try {
+        iframe.contentWindow?.postMessage({ action: "destroy", type: "close", cmd: "stop" }, "*");
+        iframe.src = "about:blank";
+        iframe.remove();
+      } catch (_) {}
+    }
+    const container = document.getElementById("boardContainer");
+    if (container) {
+      container.innerHTML = "";
+    }
+  }
+
+  window.addEventListener("pagehide", teardownArenaIframe);
+  window.addEventListener("beforeunload", teardownArenaIframe);
+
   function showView(name) {
+    if (name !== "match") {
+      teardownArenaIframe();
+    }
     if (name !== "addGame" && name !== "player" && name !== "match") {
       state.prevView = name;
     }
@@ -492,9 +513,16 @@
     if (room.status === "active") {
       state.resultModalShown = false;
       document.getElementById("modalMatchResult")?.classList.add("hidden");
-    } else if (room.status === "finished" && !state.resultModalShown) {
-      state.resultModalShown = true;
-      const modal = document.getElementById("modalMatchResult");
+    } else if (room.status === "finished") {
+      const existingIframe = document.getElementById("arenaGameIframe");
+      if (existingIframe) {
+        try {
+          existingIframe.contentWindow?.postMessage({ action: "destroy", type: "close", cmd: "stop" }, "*");
+        } catch (_) {}
+      }
+      if (!state.resultModalShown) {
+        state.resultModalShown = true;
+        const modal = document.getElementById("modalMatchResult");
       if (modal) {
         const isDraw = room.winner_role === "Draw";
         const isWin = !isDraw && selfP && room.winner_role === selfP.role;
@@ -613,6 +641,7 @@
       haptic("medium");
       if (confirm("Leave this active match and return to Arena?")) {
         sendWs({ type: "resign" });
+        teardownArenaIframe();
         state.room = null;
         showView("battle");
       }
@@ -1014,6 +1043,7 @@
   });
 
   document.getElementById("btnLeaveRoom")?.addEventListener("click", () => {
+    teardownArenaIframe();
     if (state.ws) state.ws.close();
     if (state.clockTimer) clearInterval(state.clockTimer);
     showView(state.prevView || "home");
@@ -1045,6 +1075,7 @@
     sendWs({ type: "rematch" });
   });
   document.getElementById("btnResultBack")?.addEventListener("click", () => {
+    teardownArenaIframe();
     document.getElementById("modalMatchResult")?.classList.add("hidden");
     document.getElementById("btnLeaveRoom")?.click();
   });
@@ -1080,12 +1111,20 @@
     return "casual";
   }
 
+  function getEffectiveGameImage(g) {
+    if (!g) return "";
+    const localLogo = localStorage.getItem("game_logo_" + (g.url || "")) || localStorage.getItem("game_logo_" + (g.title || ""));
+    if (localLogo && localLogo.trim()) return localLogo;
+    return g.image_url || "";
+  }
+
   function makeGameCardHtml(g) {
+    const img = getEffectiveGameImage(g);
     return `
       <button class="custom-game-card" data-url="${encodeURI(g.url)}" data-title="${g.title}" data-icon="${g.icon}">
         <div class="cgc-top">
           <div class="cgc-icon">
-            ${g.image_url ? `<img src="${g.image_url}" class="cgc-box-img" alt="${g.title}" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-block';" /><span class="cgc-fallback-emoji" style="display:none;">${g.icon || "🎮"}</span>` : (g.icon || "🎮")}
+            ${img ? `<img src="${img}" class="cgc-box-img" alt="${g.title}" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-block';" /><span class="cgc-fallback-emoji" style="display:none;">${g.icon || "🎮"}</span>` : (g.icon || "🎮")}
           </div>
           <span class="cgc-play-badge">PLAY</span>
         </div>
@@ -1275,15 +1314,18 @@
     const picks = games.filter(g => pickTitles.some(t => g.title.toLowerCase().includes(t.toLowerCase()))).slice(0, 8);
     const displayList = picks.length >= 4 ? picks : games.slice(0, 8);
 
-    row.innerHTML = displayList.map(g => `
+    row.innerHTML = displayList.map(g => {
+      const img = getEffectiveGameImage(g);
+      return `
       <button class="carousel-game-card" data-url="${encodeURI(g.url)}" data-title="${g.title}" data-icon="${g.icon}">
         <div class="cgc-thumb-wrap">
-          ${g.image_url ? `<img src="${g.image_url}" class="cgc-thumb-img" alt="${g.title}" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-block';" /><span class="cgc-art" style="display:none;">${g.icon || "🎮"}</span>` : `<span class="cgc-art">${g.icon || "🎮"}</span>`}
+          ${img ? `<img src="${img}" class="cgc-thumb-img" alt="${g.title}" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-block';" /><span class="cgc-art" style="display:none;">${g.icon || "🎮"}</span>` : `<span class="cgc-art">${g.icon || "🎮"}</span>`}
         </div>
         <div class="cgc-card-title">${g.title}</div>
         <div class="cgc-card-tag">${classifyGameCategory(g).toUpperCase()}</div>
       </button>
-    `).join("");
+    `;
+    }).join("");
 
     row.querySelectorAll(".carousel-game-card").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -1309,11 +1351,13 @@
       "Next: Beat personal high score"
     ];
 
-    list.innerHTML = trendingList.map((g, idx) => `
+    list.innerHTML = trendingList.map((g, idx) => {
+      const img = getEffectiveGameImage(g);
+      return `
       <div class="trending-game-card" data-url="${encodeURI(g.url)}" data-title="${g.title}" data-icon="${g.icon}">
         <div class="tgc-left">
           <div class="tgc-thumb">
-            ${g.image_url ? `<img src="${g.image_url}" class="tgc-thumb-img" alt="${g.title}" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-block';" /><span class="tgc-fallback-emoji" style="display:none;">${g.icon || "🎮"}</span>` : (g.icon || "🎮")}
+            ${img ? `<img src="${img}" class="tgc-thumb-img" alt="${g.title}" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-block';" /><span class="tgc-fallback-emoji" style="display:none;">${g.icon || "🎮"}</span>` : (g.icon || "🎮")}
           </div>
           <div class="tgc-info">
             <div class="tgc-title">${g.title}</div>
@@ -1328,7 +1372,8 @@
         </div>
         <button class="btn-trending-play">PLAY</button>
       </div>
-    `).join("");
+    `;
+    }).join("");
 
     list.querySelectorAll(".trending-game-card").forEach(card => {
       card.addEventListener("click", () => {
@@ -1381,26 +1426,61 @@
 
   const FALLBACK_DEFAULT_GAMES = [
     { title: "Aviator Rocket", url: "/static/games/aviator/index.html", icon: "🚀", description: "High-stakes rocket multiplier curve! Cash out before blast", image_url: "/static/thumbnails/aviator_thumb.png" },
-    { title: "Knife Master", url: "/static/games/knife_hit/index.html", icon: "🗡️", description: "Throw knives into rotating target log", image_url: "/static/thumbnails/knife_thumb.png" },
-    { title: "Fruit Slicer", url: "/static/games/fruit_slice/index.html", icon: "🍉", description: "Slice flying fruits with swipe blades", image_url: "/static/thumbnails/fruit_thumb.png" },
-    { title: "2048 Classic", url: "/static/games/2048/index.html", icon: "🔢", description: "Slide tiles to merge and reach 2048!", image_url: "/static/banners/puzzle2048_promo.png" },
+    { title: "Neon Snake 3D", url: "/static/games/snake/index.html", icon: "🐍", description: "3D cyber slither with glowing energy crystals", image_url: "/static/thumbnails/snake_thumb.png" },
+    { title: "Brick Breaker", url: "/static/games/breakout/index.html", icon: "🧱", description: "Smash neon bricks with bouncing ball", image_url: "" },
     { title: "Retro Tetris", url: "/static/games/tetris/index.html", icon: "🧩", description: "Falling tetromino block puzzle", image_url: "/static/banners/tetris_promo.png" },
     { title: "T-Rex Cyber Run", url: "/static/games/dino/index.html", icon: "🦖", description: "3D-style endless neon desert runner with energy pickups", image_url: "/static/thumbnails/dino_thumb.png" },
-    { title: "Neon Snake 3D", url: "/static/games/snake/index.html", icon: "🐍", description: "3D cyber slither with glowing energy crystals", image_url: "/static/thumbnails/snake_thumb.png" },
+    { title: "Neon Pong", url: "/static/games/pong/index.html", icon: "🏓", description: "Fast table tennis rally against AI", image_url: "" },
     { title: "Galaxy Defender 3D", url: "/static/games/space_invaders/index.html", icon: "🚀", description: "3D space fighter starship blasting alien swarms", image_url: "/static/thumbnails/galaxy_thumb.png" },
+    { title: "Fruit Slicer", url: "/static/games/fruit_slice/index.html", icon: "🍉", description: "Slice flying fruits with swipe blades", image_url: "/static/thumbnails/fruit_thumb.png" },
+    { title: "Knife Master", url: "/static/games/knife_hit/index.html", icon: "🗡️", description: "Throw knives into rotating target log", image_url: "/static/thumbnails/knife_thumb.png" },
+    { title: "Sheep Fight Royale", url: "/static/games/sheep_fight/index.html", icon: "🐑", description: "Hago 1v1 sheep pushing battle arena", image_url: "/static/thumbnails/sheep_thumb.png" },
+    { title: "Whack-a-Ghost", url: "/static/games/whack_a_mole/index.html", icon: "🔨", description: "Test reaction time whacking popping ghosts", image_url: "" },
+    { title: "Helix Drop", url: "/static/games/helix_jump/index.html", icon: "🌀", description: "Bounce ball through gaps in rotating tower", image_url: "" },
+    { title: "Tower Stack", url: "/static/games/tower_stack/index.html", icon: "🏢", description: "Slice and stack tower blocks as high as you can", image_url: "" },
+    { title: "Neon Pinball", url: "/static/games/pinball/index.html", icon: "🪩", description: "Arcade pinball with flippers & bumpers", image_url: "" },
+    { title: "Space Race", url: "/static/games/space_race/index.html", icon: "🚀", description: "Shoot asteroid obstacles & upgrade spaceship stats", image_url: "/static/thumbnails/space_race_thumb.png" },
+    { title: "Chintu's Royal Run", url: "/static/games/indian_mario/index.html", icon: "👳", description: "Indian Mario platformer with spicy chili attacks & laddoos", image_url: "/static/thumbnails/indian_mario_thumb.png" },
+    { title: "Roll the Ball", url: "/static/games/roll_ball/index.html", icon: "🪵", description: "Slide wooden track tiles to roll ball into goal", image_url: "/static/thumbnails/roll_ball_thumb.png" },
+    { title: "2048 Classic", url: "/static/games/2048/index.html", icon: "🔢", description: "Slide tiles to merge and reach 2048!", image_url: "/static/banners/puzzle2048_promo.png" },
+    { title: "Wordle Guess", url: "/static/games/wordle/index.html", icon: "🟩", description: "Guess secret 5-letter word in 6 attempts", image_url: "" },
+    { title: "Sudoku Master", url: "/static/games/sudoku/index.html", icon: "🧩", description: "Classic 9x9 number placement logic grid", image_url: "" },
+    { title: "15-Puzzle Slider", url: "/static/games/sliding_puzzle/index.html", icon: "🔟", description: "Classic sliding numbered block puzzle", image_url: "" },
+    { title: "Color Flood", url: "/static/games/color_flood/index.html", icon: "🎨", description: "Flood-fill the board with one color", image_url: "" },
+    { title: "Emoji Memory", url: "/static/games/memory/index.html", icon: "🧠", description: "Flip and match pairs of hidden cards", image_url: "" },
+    { title: "Simon Memory", url: "/static/games/simon/index.html", icon: "🔔", description: "Repeat growing sequence of lights & sounds", image_url: "" },
+    { title: "UNO Classic Arena", url: "/static/games/uno/index.html", icon: "🃏", description: "Classic 1v1 UNO card battle against AI with wild cards", image_url: "/static/thumbnails/uno_thumb.png" },
+    { title: "8-Ball Billiards", url: "/static/games/billiards/index.html", icon: "🎱", description: "Pocket balls with realistic pool physics", image_url: "" },
     { title: "Connect 4 Arena", url: "/static/games/connect4/index.html", icon: "🔴", description: "Align 4 chips in a row against AI", image_url: "/static/thumbnails/connect4_thumb.png" },
+    { title: "Checkers Classic", url: "/static/games/checkers/index.html", icon: "⚪", description: "Jump and capture enemy checkers to king", image_url: "" },
     { title: "Neon Tic-Tac-Toe", url: "/static/games/tictactoe/index.html", icon: "❌", description: "Glowing neon 3x3 XO against unbeatable AI", image_url: "/static/thumbnails/xo_thumb.png" },
+    { title: "Klondike Solitaire", url: "/static/games/solitaire/index.html", icon: "🃏", description: "World's most popular single-player card game", image_url: "" },
+    { title: "Cyber Speed Typer", url: "/static/games/speed_typer/index.html", icon: "⌨️", description: "Test and improve your words-per-minute typing", image_url: "" },
   ];
+
+  // Try initializing immediately with cached games or all 31 defaults
+  try {
+    const cached = localStorage.getItem("cached_custom_games");
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length >= 10) {
+        state.allCustomGames = parsed;
+      }
+    }
+  } catch (_) {}
+  if (!state.allCustomGames || !state.allCustomGames.length) {
+    state.allCustomGames = FALLBACK_DEFAULT_GAMES;
+  }
 
   async function loadCustomGames() {
     const el = document.getElementById("customGamesGrid");
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 3500);
+      const timer = setTimeout(() => controller.abort(), 12000);
       const res = await fetch("/api/custom-games", { signal: controller.signal });
       clearTimeout(timer);
       const data = await res.json();
-      const rawGames = data.games && data.games.length ? data.games : FALLBACK_DEFAULT_GAMES;
+      const rawGames = (data.games && data.games.length) ? data.games : (state.allCustomGames || FALLBACK_DEFAULT_GAMES);
       const seenF = new Set();
       state.allCustomGames = rawGames.filter(g => {
         const k = ((g.url || "") + "::" + (g.title || "")).trim().toLowerCase();
@@ -1408,6 +1488,9 @@
         seenF.add(k);
         return true;
       });
+      try {
+        localStorage.setItem("cached_custom_games", JSON.stringify(state.allCustomGames));
+      } catch (_) {}
     } catch (_) {
       if (!state.allCustomGames || !state.allCustomGames.length) {
         state.allCustomGames = FALLBACK_DEFAULT_GAMES;
@@ -1637,7 +1720,7 @@
 
   // Hero Sliding Window Carousel Control (Dynamic with Admin Manager)
   let heroCurrentSlide = 0;
-  let heroTotalSlides = 1;
+  let heroTotalSlides = 4;
   let heroAutoSlideInterval = null;
 
   function setHeroSlide(idx) {
@@ -1688,6 +1771,48 @@
     }, 4500);
   }
 
+  function bindDefaultHeroButtons() {
+    document.getElementById("btnPlayAviatorHero")?.addEventListener("click", () => {
+      haptic("heavy");
+      launchWebGame("Aviator Rocket", "/static/games/aviator/index.html", "🚀");
+    });
+    document.getElementById("btnPlaySpeedwayHero")?.addEventListener("click", () => {
+      haptic("heavy");
+      launchWebGame("T-Rex Cyber Run", "/static/games/dino/index.html", "🦖");
+    });
+    document.getElementById("btnPlayInvadersHero")?.addEventListener("click", () => {
+      haptic("heavy");
+      launchWebGame("Galaxy Defender 3D", "/static/games/space_invaders/index.html", "🚀");
+    });
+    document.getElementById("btnPlayTetrisHero")?.addEventListener("click", () => {
+      haptic("heavy");
+      launchWebGame("Retro Tetris", "/static/games/tetris/index.html", "🧩");
+    });
+
+    document.querySelectorAll("#carouselDots .carousel-dot").forEach((dot, idx) => {
+      dot.addEventListener("click", () => {
+        haptic("light");
+        setHeroSlide(idx);
+        startHeroAutoSlide();
+      });
+    });
+
+    // Sync custom logos to default slides if available
+    const aviatorLogo = localStorage.getItem("game_logo_/static/games/aviator/index.html") || localStorage.getItem("game_logo_Aviator Rocket");
+    const dinoLogo = localStorage.getItem("game_logo_/static/games/dino/index.html") || localStorage.getItem("game_logo_T-Rex Cyber Run");
+    const spaceLogo = localStorage.getItem("game_logo_/static/games/space_invaders/index.html") || localStorage.getItem("game_logo_Galaxy Defender 3D");
+    const tetrisLogo = localStorage.getItem("game_logo_/static/games/tetris/index.html") || localStorage.getItem("game_logo_Retro Tetris");
+
+    const slides = document.querySelectorAll("#heroSlidesWrapper .hero-slide");
+    if (slides[0] && aviatorLogo) slides[0].querySelector("img")?.setAttribute("src", aviatorLogo);
+    if (slides[1] && dinoLogo) slides[1].querySelector("img")?.setAttribute("src", dinoLogo);
+    if (slides[2] && spaceLogo) slides[2].querySelector("img")?.setAttribute("src", spaceLogo);
+    if (slides[3] && tetrisLogo) slides[3].querySelector("img")?.setAttribute("src", tetrisLogo);
+  }
+
+  bindDefaultHeroButtons();
+  startHeroAutoSlide();
+
   async function loadHeroCarouselBanners() {
     const wrapper = document.getElementById("heroSlidesWrapper");
     const dotsWrap = document.querySelector(".carousel-nav-dots");
@@ -1708,14 +1833,17 @@
         const theme = b.bg_theme || "slide-aviator";
         let glowClass = "red-glow";
         let ctaClass = "red-cta";
-        if (theme.includes("speedway") || theme.includes("blue")) { glowClass = "blue-glow"; ctaClass = "blue-cta"; }
-        else if (theme.includes("invaders") || theme.includes("purple")) { glowClass = "purple-glow"; ctaClass = "purple-cta"; }
-        else if (theme.includes("tetris") || theme.includes("green")) { glowClass = "green-glow"; ctaClass = "green-cta"; }
-        else if (theme.includes("gold")) { glowClass = "gold-glow"; ctaClass = "gold-cta"; }
-        else if (theme.includes("cyan")) { glowClass = "cyan-glow"; ctaClass = "cyan-cta"; }
+        let ctaIcon = "rocket";
+        if (theme.includes("speedway") || theme.includes("blue")) { glowClass = "blue-glow"; ctaClass = "blue-cta"; ctaIcon = "gauge"; }
+        else if (theme.includes("invaders") || theme.includes("purple")) { glowClass = "purple-glow"; ctaClass = "purple-cta"; ctaIcon = "shield"; }
+        else if (theme.includes("tetris") || theme.includes("green")) { glowClass = "green-glow"; ctaClass = "green-cta"; ctaIcon = "boxes"; }
+        else if (theme.includes("gold")) { glowClass = "gold-glow"; ctaClass = "gold-cta"; ctaIcon = "trophy"; }
+        else if (theme.includes("cyan")) { glowClass = "cyan-glow"; ctaClass = "cyan-cta"; ctaIcon = "zap"; }
+        else { ctaIcon = "play"; }
 
-        // Live artwork: use banner's image_url, or fallback to game_current_image
-        const artSrc = b.image_url || b.game_current_image || "/static/banners/welcome_banner.jpg";
+        // Live artwork: use custom local logo if updated, else banner image_url, or fallback to game_current_image
+        const localLogo = localStorage.getItem("game_logo_" + (b.game_url || "")) || localStorage.getItem("game_logo_" + (b.game_title || ""));
+        const artSrc = (localLogo && localLogo.trim()) || b.image_url || b.game_current_image || "/static/banners/welcome_banner.jpg";
 
         const slide = document.createElement("div");
         slide.className = `hero-slide ${idx === 0 ? "active" : ""}`;
@@ -1733,7 +1861,7 @@
                 <div class="hero-feature-desc">${escapeHtml(b.description || "")}</div>
                 <div class="hero-feature-cta-row">
                   <button class="btn-hero-play ${ctaClass}" data-url="${escapeHtml(b.game_url)}" data-title="${escapeHtml(b.game_title || b.title)}" data-icon="${escapeHtml(b.game_icon || "🎮")}">
-                    <i data-lucide="play" class="btn-icon-xs"></i> Play ${escapeHtml(b.game_title || "Now")}
+                    <i data-lucide="${ctaIcon}" class="lucide-sm"></i> PLAY NOW
                   </button>
                 </div>
               </div>
@@ -2600,6 +2728,12 @@
       }),
     });
     if (res.ok) {
+      if (finalImageUrl) {
+        try {
+          localStorage.setItem("game_logo_" + url, finalImageUrl);
+          localStorage.setItem("game_logo_" + title, finalImageUrl);
+        } catch (_) {}
+      }
       resetAdminGameForm();
       loadAdminGamesList();
       loadCustomGames();
