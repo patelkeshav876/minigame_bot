@@ -20,7 +20,7 @@ from webapp.ai import (
     pick_tictactoe_move,
 )
 
-VALID_GAMES = {"chess", "othello", "connect4", "tictactoe", "knife_hit", "fruit_slice"}
+VALID_GAMES = {"chess", "othello", "connect4", "tictactoe", "knife_hit", "fruit_slice", "sheep_fight"}
 INITIAL_CLOCKS = {
     "chess": 180.0,        # 3:00 blitz
     "othello": 120.0,      # 2:00 blitz
@@ -28,6 +28,7 @@ INITIAL_CLOCKS = {
     "tictactoe": 45.0,     # 0:45 speed blitz
     "knife_hit": 180.0,    # 3:00 tournament round
     "fruit_slice": 180.0,  # 3:00 tournament round
+    "sheep_fight": 90.0,   # 1:30 battle round
 }
 OTHELLO_DIRS = [
     (-1, -1), (-1, 0), (-1, 1),
@@ -144,7 +145,7 @@ class ArenaManager:
             return {"board": _init_othello_board(), "last_move": None}, "B"
         if game_type == "connect4":
             return {"board": [["" for _ in range(7)] for _ in range(6)], "last_col": None}, "R"
-        if game_type in ("knife_hit", "fruit_slice"):
+        if game_type in ("knife_hit", "fruit_slice", "sheep_fight"):
             return {
                 "p1_score": 0, "p2_score": 0,
                 "p1_level": 1, "p2_level": 1,
@@ -159,7 +160,7 @@ class ArenaManager:
             return ("B", "W")
         if game_type == "connect4":
             return ("R", "Y")
-        if game_type in ("knife_hit", "fruit_slice"):
+        if game_type in ("knife_hit", "fruit_slice", "sheep_fight"):
             return ("P1", "P2")
         return ("X", "O")
 
@@ -389,7 +390,7 @@ class ArenaManager:
         elapsed = now - room.last_tick
         room.last_tick = now
 
-        if room.game_type in ("knife_hit", "fruit_slice"):
+        if room.game_type in ("knife_hit", "fruit_slice", "sheep_fight"):
             for p in room.players:
                 p.clock = max(0.0, p.clock - elapsed)
             if room.players[0].clock <= 0.0:
@@ -484,7 +485,7 @@ class ArenaManager:
             elif msg_type == "move" and room.status == "active":
                 if not self._update_clock(room):
                     self._apply_move(room, user_id, data)
-            elif msg_type == "score_update" and room.status == "active" and room.game_type in ("knife_hit", "fruit_slice"):
+            elif msg_type == "score_update" and room.status == "active" and room.game_type in ("knife_hit", "fruit_slice", "sheep_fight"):
                 player = next((p for p in room.players if p.user_id == user_id), None)
                 if player:
                     p_prefix = "p1" if player.role == "P1" else "p2"

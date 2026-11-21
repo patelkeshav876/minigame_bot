@@ -63,6 +63,7 @@ DEFAULT_HTML5_GAMES: list[tuple[str, str, str, str, str]] = [
     ("Asteroid Blaster", "/static/games/asteroids/index.html", "🚀", "Space vector rock shooter with thrusters", ""),
     ("Fruit Slicer", "/static/games/fruit_slice/index.html", "🍉", "Slice flying fruits with swipe blades", "/static/thumbnails/fruit_thumb.png"),
     ("Knife Master", "/static/games/knife_hit/index.html", "🗡️", "Throw knives into rotating target log", "/static/thumbnails/knife_thumb.png"),
+    ("Sheep Fight Royale", "/static/games/sheep_fight/index.html", "🐑", "Hago 1v1 sheep pushing battle arena", "/static/thumbnails/sheep_thumb.png"),
     ("Whack-a-Ghost", "/static/games/whack_a_mole/index.html", "🔨", "Test reaction time whacking popping ghosts", ""),
     ("Helix Drop", "/static/games/helix_jump/index.html", "🌀", "Bounce ball through gaps in rotating tower", ""),
     ("Tower Stack", "/static/games/tower_stack/index.html", "🏢", "Slice and stack tower blocks as high as you can", ""),

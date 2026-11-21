@@ -529,7 +529,7 @@
     document.getElementById("btnResign").classList.toggle("hidden", isSpectator || room.status !== "active");
     document.getElementById("btnRematch").classList.toggle("hidden", isSpectator || room.status !== "finished");
 
-    const isArcade = room.game_type === "knife_hit" || room.game_type === "fruit_slice";
+    const isArcade = room.game_type === "knife_hit" || room.game_type === "fruit_slice" || room.game_type === "sheep_fight";
     views.match.classList.toggle("arena-mode-arcade", isArcade);
 
     const container = document.getElementById("boardContainer");
@@ -569,7 +569,10 @@
     }
 
     container.innerHTML = "";
-    const gamePath = room.game_type === "knife_hit" ? "/static/games/knife_hit/index.html" : "/static/games/fruit_slice/index.html";
+    let gamePath = "/static/games/fruit_slice/index.html";
+    if (room.game_type === "knife_hit") gamePath = "/static/games/knife_hit/index.html";
+    else if (room.game_type === "sheep_fight") gamePath = "/static/games/sheep_fight/index.html";
+
     const iframeSrc = `${gamePath}?mode=arena&opp=${encodeURIComponent(oppP.name || "Rival")}`;
 
     const wrap = document.createElement("div");
@@ -700,11 +703,14 @@
 
   function renderConnect4Board(container, room, myTurn) {
     const boardEl = document.createElement("div");
-    boardEl.className = "c4-board";
+    boardEl.className = "c4-board connect-board";
     room.state.board.forEach((row) => {
       row.forEach((cell, col) => {
         const cellEl = document.createElement("div");
-        cellEl.className = `c4-cell ${cell}`;
+        cellEl.className = `c4-cell ${cell ? "filled " + cell : "empty"}`;
+        if (cell === "R" || cell === "Y") {
+          cellEl.innerHTML = `<div class="c4-disc ${cell}"></div>`;
+        }
         cellEl.addEventListener("click", () => {
           if (!myTurn) return;
           haptic("light");
@@ -872,6 +878,14 @@
       thumb: "/static/thumbnails/fruit_thumb.png",
       desc: "3-minute blitz frenzy • 3 lives • swipe multi-combos and avoid deadly bombs!",
       timer: "🍉 3 LIVES • 3 MIN",
+    },
+    sheep_fight: {
+      title: "Sheep Fight Royale",
+      tag: "Hago 1v1 Battle Arena",
+      icon: "🐑",
+      thumb: "/static/thumbnails/sheep_thumb.png",
+      desc: "Hago-style 5-lane sheep pushing battle! Deploy small, medium, and giant horned rams to push opponent into their barn!",
+      timer: "⏱️ 90s MATCH",
     },
   };
 
@@ -1339,7 +1353,8 @@
     const titleEl = document.getElementById("gamePlayerTitle");
     if (titleEl) titleEl.textContent = `${title}`;
     const iframe = document.getElementById("customGameIframe");
-    if (iframe) iframe.src = url;
+    // Hold game while popup is active so it does not run or tick in the background
+    if (iframe) iframe.src = "about:blank";
 
     // Show Pre-Game Start Modal Pop-Up
     const pso = document.getElementById("playerStartOverlay");
@@ -1381,6 +1396,10 @@
     playStartChime();
     const pso = document.getElementById("playerStartOverlay");
     if (pso) pso.classList.add("hidden");
+    const iframe = document.getElementById("customGameIframe");
+    if (iframe && state.currentGameUrl && (!iframe.src || iframe.src.endsWith("about:blank") || iframe.src === "about:blank")) {
+      iframe.src = state.currentGameUrl;
+    }
   });
 
   // Hero Sliding Window Carousel Control

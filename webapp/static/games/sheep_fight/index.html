@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Sheep Fight Royale</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+body {
+  background: #090d16;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow: hidden;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+#gameContainer {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  height: 100vh;
+  max-height: 740px;
+  overflow: hidden;
+  background: #14532d;
+  box-shadow: 0 0 50px rgba(0,0,0,0.9);
+  border-radius: 18px;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* TOP HUD - Scores & Clocks */
+#hudTop {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+  z-index: 10;
+}
+.hud-card {
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  padding: 5px 12px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+}
+.hud-score-p1 { font-size: 1.2rem; font-weight: 900; color: #38bdf8; }
+.hud-score-p2 { font-size: 1.2rem; font-weight: 900; color: #ef4444; }
+.hud-timer { font-size: 1.05rem; font-weight: 800; color: #fde047; }
+
+/* BOTTOM CONTROLS & ENERGY */
+#controlsBottom {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 10;
+}
+.energy-bar-wrap {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 12px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.energy-icon { font-size: 1.1rem; }
+.energy-track {
+  flex: 1;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+.energy-fill {
+  height: 100%;
+  width: 50%;
+  background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+  border-radius: 6px;
+  transition: width 0.1s linear;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
+}
+.energy-val { font-size: 0.75rem; font-weight: 900; color: #34d399; min-width: 38px; text-align: right; }
+
+.cards-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.sheep-card {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  padding: 6px 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.sheep-card.selected {
+  border-color: #38bdf8;
+  background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.6);
+  transform: translateY(-3px);
+}
+.sheep-card.disabled {
+  opacity: 0.45;
+  filter: grayscale(0.8);
+}
+.card-icon { font-size: 1.5rem; line-height: 1.1; margin-bottom: 2px; }
+.card-title { font-size: 0.72rem; font-weight: 800; color: #e2e8f0; }
+.card-cost { font-size: 0.68rem; font-weight: 900; color: #34d399; }
+
+/* Modals */
+.game-modal {
+  position: absolute;
+  inset: 0;
+  background: rgba(7, 11, 22, 0.92);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 20px;
+}
+.game-modal.hidden { display: none !important; }
+.modal-box {
+  background: linear-gradient(180deg, #164e63 0%, #082f49 100%);
+  border: 2px solid rgba(56, 189, 248, 0.45);
+  border-radius: 24px;
+  padding: 26px 20px;
+  text-align: center;
+  max-width: 320px;
+  width: 100%;
+  box-shadow: 0 20px 45px rgba(0,0,0,0.85), 0 0 35px rgba(56,189,248,0.3);
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes popIn {
+  0% { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.modal-title {
+  font-size: 1.6rem;
+  font-weight: 900;
+  margin-bottom: 6px;
+  color: #38bdf8;
+  letter-spacing: 0.02em;
+}
+.modal-sub {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  margin-bottom: 18px;
+  line-height: 1.4;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  padding: 12px 24px;
+  width: 100%;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
+  transition: transform 0.1s ease;
+}
+.btn-primary:active { transform: scale(0.96); }
+</style>
+</head>
+<body>
+
+<div id="gameContainer">
+  <canvas id="cvs"></canvas>
+
+  <!-- TOP HUD -->
+  <div id="hudTop">
+    <div class="hud-card">
+      <span style="font-size:0.75rem; color:#94a3b8; font-weight:800;">YOU</span>
+      <span class="hud-score-p1" id="scoreP1">0</span>
+    </div>
+    <div class="hud-card">
+      <span style="font-size:0.75rem; color:#fde047;">⏱️</span>
+      <span class="hud-timer" id="timerVal">01:30</span>
+    </div>
+    <div class="hud-card">
+      <span class="hud-score-p2" id="scoreP2">0</span>
+      <span style="font-size:0.75rem; color:#94a3b8; font-weight:800;" id="oppNameLabel">RIVAL</span>
+    </div>
+  </div>
+
+  <!-- BOTTOM CONTROLS & CARDS -->
+  <div id="controlsBottom">
+    <div class="energy-bar-wrap">
+      <span class="energy-icon">🌱</span>
+      <div class="energy-track">
+        <div class="energy-fill" id="energyFill"></div>
+      </div>
+      <span class="energy-val" id="energyVal">50/100</span>
+    </div>
+
+    <div class="cards-row">
+      <div class="sheep-card selected" id="cardSmall" data-type="small">
+        <div class="card-icon">🐑</div>
+        <div class="card-title">Small Lamb</div>
+        <div class="card-cost">⚡ 10 (Wt 1)</div>
+      </div>
+      <div class="sheep-card" id="cardMedium" data-type="medium">
+        <div class="card-icon">🐏</div>
+        <div class="card-title">Battle Ram</div>
+        <div class="card-cost">⚡ 20 (Wt 2)</div>
+      </div>
+      <div class="sheep-card" id="cardGiant" data-type="giant">
+        <div class="card-icon">🐂</div>
+        <div class="card-title">Giant Horn</div>
+        <div class="card-cost">⚡ 30 (Wt 3)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Start Modal -->
+  <div id="modalStart" class="game-modal">
+    <div class="modal-box">
+      <div style="font-size: 3.2rem; margin-bottom: 6px;">🐑⚡🐏</div>
+      <h1 class="modal-title">SHEEP FIGHT ROYALE</h1>
+      <p class="modal-sub">Hago-style 5-lane sheep pushing duel! Tap lanes to deploy rams. Heavy sheep push back lighter ones into the rival barn!</p>
+      <button class="btn-primary" id="btnStartGame">▶ BATTLE NOW</button>
+    </div>
+  </div>
+
+  <!-- Game Over Modal -->
+  <div id="modalGameOver" class="game-modal hidden">
+    <div class="modal-box">
+      <div style="font-size: 3rem; margin-bottom: 6px;" id="goIcon">🏆</div>
+      <h1 class="modal-title" id="goTitle">VICTORY!</h1>
+      <p class="modal-sub" id="goSubtitle">You dominated the pastures!</p>
+      
+      <div style="background: rgba(0,0,0,0.4); border-radius: 14px; padding: 12px; margin-bottom: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div>
+          <div style="font-size: 0.68rem; color: #94a3b8; text-transform: uppercase;">Your Score</div>
+          <div style="font-size: 1.5rem; font-weight: 900; color: #38bdf8;" id="finalScoreP1">0</div>
+        </div>
+        <div>
+          <div style="font-size: 0.68rem; color: #94a3b8; text-transform: uppercase;">Rival Score</div>
+          <div style="font-size: 1.5rem; font-weight: 900; color: #ef4444;" id="finalScoreP2">0</div>
+        </div>
+      </div>
+      
+      <button class="btn-primary" id="btnRestartGame">🔄 PLAY AGAIN</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Web Audio Synth
+const Sound = {
+  ctx: null,
+  init() {
+    if (!this.ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) this.ctx = new AC();
+    }
+  },
+  play(type) {
+    if (!this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      if (type === 'deploy') {
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(350, t);
+        osc.frequency.exponentialRampToValueAtTime(520, t + 0.1);
+        g.gain.setValueAtTime(0.2, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        osc.connect(g); g.connect(this.ctx.destination);
+        osc.start(t); osc.stop(t + 0.11);
+      } else if (type === 'clash') {
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, t);
+        osc.frequency.exponentialRampToValueAtTime(70, t + 0.14);
+        g.gain.setValueAtTime(0.28, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+        osc.connect(g); g.connect(this.ctx.destination);
+        osc.start(t); osc.stop(t + 0.16);
+      } else if (type === 'goal') {
+        [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(f, t + i * 0.08);
+          g.gain.setValueAtTime(0.25, t + i * 0.08);
+          g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.08 + 0.25);
+          osc.connect(g); g.connect(this.ctx.destination);
+          osc.start(t + i * 0.08); osc.stop(t + i * 0.08 + 0.26);
+        });
+      }
+    } catch (_) {}
+  }
+};
+
+const cvs = document.getElementById('cvs');
+const ctx = cvs.getContext('2d');
+let W = 360, H = 640;
+
+function resize() {
+  const container = document.getElementById('gameContainer');
+  W = cvs.width = container.clientWidth;
+  H = cvs.height = container.clientHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// 5 Lanes Configuration
+const NUM_LANES = 5;
+function getLaneWidth() { return W / NUM_LANES; }
+function getLaneCenterX(lane) { return lane * getLaneWidth() + getLaneWidth() / 2; }
+
+// Sheep Archetypes
+const SHEEP_TYPES = {
+  small:  { name: 'Small Lamb', weight: 1, speed: 2.8, cost: 10, radius: 14, wool: 18 },
+  medium: { name: 'Battle Ram', weight: 2, speed: 2.1, cost: 20, radius: 18, wool: 24 },
+  giant:  { name: 'Giant Horn', weight: 3, speed: 1.5, cost: 30, radius: 24, wool: 30 },
+};
+
+// Game State
+let gameState = 'ready'; // ready, playing, gameover
+let selectedType = 'small';
+let energy = 40;
+let aiEnergy = 40;
+let scoreP1 = 0;
+let scoreP2 = 0;
+let timeLeft = 90; // 90 seconds duel
+let timerInterval = null;
+
+// Sheep Arrays per lane
+// Each sheep: { id, lane, side: 'p1'|'p2', typeKey, x, y, vy, weight, radius, wool, speed, trot: 0, isPushing: false }
+let sheepList = [];
+let particles = [];
+let nextSheepId = 1;
+
+// Multiplayer Arena Bridge
+let isArenaMode = false;
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('mode') === 'arena') {
+  isArenaMode = true;
+  const opp = urlParams.get('opp') || 'Rival';
+  document.getElementById('oppNameLabel').textContent = opp.toUpperCase();
+}
+
+function initGame() {
+  scoreP1 = 0;
+  scoreP2 = 0;
+  energy = 40;
+  aiEnergy = 40;
+  timeLeft = 90;
+  sheepList = [];
+  particles = [];
+  selectedType = 'small';
+  updateCardsUi();
+  updateScoresUi();
+
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if (gameState !== 'playing') return;
+    timeLeft--;
+    updateTimerUi();
+    if (timeLeft <= 0) {
+      finishGame();
+    }
+  }, 1000);
+}
+
+function updateTimerUi() {
+  const m = Math.floor(timeLeft / 60);
+  const s = timeLeft % 60;
+  document.getElementById('timerVal').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function updateScoresUi() {
+  document.getElementById('scoreP1').textContent = scoreP1;
+  document.getElementById('scoreP2').textContent = scoreP2;
+}
+
+// Card Selection
+document.querySelectorAll('.sheep-card').forEach(card => {
+  card.addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+    selectedType = card.dataset.type;
+    updateCardsUi();
+    Sound.init();
+  });
+});
+
+function updateCardsUi() {
+  document.querySelectorAll('.sheep-card').forEach(card => {
+    const t = card.dataset.type;
+    card.classList.toggle('selected', t === selectedType);
+    card.classList.toggle('disabled', energy < SHEEP_TYPES[t].cost);
+  });
+}
+
+// Deploy Sheep into Lane
+function deploySheep(side, lane, typeKey) {
+  const cfg = SHEEP_TYPES[typeKey];
+  const lw = getLaneWidth();
+  const cx = getLaneCenterX(lane);
+
+  const startY = side === 'p1' ? H - 110 : 75;
+  const vy = side === 'p1' ? -cfg.speed : cfg.speed;
+
+  sheepList.push({
+    id: nextSheepId++,
+    side,
+    lane,
+    typeKey,
+    x: cx,
+    y: startY,
+    vy,
+    weight: cfg.weight,
+    radius: cfg.radius,
+    wool: cfg.wool,
+    speed: cfg.speed,
+    trot: 0,
+    isPushing: false,
+  });
+
+  Sound.play('deploy');
+
+  // Spawn dirt puff at gate
+  for (let i = 0; i < 8; i++) {
+    particles.push({
+      x: cx, y: startY,
+      vx: (Math.random() - 0.5) * 3,
+      vy: (Math.random() - 0.5) * 3,
+      color: '#e2e8f0',
+      size: 4, life: 16, maxLife: 16
+    });
+  }
+}
+
+// Tap canvas to deploy in lane
+cvs.addEventListener('pointerdown', (e) => {
+  if (gameState !== 'playing') return;
+  const rect = cvs.getBoundingClientRect();
+  const tapX = e.clientX - rect.left;
+  const tapY = e.clientY - rect.top;
+
+  // Don't deploy if tapped in control deck area
+  if (tapY > H - 85) return;
+
+  const lane = Math.floor(tapX / getLaneWidth());
+  if (lane >= 0 && lane < NUM_LANES) {
+    const cost = SHEEP_TYPES[selectedType].cost;
+    if (energy >= cost) {
+      energy -= cost;
+      deploySheep('p1', lane, selectedType);
+      updateCardsUi();
+    }
+  }
+});
+
+// AI Behavior Loop
+let aiDecisionTimer = 0;
+function updateAi() {
+  aiEnergy = Math.min(100, aiEnergy + 0.22); // Recharges
+  aiDecisionTimer++;
+  if (aiDecisionTimer < 35) return;
+  aiDecisionTimer = 0;
+
+  // Inspect lanes: Find lane that has high threat or is open
+  const laneP1Weight = [0, 0, 0, 0, 0];
+  const laneP2Weight = [0, 0, 0, 0, 0];
+  sheepList.forEach(s => {
+    if (s.side === 'p1') laneP1Weight[s.lane] += s.weight;
+    else laneP2Weight[s.lane] += s.weight;
+  });
+
+  // Pick target lane
+  let chosenLane = -1;
+  // 1. Defend lane where P1 is pushing hard
+  for (let l = 0; l < NUM_LANES; l++) {
+    if (laneP1Weight[l] > laneP2Weight[l] && laneP1Weight[l] > 0) {
+      chosenLane = l;
+      break;
+    }
+  }
+  // 2. Otherwise attack an undefended lane
+  if (chosenLane === -1) {
+    const emptyLanes = [0, 1, 2, 3, 4].filter(l => laneP1Weight[l] === 0);
+    chosenLane = emptyLanes.length ? emptyLanes[Math.floor(Math.random() * emptyLanes.length)] : Math.floor(Math.random() * 5);
+  }
+
+  // Choose sheep type based on energy
+  let aiType = 'small';
+  if (aiEnergy >= 30 && (laneP1Weight[chosenLane] >= 2 || Math.random() < 0.35)) {
+    aiType = 'giant';
+  } else if (aiEnergy >= 20 && Math.random() < 0.6) {
+    aiType = 'medium';
+  }
+
+  if (aiEnergy >= SHEEP_TYPES[aiType].cost) {
+    aiEnergy -= SHEEP_TYPES[aiType].cost;
+    deploySheep('p2', chosenLane, aiType);
+  }
+}
+
+// Lane Pushing Physics & Clash Engine
+function updatePhysics() {
+  // Energy regeneration for player
+  energy = Math.min(100, energy + 0.24);
+  const fill = document.getElementById('energyFill');
+  if (fill) fill.style.width = `${energy}%`;
+  const val = document.getElementById('energyVal');
+  if (val) val.textContent = `${Math.floor(energy)}/100`;
+  updateCardsUi();
+
+  // Run AI
+  updateAi();
+
+  // Process sheep per lane
+  for (let lane = 0; lane < NUM_LANES; lane++) {
+    const p1Sheep = sheepList.filter(s => s.lane === lane && s.side === 'p1').sort((a,b) => a.y - b.y);
+    const p2Sheep = sheepList.filter(s => s.lane === lane && s.side === 'p2').sort((a,b) => a.y - b.y);
+
+    // Trot legs animation
+    sheepList.filter(s => s.lane === lane).forEach(s => { s.trot += 0.25; });
+
+    // Head-to-head contact detection
+    if (p1Sheep.length > 0 && p2Sheep.length > 0) {
+      const leadP1 = p1Sheep[0]; // Highest P1 sheep (smallest Y)
+      const leadP2 = p2Sheep[p2Sheep.length - 1]; // Lowest P2 sheep (largest Y)
+
+      const dist = leadP1.y - leadP2.y;
+      const touchDist = leadP1.radius + leadP2.radius;
+
+      if (dist <= touchDist) {
+        // Clashing!
+        leadP1.isPushing = true;
+        leadP2.isPushing = true;
+
+        // Sum weights of touching cluster
+        let wP1 = leadP1.weight;
+        let wP2 = leadP2.weight;
+
+        // Reinforcement weights touching lead sheep
+        for (let i = 1; i < p1Sheep.length; i++) {
+          if (p1Sheep[i].y - p1Sheep[i-1].y <= p1Sheep[i].radius + p1Sheep[i-1].radius + 8) {
+            wP1 += p1Sheep[i].weight;
+            p1Sheep[i].isPushing = true;
+          }
+        }
+        for (let i = p2Sheep.length - 2; i >= 0; i--) {
+          if (p2Sheep[i+1].y - p2Sheep[i].y <= p2Sheep[i+1].radius + p2Sheep[i].radius + 8) {
+            wP2 += p2Sheep[i].weight;
+            p2Sheep[i].isPushing = true;
+          }
+        }
+
+        // Push resolution
+        let pushSpeed = 0;
+        if (wP1 > wP2) {
+          pushSpeed = -0.7 - (wP1 - wP2) * 0.45; // Moves up towards P2 barn
+        } else if (wP2 > wP1) {
+          pushSpeed = 0.7 + (wP2 - wP1) * 0.45;  // Moves down towards P1 barn
+        } else {
+          // Deadlock jitter
+          pushSpeed = (Math.random() - 0.5) * 0.6;
+        }
+
+        leadP1.y += pushSpeed;
+        leadP2.y = leadP1.y - touchDist;
+
+        // Propagate push to chain
+        for (let i = 1; i < p1Sheep.length; i++) {
+          if (p1Sheep[i].isPushing) p1Sheep[i].y = p1Sheep[i-1].y + (p1Sheep[i].radius + p1Sheep[i-1].radius);
+        }
+        for (let i = p2Sheep.length - 2; i >= 0; i--) {
+          if (p2Sheep[i].isPushing) p2Sheep[i].y = p2Sheep[i+1].y - (p2Sheep[i+1].radius + p2Sheep[i].radius);
+        }
+
+        // Spawn clash spark stars
+        if (Math.random() < 0.3) {
+          Sound.play('clash');
+          const midX = getLaneCenterX(lane);
+          const midY = (leadP1.y + leadP2.y) / 2;
+          for (let p = 0; p < 4; p++) {
+            particles.push({
+              x: midX + (Math.random() - 0.5) * 16,
+              y: midY + (Math.random() - 0.5) * 16,
+              vx: (Math.random() - 0.5) * 4,
+              vy: (Math.random() - 0.5) * 4,
+              color: Math.random() < 0.5 ? '#fde047' : '#fff',
+              size: 4, life: 14, maxLife: 14, isStar: true
+            });
+          }
+        }
+      } else {
+        // Free movement
+        p1Sheep.forEach(s => { s.isPushing = false; s.y += s.vy; });
+        p2Sheep.forEach(s => { s.isPushing = false; s.y += s.vy; });
+      }
+    } else {
+      // Free movement when no opposing sheep in lane
+      p1Sheep.forEach(s => { s.isPushing = false; s.y += s.vy; });
+      p2Sheep.forEach(s => { s.isPushing = false; s.y += s.vy; });
+    }
+  }
+
+  // Check Barn Goal entries
+  const goalTopY = 65;
+  const goalBottomY = H - 90;
+
+  sheepList = sheepList.filter(s => {
+    // P1 sheep enters P2 barn
+    if (s.side === 'p1' && s.y <= goalTopY) {
+      scoreP1 += s.weight;
+      updateScoresUi();
+      Sound.play('goal');
+      triggerGoalCelebration(s.x, goalTopY, '#38bdf8');
+      broadcastScore();
+      return false;
+    }
+    // P2 sheep enters P1 barn
+    if (s.side === 'p2' && s.y >= goalBottomY) {
+      scoreP2 += s.weight;
+      updateScoresUi();
+      Sound.play('goal');
+      triggerGoalCelebration(s.x, goalBottomY, '#ef4444');
+      broadcastScore();
+      return false;
+    }
+    return true;
+  });
+
+  // Target limit: First to 15 points wins instantly!
+  if (scoreP1 >= 15 || scoreP2 >= 15) {
+    finishGame();
+  }
+}
+
+function triggerGoalCelebration(x, y, color) {
+  for (let i = 0; i < 20; i++) {
+    const a = Math.random() * Math.PI * 2;
+    particles.push({
+      x, y,
+      vx: Math.cos(a) * (3 + Math.random() * 5),
+      vy: Math.sin(a) * (3 + Math.random() * 5),
+      color,
+      size: 5,
+      life: 25,
+      maxLife: 25,
+      isStar: true,
+    });
+  }
+}
+
+function broadcastScore(isFinal = false) {
+  if (!isArenaMode) return;
+  try {
+    window.parent?.postMessage({
+      type: "score_update",
+      score: scoreP1,
+      level: 1,
+      status: isFinal ? "game_over" : "playing"
+    }, "*");
+  } catch (_) {}
+}
+
+function finishGame() {
+  gameState = 'gameover';
+  clearInterval(timerInterval);
+
+  broadcastScore(true);
+
+  const isWin = scoreP1 > scoreP2;
+  const isDraw = scoreP1 === scoreP2;
+
+  document.getElementById('finalScoreP1').textContent = scoreP1;
+  document.getElementById('finalScoreP2').textContent = scoreP2;
+
+  const iconEl = document.getElementById('goIcon');
+  const titleEl = document.getElementById('goTitle');
+  const subEl = document.getElementById('goSubtitle');
+
+  if (isDraw) {
+    iconEl.textContent = '🤝';
+    titleEl.textContent = 'DRAW!';
+    titleEl.style.color = '#f59e0b';
+    subEl.textContent = 'A fierce, perfectly balanced pasture duel!';
+  } else if (isWin) {
+    iconEl.textContent = '🏆';
+    titleEl.textContent = 'VICTORY!';
+    titleEl.style.color = '#10b981';
+    subEl.textContent = 'You dominated and conquered the pastures!';
+  } else {
+    iconEl.textContent = '💔';
+    titleEl.textContent = 'DEFEAT';
+    titleEl.style.color = '#ef4444';
+    subEl.textContent = 'Rival rams out-pushed your flock!';
+  }
+
+  document.getElementById('modalGameOver').classList.remove('hidden');
+}
+
+// ----------------- DRAWING ENGINE (HAGO CARTOON STYLE) -----------------
+function drawPasture() {
+  ctx.fillStyle = '#15803d';
+  ctx.fillRect(0, 0, W, H);
+
+  const lw = getLaneWidth();
+
+  // Draw 5 Lane Paths
+  for (let l = 0; l < NUM_LANES; l++) {
+    const lx = l * lw;
+    // Dirt track in center of lane
+    ctx.fillStyle = (l % 2 === 0) ? '#166534' : '#14532d';
+    ctx.fillRect(lx, 0, lw, H);
+
+    ctx.fillStyle = 'rgba(217, 119, 6, 0.16)';
+    ctx.fillRect(lx + 8, 50, lw - 16, H - 120);
+
+    // Wooden Fence Posts
+    ctx.strokeStyle = 'rgba(120, 53, 15, 0.55)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(lx, 50); ctx.lineTo(lx, H - 70);
+    ctx.stroke();
+  }
+
+  // Top Rival Barn Goal Line
+  ctx.fillStyle = 'rgba(239, 68, 68, 0.35)';
+  ctx.fillRect(0, 50, W, 20);
+  ctx.strokeStyle = '#ef4444';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(0, 50, W, 20);
+
+  // Bottom Player Barn Goal Line
+  ctx.fillStyle = 'rgba(56, 189, 248, 0.35)';
+  ctx.fillRect(0, H - 95, W, 20);
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(0, H - 95, W, 20);
+}
+
+// Draw Expressive Chibi Cartoon Sheep
+function drawSheep(s) {
+  ctx.save();
+  ctx.translate(s.x, s.y);
+
+  const isP1 = s.side === 'p1';
+  const woolColor = isP1 ? '#f8fafc' : '#334155';
+  const skinColor = isP1 ? '#fecdd3' : '#64748b';
+  const ribbonColor = isP1 ? '#38bdf8' : '#e11d48';
+  const hornColor = isP1 ? '#f59e0b' : '#be123c';
+
+  // 1. Shadow underneath
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+  ctx.beginPath();
+  ctx.ellipse(0, s.radius * 0.8, s.wool * 0.9, s.wool * 0.45, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 2. Animated Trot Legs
+  const legOffset = Math.sin(s.trot) * (s.isPushing ? 2 : 5);
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(-s.wool * 0.5, s.radius * 0.4 + legOffset, 5, 8);
+  ctx.fillRect(s.wool * 0.4, s.radius * 0.4 - legOffset, 5, 8);
+
+  // 3. Fluffy Cloud-like Wool Body
+  ctx.fillStyle = woolColor;
+  ctx.beginPath();
+  ctx.arc(0, 0, s.wool * 0.75, 0, Math.PI * 2);
+  ctx.arc(-s.wool * 0.35, -s.wool * 0.2, s.wool * 0.4, 0, Math.PI * 2);
+  ctx.arc(s.wool * 0.35, -s.wool * 0.2, s.wool * 0.4, 0, Math.PI * 2);
+  ctx.arc(-s.wool * 0.3, s.wool * 0.2, s.wool * 0.4, 0, Math.PI * 2);
+  ctx.arc(s.wool * 0.3, s.wool * 0.2, s.wool * 0.4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 4. Head (Forward Facing)
+  const headY = isP1 ? -s.radius * 0.6 : s.radius * 0.6;
+  ctx.fillStyle = skinColor;
+  ctx.beginPath();
+  ctx.arc(0, headY, s.radius * 0.65, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 5. Curved Ram Horns (Small, Medium, Giant)
+  const hornSpan = s.typeKey === 'giant' ? 18 : (s.typeKey === 'medium' ? 14 : 9);
+  ctx.strokeStyle = hornColor;
+  ctx.lineWidth = s.typeKey === 'giant' ? 6 : (s.typeKey === 'medium' ? 4.5 : 3);
+  ctx.lineCap = 'round';
+
+  // Left Horn
+  ctx.beginPath();
+  ctx.arc(-s.radius * 0.6, headY, hornSpan, 0.8, Math.PI * 1.3, false);
+  ctx.stroke();
+
+  // Right Horn
+  ctx.beginPath();
+  ctx.arc(s.radius * 0.6, headY, hornSpan, -0.3, Math.PI * 0.2, true);
+  ctx.stroke();
+
+  // 6. Determined Anime Eyes
+  const eyeY = headY + (isP1 ? -2 : 2);
+  ctx.fillStyle = isP1 ? '#0f172a' : '#fff';
+  ctx.beginPath();
+  ctx.arc(-5, eyeY, 3, 0, Math.PI * 2);
+  ctx.arc(5, eyeY, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Cute highlight sparkle
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(-4, eyeY - 1, 1, 0, Math.PI * 2);
+  ctx.arc(6, eyeY - 1, 1, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 7. Team Ribbon
+  ctx.fillStyle = ribbonColor;
+  ctx.fillRect(-s.radius * 0.5, headY + (isP1 ? 6 : -8), s.radius, 4);
+
+  // 8. Struggle / Sweat Particle if pushing hard
+  if (s.isPushing) {
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.arc(s.radius * 0.8, headY - 4, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Weight Indicator Badge
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.beginPath();
+  ctx.arc(0, 0, 9, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(s.weight, 0, 0);
+
+  ctx.restore();
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+  drawPasture();
+
+  // Draw Sheep
+  sheepList.forEach(s => drawSheep(s));
+
+  // Draw Particles / Sparks
+  particles.forEach(p => {
+    ctx.save();
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = p.life / p.maxLife;
+    ctx.beginPath();
+    if (p.isStar) {
+      // 4-point star
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    } else {
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    }
+    ctx.fill();
+    ctx.restore();
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life--;
+  });
+  particles = particles.filter(p => p.life > 0);
+}
+
+function loop() {
+  if (gameState === 'playing') {
+    updatePhysics();
+  }
+  drawGame();
+  requestAnimationFrame(loop);
+}
+loop();
+
+document.getElementById('btnStartGame').addEventListener('click', () => {
+  document.getElementById('modalStart').classList.add('hidden');
+  initGame();
+  gameState = 'playing';
+});
+
+document.getElementById('btnRestartGame').addEventListener('click', () => {
+  document.getElementById('modalGameOver').classList.add('hidden');
+  initGame();
+  gameState = 'playing';
+});
+
+// Pause / Resume messages from parent
+window.addEventListener('message', (e) => {
+  if (e.data?.type === 'PAUSE_GAME' && gameState === 'playing') {
+    gameState = 'paused';
+  } else if (e.data?.type === 'RESUME_GAME' && gameState === 'paused') {
+    gameState = 'playing';
+  }
+});
+</script>
+</body>
+</html>

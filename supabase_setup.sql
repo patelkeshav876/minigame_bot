@@ -112,6 +112,7 @@ INSERT INTO custom_games (title, url, icon, description, image_url, is_active, c
     ('Asteroid Blaster', '/static/games/asteroids/index.html', '🚀', 'Space vector rock shooter with thrusters', '', 1, 1795166669.9031487),
     ('Fruit Slicer', '/static/games/fruit_slice/index.html', '🍉', 'Slice flying fruits with swipe blades', '/static/thumbnails/fruit_thumb.png', 1, 1795166669.9031487),
     ('Knife Master', '/static/games/knife_hit/index.html', '🗡️', 'Throw knives into rotating target log', '/static/thumbnails/knife_thumb.png', 1, 1795166669.9031487),
+    ('Sheep Fight Royale', '/static/games/sheep_fight/index.html', '🐑', 'Hago 1v1 sheep pushing battle arena', '/static/thumbnails/sheep_thumb.png', 1, 1795166669.9031487),
     ('Whack-a-Ghost', '/static/games/whack_a_mole/index.html', '🔨', 'Test reaction time whacking popping ghosts', '', 1, 1795166669.9031487),
     ('Helix Drop', '/static/games/helix_jump/index.html', '🌀', 'Bounce ball through gaps in rotating tower', '', 1, 1795166669.9031487),
     ('Tower Stack', '/static/games/tower_stack/index.html', '🏢', 'Slice and stack tower blocks as high as you can', '', 1, 1795166669.9031487),
