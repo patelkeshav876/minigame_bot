@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import secrets
 import time
 from dataclasses import dataclass, field
@@ -40,6 +41,7 @@ class ArenaPlayer:
     user_id: str
     name: str
     elo: float = 1200.0
+    wins: int = 0
     role: str = ""  # chess: w/b, othello: B/W, connect4: R/Y, tictactoe: X/O
     clock: float = 180.0
     is_ai: bool = False
@@ -119,6 +121,8 @@ class ArenaManager:
         return self._raw_lock
 
     def start_background_tasks(self) -> None:
+        if os.getenv("TESTING") == "1":
+            return
         if self._clock_task is None or self._clock_task.done():
             self._clock_task = asyncio.create_task(self._clock_loop())
 
@@ -129,6 +133,9 @@ class ArenaManager:
                 await self._clock_task
             except asyncio.CancelledError:
                 pass
+
+    async def stop(self) -> None:
+        await self.stop_background_tasks()
 
     def _init_game_state(self, game_type: str) -> tuple[dict[str, Any], str]:
         if game_type == "chess":
@@ -170,13 +177,14 @@ class ArenaManager:
 
         self.storage.upsert_player(user_id, name)
         elo = self.storage.get_game_elo(user_id, game_type)
+        wins = self.storage.get_game_wins(user_id, game_type)
 
         async with self._lock:
             if room_id and not vs_ai:
                 clean_id = room_id.upper().strip()
                 room = self.rooms.get(clean_id)
                 if room:
-                    return self._attach_player(room, user_id, name, elo)
+                    return self._attach_player(room, user_id, name, elo, wins=wins)
             else:
                 clean_id = secrets.token_hex(3).upper()
 
@@ -191,7 +199,7 @@ class ArenaManager:
                 turn_role=first_role,
             )
             self.rooms[clean_id] = room
-            self._attach_player(room, user_id, name, elo)
+            self._attach_player(room, user_id, name, elo, wins=wins)
             if vs_ai:
                 roles = self._roles_for(game_type)
                 room.players.append(
@@ -214,6 +222,7 @@ class ArenaManager:
 
         self.storage.upsert_player(user_id, name)
         elo = self.storage.get_game_elo(user_id, game_type)
+        wins = self.storage.get_game_wins(user_id, game_type)
 
         async with self._lock:
             for room in self.rooms.values():
@@ -225,7 +234,7 @@ class ArenaManager:
                     and len(room.players) == 1
                     and room.players[0].user_id != user_id
                 ):
-                    return self._attach_player(room, user_id, name, elo)
+                    return self._attach_player(room, user_id, name, elo, wins=wins)
 
             room_id = secrets.token_hex(3).upper()
             state, first_role = self._init_game_state(game_type)
@@ -238,13 +247,14 @@ class ArenaManager:
                 turn_role=first_role,
             )
             self.rooms[room_id] = room
-            return self._attach_player(room, user_id, name, elo)
+            return self._attach_player(room, user_id, name, elo, wins=wins)
 
-    def _attach_player(self, room: ArenaRoom, user_id: str, name: str, elo: float) -> ArenaRoom:
+    def _attach_player(self, room: ArenaRoom, user_id: str, name: str, elo: float, wins: int = 0) -> ArenaRoom:
         for p in room.players:
             if p.user_id == user_id:
                 p.name = name
                 p.elo = elo
+                p.wins = wins
                 return room
 
         if len(room.players) >= 2:
@@ -258,6 +268,7 @@ class ArenaManager:
                 user_id=user_id,
                 name=name,
                 elo=elo,
+                wins=wins,
                 role=role,
                 clock=INITIAL_CLOCKS[room.game_type],
             )
@@ -297,6 +308,7 @@ class ArenaManager:
                     "user_id": p.user_id,
                     "name": p.name,
                     "elo": round(p.elo),
+                    "wins": getattr(p, "wins", 0),
                     "role": p.role,
                     "clock": round(max(0.0, p.clock), 1),
                     "is_ai": p.is_ai,
@@ -335,7 +347,8 @@ class ArenaManager:
 
             self.storage.upsert_player(user_id, name)
             elo = self.storage.get_game_elo(user_id, room.game_type)
-            self._attach_player(room, user_id, name, elo)
+            wins = self.storage.get_game_wins(user_id, room.game_type)
+            self._attach_player(room, user_id, name, elo, wins=wins)
             player = next((p for p in room.players if p.user_id == user_id), None)
             if player:
                 player.ws = ws
@@ -503,7 +516,8 @@ class ArenaManager:
         await self.broadcast_room(room)
 
         if ai_should_move:
-            await asyncio.sleep(0.25)
+            # Deliberate AI thinking delay (750ms) so human player has time to see their move and AI's turn
+            await asyncio.sleep(0.75)
             async with self._lock:
                 self._perform_ai_turn(room)
             await self.broadcast_room(room)

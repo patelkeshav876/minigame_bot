@@ -340,6 +340,61 @@
     }
   }
 
+  function playMatchResultAudio(type) {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const actx = new AudioCtx();
+      const now = actx.currentTime;
+
+      if (type === "win") {
+        // Celebratory major ascending fanfare: C5, E5, G5, C6
+        const freqs = [523.25, 659.25, 783.99, 1046.50];
+        freqs.forEach((f, i) => {
+          const osc = actx.createOscillator();
+          const gain = actx.createGain();
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(f, now + i * 0.12);
+          gain.gain.setValueAtTime(0.22, now + i * 0.12);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.35);
+          osc.connect(gain);
+          gain.connect(actx.destination);
+          osc.start(now + i * 0.12);
+          osc.stop(now + i * 0.12 + 0.36);
+        });
+      } else if (type === "loss") {
+        // Minor descending tone: G3, Eb3, C3
+        const freqs = [196.0, 155.56, 130.81];
+        freqs.forEach((f, i) => {
+          const osc = actx.createOscillator();
+          const gain = actx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(f, now + i * 0.18);
+          gain.gain.setValueAtTime(0.2, now + i * 0.18);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.18 + 0.4);
+          osc.connect(gain);
+          gain.connect(actx.destination);
+          osc.start(now + i * 0.18);
+          osc.stop(now + i * 0.18 + 0.42);
+        });
+      } else {
+        // Harmonic draw chime: E4, G4
+        [329.63, 392.0].forEach((f, i) => {
+          const osc = actx.createOscillator();
+          const gain = actx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(f, now + i * 0.14);
+          gain.gain.setValueAtTime(0.18, now + i * 0.14);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.14 + 0.35);
+          osc.connect(gain);
+          gain.connect(actx.destination);
+          osc.start(now + i * 0.14);
+          osc.stop(now + i * 0.14 + 0.36);
+        });
+      }
+    } catch (_) {}
+  }
+
   function updatePlayerCards() {
     const room = state.room;
     if (!room) return;
@@ -348,12 +403,13 @@
 
     const selfCard = document.getElementById("selfCard");
     const oppCard = document.getElementById("opponentCard");
+    const isChess = room.game_type === "chess";
 
     if (selfP) {
       let extra = "";
       if (room.game_type === "othello" && room.counts) extra = ` • ${room.counts[selfP.role] ?? 0}`;
       selfCard.querySelector(".p-name").textContent = `${selfP.name} (${selfP.role})${extra}`;
-      selfCard.querySelector(".p-elo").textContent = `${selfP.elo} ELO`;
+      selfCard.querySelector(".p-elo").textContent = isChess ? `${selfP.elo} ELO` : `🏆 ${selfP.wins || 0} Wins`;
       selfCard.querySelector(".p-clock").textContent = formatClock(selfP.clock);
       selfCard.classList.toggle("active-turn", room.status === "active" && room.turn_role === selfP.role);
     }
@@ -362,12 +418,13 @@
       let extra = "";
       if (room.game_type === "othello" && room.counts) extra = ` • ${room.counts[oppP.role] ?? 0}`;
       oppCard.querySelector(".p-name").textContent = `${oppP.name} (${oppP.role})${extra}`;
-      oppCard.querySelector(".p-elo").textContent = oppP.is_ai ? "AI" : `${oppP.elo} ELO`;
+      const oppRating = isChess ? (oppP.is_ai ? "AI" : `${oppP.elo} ELO`) : (oppP.is_ai ? "AI Bot" : `🏆 ${oppP.wins || 0} Wins`);
+      oppCard.querySelector(".p-elo").textContent = oppRating;
       oppCard.querySelector(".p-clock").textContent = oppP.is_ai ? "∞" : formatClock(oppP.clock);
       oppCard.classList.toggle("active-turn", room.status === "active" && room.turn_role === oppP.role);
     } else {
       oppCard.querySelector(".p-name").textContent = "Waiting for opponent...";
-      oppCard.querySelector(".p-elo").textContent = "-- ELO";
+      oppCard.querySelector(".p-elo").textContent = isChess ? "-- ELO" : "-- Wins";
       oppCard.querySelector(".p-clock").textContent = "--:--";
       oppCard.classList.remove("active-turn");
     }
@@ -396,6 +453,7 @@
     updatePlayerCards();
 
     const selfP = room.players.find((p) => p.user_id === state.userId);
+    const oppP = room.players.find((p) => p.user_id !== selfP?.user_id);
     const isSpectator = !selfP;
     const myTurn = !isSpectator && room.status === "active" && selfP.role === room.turn_role;
 
@@ -414,6 +472,58 @@
     } else {
       const checkNote = room.in_check ? " • ⚠️ CHECK!" : "";
       banner.textContent = (myTurn ? "👉 Your turn!" : "⏳ Opponent's turn...") + checkNote;
+    }
+
+    // Match Result Celebration Pop-up
+    if (room.status === "active") {
+      state.resultModalShown = false;
+      document.getElementById("modalMatchResult")?.classList.add("hidden");
+    } else if (room.status === "finished" && !state.resultModalShown) {
+      state.resultModalShown = true;
+      const modal = document.getElementById("modalMatchResult");
+      if (modal) {
+        const isDraw = room.winner_role === "Draw";
+        const isWin = !isDraw && selfP && room.winner_role === selfP.role;
+        const iconEl = document.getElementById("resultModalIcon");
+        const titleEl = document.getElementById("resultModalTitle");
+        const subEl = document.getElementById("resultModalSubtitle");
+        const statsEl = document.getElementById("resultModalStats");
+
+        if (isDraw) {
+          if (iconEl) iconEl.textContent = "🤝";
+          if (titleEl) {
+            titleEl.textContent = "DRAW!";
+            titleEl.className = "result-title draw";
+          }
+          if (subEl) subEl.textContent = room.reason || "The match ended in a draw!";
+          playMatchResultAudio("draw");
+          try { tg?.HapticFeedback?.notificationOccurred("warning"); } catch (_) {}
+        } else if (isWin) {
+          if (iconEl) iconEl.textContent = "🏆";
+          if (titleEl) {
+            titleEl.textContent = "VICTORY!";
+            titleEl.className = "result-title win";
+          }
+          if (subEl) subEl.textContent = `You defeated ${oppP ? oppP.name : "opponent"}! (${room.reason || "Game Won"})`;
+          playMatchResultAudio("win");
+          try { tg?.HapticFeedback?.notificationOccurred("success"); } catch (_) {}
+        } else {
+          if (iconEl) iconEl.textContent = "💔";
+          if (titleEl) {
+            titleEl.textContent = "DEFEAT";
+            titleEl.className = "result-title loss";
+          }
+          if (subEl) subEl.textContent = `${oppP ? oppP.name : "Opponent"} won (${room.reason || "Game Lost"})`;
+          playMatchResultAudio("loss");
+          try { tg?.HapticFeedback?.notificationOccurred("error"); } catch (_) {}
+        }
+
+        if (statsEl) {
+          const gameTitle = room.game_type === "chess" ? "Chess" : (room.game_type === "tictactoe" ? "XO Blitz" : room.game_type.toUpperCase());
+          statsEl.textContent = `Game: ${gameTitle} • Result: ${room.reason || "Completed"}`;
+        }
+        modal.classList.remove("hidden");
+      }
     }
 
     document.getElementById("btnResign").classList.toggle("hidden", isSpectator || room.status !== "active");
@@ -519,14 +629,28 @@
         if (state.selectedSquare === sq) sqEl.classList.add("selected");
         if (legalTargets.has(sq)) sqEl.classList.add(piece ? "capture" : "legal");
 
+        // King In-Check Highlight
+        if (room.in_check && piece) {
+          const checkKingPiece = room.turn_role === "w" ? "K" : "k";
+          if (piece === checkKingPiece) {
+            sqEl.classList.add("in-check");
+          }
+        }
+
         sqEl.innerHTML = (piece ? pieceSvg(piece) : "") + `<span class="chess-coord">${sq.toUpperCase()}</span>`;
 
         sqEl.addEventListener("click", () => {
           if (!myTurn) return;
           if (state.selectedSquare && legalTargets.has(sq)) {
             haptic("medium");
-            sendWs({ type: "move", uci: `${state.selectedSquare}${sq}` });
+            let uciMove = `${state.selectedSquare}${sq}`;
+            // Auto queen promotion if legal
+            if (legalMoves.includes(`${uciMove}q`)) {
+              uciMove += "q";
+            }
+            sendWs({ type: "move", uci: uciMove });
             state.selectedSquare = null;
+            renderMatch();
             return;
           }
           const hasMoves = legalMoves.some((uci) => uci.startsWith(sq));
@@ -888,6 +1012,14 @@
 
   document.getElementById("btnResign")?.addEventListener("click", () => sendWs({ type: "resign" }));
   document.getElementById("btnRematch")?.addEventListener("click", () => sendWs({ type: "rematch" }));
+  document.getElementById("btnResultRematch")?.addEventListener("click", () => {
+    document.getElementById("modalMatchResult")?.classList.add("hidden");
+    sendWs({ type: "rematch" });
+  });
+  document.getElementById("btnResultBack")?.addEventListener("click", () => {
+    document.getElementById("modalMatchResult")?.classList.add("hidden");
+    document.getElementById("btnLeaveRoom")?.click();
+  });
   document.getElementById("btnRefreshLb")?.addEventListener("click", loadLeaderboard);
   document.getElementById("btnRefreshLive")?.addEventListener("click", refreshLiveRooms);
   document.getElementById("btnRefreshProfile")?.addEventListener("click", refreshProfileAndHistory);

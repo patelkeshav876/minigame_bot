@@ -509,10 +509,9 @@ function throwKnife() {
   flyingKnife = {
     x: W / 2,
     y: H - 120,
-    vy: -68,
+    vy: -85,
     width: 14,
     height: 60,
-    tapTargetAngle: targetAngle,
     prevY: H - 120,
   };
 
@@ -538,9 +537,10 @@ function checkKnifeHit() {
   const targetY = H * 0.28;
   const targetRadius = 65;
 
-  if (flyingKnife.y <= targetY + targetRadius + 20) {
-    // Calculate angle on target locked precisely to tap angle for zero-latency hit
-    const hitAngle = (-flyingKnife.tapTargetAngle + Math.PI / 2) % (Math.PI * 2);
+  if (flyingKnife.y <= targetY + targetRadius + 18) {
+    // Calculate angle on target locked precisely to 6 o'clock bottom entry vector at moment of impact
+    let hitAngle = (-targetAngle) % (Math.PI * 2);
+    if (hitAngle < 0) hitAngle += Math.PI * 2;
 
     // 1. Check clash with embedded knives
     let clashed = currentKnives.some(kAngle => {

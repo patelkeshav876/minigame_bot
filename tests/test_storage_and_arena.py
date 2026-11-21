@@ -4,8 +4,14 @@ import asyncio
 import hashlib
 import hmac
 import json
+import os
+import sys
 import time
 from urllib.parse import urlencode
+
+os.environ["TESTING"] = "1"
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 import httpx
 

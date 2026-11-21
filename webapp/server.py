@@ -29,7 +29,12 @@ async def lifespan(_: FastAPI):
         await arena.stop_background_tasks()
 
 
-app = FastAPI(title="MiniGame Bot Battle Arena", lifespan=lifespan)
+import os
+
+app = FastAPI(
+    title="MiniGame Bot Battle Arena",
+    lifespan=None if os.getenv("TESTING") == "1" else lifespan,
+)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 

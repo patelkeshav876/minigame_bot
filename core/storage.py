@@ -727,6 +727,17 @@ class GameStorage:
             ).fetchone()
             return float(row["elo"]) if row else 1200.0
 
+    def get_game_wins(self, user_id: int | str, game_type: str) -> int:
+        with self._lock, self._connect() as conn:
+            row = conn.execute(
+                "SELECT wins FROM game_ratings WHERE user_id = ? AND game_type = ?",
+                (str(user_id), game_type),
+            ).fetchone()
+            if row:
+                return int(row["wins"])
+            p_row = conn.execute("SELECT wins FROM players WHERE user_id = ?", (str(user_id),)).fetchone()
+            return int(p_row["wins"]) if p_row else 0
+
     def list_all_player_ids(self) -> list[str]:
         with self._lock, self._connect() as conn:
             rows = conn.execute("SELECT user_id FROM players").fetchall()

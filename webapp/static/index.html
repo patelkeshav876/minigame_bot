@@ -586,6 +586,20 @@
         <button id="btnResign" class="btn danger">🏳️ Resign</button>
         <button id="btnRematch" class="btn primary hidden">🔄 Rematch</button>
       </div>
+
+      <!-- MATCH RESULT CELEBRATION MODAL -->
+      <div id="modalMatchResult" class="modal hidden">
+        <div class="modal-card result-modal-card">
+          <div class="result-badge-icon" id="resultModalIcon">🏆</div>
+          <h2 id="resultModalTitle" class="result-title win">VICTORY!</h2>
+          <p id="resultModalSubtitle" class="result-sub">You won the match!</p>
+          <div class="result-stats-box" id="resultModalStats">Match Finished</div>
+          <div class="result-btn-row">
+            <button id="btnResultRematch" class="btn primary full">🔄 Rematch</button>
+            <button id="btnResultBack" class="btn outline full">⬅️ Back to Arena</button>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- ==================== LEADERBOARD VIEW ==================== -->
