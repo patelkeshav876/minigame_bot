@@ -53,12 +53,12 @@ DEFAULT_HTML5_GAMES: list[tuple[str, str, str, str, str]] = [
     ("Aviator Rocket", "/static/games/aviator/index.html", "🚀", "High-stakes rocket multiplier curve! Cash out before the blast", "/static/thumbnails/aviator_thumb.png"),
 
     # 🕹️ Arcade Classics (Self-Hosted & 100% Working)
-    ("Neon Snake", "/static/games/snake/index.html", "🐍", "Classic retro snake with smooth controls", ""),
+    ("Neon Snake 3D", "/static/games/snake/index.html", "🐍", "3D cyber slither with glowing energy crystals", "/static/thumbnails/snake_thumb.png"),
     ("Brick Breaker", "/static/games/breakout/index.html", "🧱", "Smash neon bricks with bouncing ball", ""),
     ("Retro Tetris", "/static/games/tetris/index.html", "🧩", "Falling tetromino block puzzle", "/static/banners/tetris_promo.png"),
-    ("T-Rex Desert Run", "/static/games/dino/index.html", "🦖", "Endless runner cactus jumping challenge", "/static/banners/dino_promo.png"),
+    ("T-Rex Cyber Run", "/static/games/dino/index.html", "🦖", "3D-style endless neon desert runner with energy pickups", "/static/thumbnails/dino_thumb.png"),
     ("Neon Pong", "/static/games/pong/index.html", "🏓", "Fast table tennis rally against AI", ""),
-    ("Space Invaders", "/static/games/space_invaders/index.html", "👾", "Defend galaxy from alien waves", "/static/banners/space_promo.png"),
+    ("Galaxy Defender 3D", "/static/games/space_invaders/index.html", "🚀", "3D space fighter starship blasting alien swarms", "/static/thumbnails/galaxy_thumb.png"),
     ("Fruit Slicer", "/static/games/fruit_slice/index.html", "🍉", "Slice flying fruits with swipe blades", "/static/thumbnails/fruit_thumb.png"),
     ("Knife Master", "/static/games/knife_hit/index.html", "🗡️", "Throw knives into rotating target log", "/static/thumbnails/knife_thumb.png"),
     ("Sheep Fight Royale", "/static/games/sheep_fight/index.html", "🐑", "Hago 1v1 sheep pushing battle arena", "/static/thumbnails/sheep_thumb.png"),
@@ -506,6 +506,9 @@ class GameStorage:
         for b in removed:
             conn.execute("DELETE FROM custom_games WHERE url LIKE ?", (f"%{b}%",))
         try:
+            conn.execute("UPDATE custom_games SET title = 'T-Rex Cyber Run', image_url = '/static/thumbnails/dino_thumb.png' WHERE url LIKE '%/dino/%'")
+            conn.execute("UPDATE custom_games SET title = 'Galaxy Defender 3D', icon = '🚀', image_url = '/static/thumbnails/galaxy_thumb.png' WHERE url LIKE '%/space_invaders/%'")
+            conn.execute("UPDATE custom_games SET title = 'Neon Snake 3D', image_url = '/static/thumbnails/snake_thumb.png' WHERE url LIKE '%/snake/%'")
             conn.execute("DELETE FROM custom_games WHERE id NOT IN (SELECT MIN(id) FROM custom_games GROUP BY url)")
         except Exception:
             pass

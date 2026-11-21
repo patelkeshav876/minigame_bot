@@ -1,68 +1,987 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Dino Run</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Cyber T-Rex Runner</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
-body{background:#0f172a;color:#f8fafc;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
-#cvs{background:#1e293b;border:3px solid #10b981;border-radius:18px;box-shadow:0 0 25px rgba(16,185,129,0.25);width:100%;max-width:360px;aspect-ratio:3/2;cursor:pointer;}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #090d16;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#gameContainer {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  height: 100%;
+  max-height: 720px;
+  background: #0a0e1a;
+  overflow: hidden;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+}
+#gameCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* TOP HUD */
+#hud {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+  z-index: 10;
+}
+.hud-pill {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 6px 14px;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hud-score {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #10b981;
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+.hud-coins {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #facc15;
+}
+.hud-high {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #94a3b8;
+}
+
+/* Bottom Controls */
+#controlsHint {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.05em;
+  pointer-events: none;
+}
+.touch-btn-bar {
+  position: absolute;
+  bottom: 30px;
+  left: 20px;
+  right: 20px;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: auto;
+  z-index: 15;
+}
+.action-btn {
+  background: rgba(30, 41, 59, 0.75);
+  border: 2px solid rgba(16, 185, 129, 0.4);
+  color: #fff;
+  border-radius: 16px;
+  padding: 12px 28px;
+  font-size: 1.1rem;
+  font-weight: 900;
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  transition: transform 0.08s ease, background 0.08s ease;
+}
+.action-btn:active {
+  transform: scale(0.92);
+  background: rgba(16, 185, 129, 0.35);
+}
+
+/* Modals */
+.game-modal {
+  position: absolute;
+  inset: 0;
+  background: rgba(7, 11, 22, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 24px;
+}
+.game-modal.hidden { display: none !important; }
+.modal-box {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border: 2px solid rgba(16, 185, 129, 0.45);
+  border-radius: 26px;
+  padding: 28px 22px;
+  text-align: center;
+  max-width: 320px;
+  width: 100%;
+  box-shadow: 0 20px 45px rgba(0,0,0,0.85), 0 0 35px rgba(16,185,129,0.25);
+  animation: popIn 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes popIn {
+  0% { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.modal-title {
+  font-size: 1.65rem;
+  font-weight: 900;
+  margin-bottom: 6px;
+  color: #10b981;
+  letter-spacing: 0.02em;
+}
+.modal-sub {
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  margin-bottom: 18px;
+  line-height: 1.45;
+}
+.stats-grid {
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 16px;
+  padding: 12px;
+  margin-bottom: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.stat-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+.stat-val {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #f8fafc;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  font-size: 1.1rem;
+  font-weight: 900;
+  padding: 13px 24px;
+  width: 100%;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+  transition: transform 0.1s ease;
+}
+.btn-primary:active { transform: scale(0.96); }
 </style>
 </head>
 <body>
-<div style="font-weight:900;margin-bottom:8px;color:#10b981;">🦖 T-REX DESERT RUN</div>
-<canvas id="cvs" width="360" height="240"></canvas>
-<div style="color:#94a3b8;font-size:0.8rem;margin-top:8px;">Tap / Space to Jump</div>
+
+<div id="gameContainer">
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="hud">
+    <div class="hud-pill">
+      <span class="hud-score" id="hudScore">0m</span>
+      <span class="hud-coins" id="hudCoins">🪙 0</span>
+    </div>
+    <div class="hud-pill">
+      <span class="hud-high" id="hudHigh">HI 0m</span>
+    </div>
+  </div>
+
+  <div class="touch-btn-bar">
+    <button class="action-btn" id="btnDuck">⬇️ DUCK</button>
+    <button class="action-btn" id="btnJump" style="background: rgba(16,185,129,0.3); border-color: #10b981;">⬆️ JUMP</button>
+  </div>
+
+  <div id="controlsHint">TAP SCREEN / SPACE TO JUMP • SWIPE DOWN TO DUCK</div>
+
+  <!-- Start Modal -->
+  <div id="modalStart" class="game-modal">
+    <div class="modal-box">
+      <div style="font-size: 3.2rem; margin-bottom: 6px;">🦖</div>
+      <h1 class="modal-title">CYBER T-REX RUN</h1>
+      <p class="modal-sub">Sprint across the neon desert! Jump over cacti, duck under flying drones, and grab power energy orbs!</p>
+      <button class="btn-primary" id="btnStartGame">▶ START RUNNING</button>
+    </div>
+  </div>
+
+  <!-- Game Over Modal -->
+  <div id="modalGameOver" class="game-modal hidden">
+    <div class="modal-box">
+      <div style="font-size: 3rem; margin-bottom: 6px;">💥</div>
+      <h1 class="modal-title" style="color: #ef4444;">CRASHED!</h1>
+      <p class="modal-sub">You hit an obstacle on the cyber track!</p>
+      <div class="stats-grid">
+        <div>
+          <div class="stat-label">Distance Run</div>
+          <div class="stat-val" style="color: #10b981;" id="finalScore">0m</div>
+        </div>
+        <div>
+          <div class="stat-label">Coins Picked</div>
+          <div class="stat-val" style="color: #facc15;" id="finalCoins">0</div>
+        </div>
+      </div>
+      <button class="btn-primary" id="btnRestartGame">🔄 RUN AGAIN</button>
+    </div>
+  </div>
+</div>
+
 <script>
-const cvs = document.getElementById('cvs'), ctx = cvs.getContext('2d');
-let dino = {x: 40, y: 160, vy: 0, w: 28, h: 32, grounded: true};
-let obstacles = [], score = 0, best = 0, over = false;
-function jump() {
-  if (over) { reset(); return; }
-  if (dino.grounded) { dino.vy = -10.5; dino.grounded = false; }
+// --- Web Audio Synth ---
+const Sound = {
+  ctx: null,
+  init() {
+    if (!this.ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) this.ctx = new AC();
+    }
+  },
+  play(type) {
+    if (!this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      if (type === 'jump') {
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(260, t);
+        osc.frequency.exponentialRampToValueAtTime(540, t + 0.12);
+        g.gain.setValueAtTime(0.2, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+        osc.connect(g); g.connect(this.ctx.destination);
+        osc.start(t); osc.stop(t + 0.13);
+      } else if (type === 'coin') {
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(880, t);
+        osc.frequency.setValueAtTime(1320, t + 0.08);
+        g.gain.setValueAtTime(0.25, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+        osc.connect(g); g.connect(this.ctx.destination);
+        osc.start(t); osc.stop(t + 0.22);
+      } else if (type === 'crash') {
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(160, t);
+        osc.frequency.exponentialRampToValueAtTime(30, t + 0.35);
+        g.gain.setValueAtTime(0.4, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+        osc.connect(g); g.connect(this.ctx.destination);
+        osc.start(t); osc.stop(t + 0.36);
+      }
+    } catch (_) {}
+  }
+};
+
+function haptic(type) {
+  try {
+    const tg = window.Telegram?.WebApp?.HapticFeedback;
+    if (tg) {
+      if (type === 'light') tg.impactOccurred('light');
+      else if (type === 'medium') tg.impactOccurred('medium');
+      else if (type === 'error') tg.notificationOccurred('error');
+    }
+  } catch (_) {}
 }
-function reset() { obstacles = []; score = 0; over = false; dino.y = 160; dino.vy = 0; dino.grounded = true; }
-window.addEventListener('keydown', e => { if (e.code==='Space'||e.key==='ArrowUp') jump(); });
-cvs.addEventListener('pointerdown', jump);
+
+const cvs = document.getElementById('gameCanvas');
+const ctx = cvs.getContext('2d');
+let W = 400, H = 600;
+
+function resize() {
+  const container = document.getElementById('gameContainer');
+  W = cvs.width = container.clientWidth;
+  H = cvs.height = container.clientHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// Game State
+let gameState = 'ready'; // ready, playing, gameover, paused
+let score = 0;
+let coins = 0;
+let highScore = parseInt(localStorage.getItem('cyber_dino_high') || '0', 10);
+let speed = 6.2;
+let groundY = 0;
+
+// Parallax Layers
+let stars = [];
+let clouds = [];
+let mountains = [];
+let dustParticles = [];
+
+// Player Cyber T-Rex (Facing RIGHT!)
+let dino = {
+  x: 55,
+  y: 0,
+  vy: 0,
+  w: 48,
+  h: 56,
+  grounded: true,
+  isDucking: false,
+  animTick: 0,
+  hasShield: false,
+};
+
+// Obstacles & Pickups
+let obstacles = [];
+let pickups = [];
+
+function initGame() {
+  score = 0;
+  coins = 0;
+  speed = 6.0;
+  groundY = H * 0.76;
+
+  dino.y = groundY - dino.h;
+  dino.vy = 0;
+  dino.grounded = true;
+  dino.isDucking = false;
+  dino.animTick = 0;
+  dino.hasShield = false;
+
+  obstacles = [];
+  pickups = [];
+  dustParticles = [];
+
+  // Stars
+  stars = [];
+  for (let i = 0; i < 40; i++) {
+    stars.push({ x: Math.random() * W, y: Math.random() * (groundY * 0.7), size: Math.random() * 2 + 1, alpha: Math.random() * 0.7 + 0.3 });
+  }
+
+  // Clouds
+  clouds = [];
+  for (let i = 0; i < 4; i++) {
+    clouds.push({ x: Math.random() * W, y: 40 + Math.random() * 90, speed: 0.3 + Math.random() * 0.4, w: 70 + Math.random() * 50 });
+  }
+
+  updateHUD();
+}
+
+function updateHUD() {
+  document.getElementById('hudScore').textContent = `${Math.floor(score / 5)}m`;
+  document.getElementById('hudCoins').textContent = `🪙 ${coins}`;
+  document.getElementById('hudHigh').textContent = `HI ${Math.max(Math.floor(score / 5), highScore)}m`;
+}
+
+// Controls
+function doJump() {
+  if (gameState !== 'playing') return;
+  if (dino.grounded) {
+    dino.vy = -12.5;
+    dino.grounded = false;
+    Sound.play('jump');
+    haptic('medium');
+    // Spawn dust puff
+    for (let i = 0; i < 6; i++) {
+      dustParticles.push({
+        x: dino.x + 10,
+        y: groundY,
+        vx: (Math.random() - 0.7) * 3,
+        vy: -Math.random() * 2.5,
+        size: 3 + Math.random() * 4,
+        life: 20,
+      });
+    }
+  }
+}
+
+function setDuck(val) {
+  dino.isDucking = val;
+  dino.h = val ? 34 : 56;
+}
+
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' || e.key === 'ArrowUp' || e.key === 'w') {
+    e.preventDefault();
+    doJump();
+  } else if (e.key === 'ArrowDown' || e.key === 's') {
+    e.preventDefault();
+    setDuck(true);
+  }
+});
+window.addEventListener('keyup', (e) => {
+  if (e.key === 'ArrowDown' || e.key === 's') {
+    setDuck(false);
+  }
+});
+
+// Touch / pointer controls
+let touchStartY = 0;
+cvs.addEventListener('pointerdown', (e) => {
+  touchStartY = e.clientY;
+  if (gameState === 'playing') {
+    doJump();
+  }
+  Sound.init();
+});
+window.addEventListener('pointermove', (e) => {
+  if (touchStartY && e.clientY - touchStartY > 35) {
+    setDuck(true);
+  }
+});
+window.addEventListener('pointerup', () => {
+  touchStartY = 0;
+  setDuck(false);
+});
+
+document.getElementById('btnJump').addEventListener('pointerdown', (e) => { e.stopPropagation(); doJump(); });
+document.getElementById('btnDuck').addEventListener('pointerdown', (e) => { e.stopPropagation(); setDuck(true); });
+document.getElementById('btnDuck').addEventListener('pointerup', (e) => { e.stopPropagation(); setDuck(false); });
+
+// Update Game Loop
 function update() {
-  if (over) return;
-  score++; if (score > best) best = score;
-  dino.vy += 0.58; dino.y += dino.vy;
-  if (dino.y >= 160) { dino.y = 160; dino.vy = 0; dino.grounded = true; }
-  if (obstacles.length === 0 || obstacles[obstacles.length-1].x < 220) {
-    if (Math.random() < 0.035) obstacles.push({x: 360, w: 18, h: 30 + Math.random()*15});
+  if (gameState !== 'playing') return;
+
+  score++;
+  speed = 6.0 + Math.min(6.5, score / 450); // Progressively accelerates
+  groundY = H * 0.76;
+
+  // Dino Physics
+  dino.animTick += speed * 0.08;
+  dino.vy += 0.68; // Gravity
+  dino.y += dino.vy;
+
+  if (dino.y >= groundY - dino.h) {
+    dino.y = groundY - dino.h;
+    dino.vy = 0;
+    dino.grounded = true;
   }
-  obstacles.forEach(o => {
-    o.x -= 4.2;
-    if (dino.x + dino.w > o.x && dino.x < o.x + o.w && dino.y + dino.h > 192 - o.h) over = true;
+
+  // Running Dust
+  if (dino.grounded && Math.random() < 0.35) {
+    dustParticles.push({
+      x: dino.x + 8,
+      y: groundY,
+      vx: -(speed * 0.4 + Math.random() * 2),
+      vy: -Math.random() * 1.5,
+      size: 2 + Math.random() * 3,
+      life: 18,
+    });
+  }
+
+  // Obstacle Spawning
+  const lastObs = obstacles[obstacles.length - 1];
+  const minSpacing = 220 + Math.random() * 140;
+
+  if (!lastObs || W - lastObs.x > minSpacing) {
+    const isPterodactyl = score > 180 && Math.random() < 0.35;
+    if (isPterodactyl) {
+      // Flying Drone / Pterodactyl at low or high altitude
+      const alt = Math.random() < 0.5 ? groundY - 78 : groundY - 42;
+      obstacles.push({
+        type: 'drone',
+        x: W + 20,
+        y: alt,
+        w: 36,
+        h: 24,
+        anim: 0,
+      });
+    } else {
+      // Neon Cacti (single, double, or giant)
+      const count = Math.random() < 0.4 ? 1 : (Math.random() < 0.7 ? 2 : 3);
+      const h = 34 + Math.random() * 18;
+      obstacles.push({
+        type: 'cactus',
+        x: W + 20,
+        y: groundY - h,
+        w: count * 16,
+        h: h,
+        count: count,
+      });
+    }
+
+    // Chance to spawn collectible energy orbs
+    if (Math.random() < 0.45) {
+      pickups.push({
+        x: W + 120 + Math.random() * 60,
+        y: groundY - (40 + Math.random() * 50),
+        r: 10,
+        type: 'coin',
+        pulse: 0,
+      });
+    }
+  }
+
+  // Update Obstacles & Collisions
+  for (let i = obstacles.length - 1; i >= 0; i--) {
+    const o = obstacles[i];
+    o.x -= speed;
+    if (o.anim !== undefined) o.anim += 0.2;
+
+    // Collision Box
+    const hitBoxPad = 6;
+    if (
+      dino.x + dino.w - hitBoxPad > o.x &&
+      dino.x + hitBoxPad < o.x + o.w &&
+      dino.y + dino.h - hitBoxPad > o.y &&
+      dino.y + hitBoxPad < o.y + o.h
+    ) {
+      if (dino.hasShield) {
+        dino.hasShield = false;
+        obstacles.splice(i, 1);
+        Sound.play('coin');
+        haptic('light');
+        continue;
+      }
+      onGameOver();
+      return;
+    }
+
+    if (o.x < -60) obstacles.splice(i, 1);
+  }
+
+  // Update Pickups
+  for (let i = pickups.length - 1; i >= 0; i--) {
+    const p = pickups[i];
+    p.x -= speed;
+    p.pulse += 0.1;
+
+    // Grab coin
+    const dx = (dino.x + dino.w / 2) - p.x;
+    const dy = (dino.y + dino.h / 2) - p.y;
+    if (Math.sqrt(dx * dx + dy * dy) < p.r + 24) {
+      coins++;
+      score += 25;
+      Sound.play('coin');
+      haptic('light');
+      pickups.splice(i, 1);
+      continue;
+    }
+
+    if (p.x < -30) pickups.splice(i, 1);
+  }
+
+  // Update Dust
+  dustParticles.forEach(d => {
+    d.x += d.vx;
+    d.y += d.vy;
+    d.life--;
   });
-  obstacles = obstacles.filter(o => o.x > -30);
+  dustParticles = dustParticles.filter(d => d.life > 0);
+
+  // Update Clouds
+  clouds.forEach(c => {
+    c.x -= c.speed;
+    if (c.x < -c.w) c.x = W + 40;
+  });
+
+  updateHUD();
 }
+
+// Draw Modern Cyber T-Rex (Facing RIGHT!)
+function drawDino(x, y, w, h) {
+  ctx.save();
+  ctx.translate(x, y);
+
+  const isDucking = dino.isDucking;
+  const legCycle = Math.sin(dino.animTick);
+  const tailWave = Math.sin(dino.animTick * 0.8) * 4;
+
+  // Glow filter
+  ctx.shadowColor = '#10b981';
+  ctx.shadowBlur = 10;
+
+  // 1. Cyber Tail (animated)
+  ctx.fillStyle = '#059669';
+  ctx.beginPath();
+  if (isDucking) {
+    ctx.moveTo(8, 24);
+    ctx.quadraticCurveTo(-14, 20 + tailWave, -26, 22 + tailWave);
+    ctx.quadraticCurveTo(-12, 28 + tailWave, 8, 28);
+  } else {
+    ctx.moveTo(10, 32);
+    ctx.quadraticCurveTo(-12, 24 + tailWave, -22, 20 + tailWave);
+    ctx.quadraticCurveTo(-10, 36 + tailWave, 10, 40);
+  }
+  ctx.closePath();
+  ctx.fill();
+
+  // Tail energy plates
+  ctx.fillStyle = '#34d399';
+  ctx.fillRect(-14, (isDucking ? 21 : 22) + tailWave, 4, 3);
+  ctx.fillRect(-6, (isDucking ? 23 : 28) + tailWave, 5, 4);
+
+  // 2. Main Torso (Sleek cyber armor)
+  ctx.fillStyle = '#10b981';
+  ctx.beginPath();
+  if (isDucking) {
+    ctx.roundRect(6, 12, 32, 18, 8);
+  } else {
+    ctx.roundRect(8, 18, 28, 26, 8);
+  }
+  ctx.fill();
+
+  // Torso Chest Plate / Neon Stripe
+  ctx.fillStyle = '#34d399';
+  if (isDucking) {
+    ctx.fillRect(14, 16, 14, 3);
+    ctx.fillRect(18, 22, 10, 2);
+  } else {
+    ctx.fillRect(12, 24, 16, 4);
+    ctx.fillRect(14, 31, 12, 3);
+  }
+
+  // 3. Head & Jaws (Facing RIGHT ->)
+  ctx.fillStyle = '#10b981';
+  ctx.beginPath();
+  if (isDucking) {
+    // Forward-reaching low head
+    ctx.roundRect(26, 8, 24, 14, 6);
+  } else {
+    // Proud upright head
+    ctx.roundRect(22, 2, 24, 18, 6);
+  }
+  ctx.fill();
+
+  // Cyber Jaw (mouth opening)
+  ctx.fillStyle = '#064e3b';
+  const headX = isDucking ? 26 : 22;
+  const headY = isDucking ? 8 : 2;
+  ctx.beginPath();
+  ctx.moveTo(headX + 10, headY + 12);
+  ctx.lineTo(headX + 24, headY + 12);
+  ctx.lineTo(headX + 18, headY + 15);
+  ctx.closePath();
+  ctx.fill();
+
+  // Sharp White Cyber Teeth
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(headX + 16, headY + 11, 2, 2);
+  ctx.fillRect(headX + 20, headY + 11, 2, 2);
+
+  // Glowing Cyan Cyber Eye
+  ctx.fillStyle = '#38bdf8';
+  ctx.shadowColor = '#38bdf8';
+  ctx.shadowBlur = 12;
+  ctx.beginPath();
+  ctx.arc(headX + 14, headY + 6, 2.8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 4. Forearms / Claws (Facing forward)
+  ctx.shadowColor = '#10b981';
+  ctx.shadowBlur = 6;
+  ctx.fillStyle = '#059669';
+  const armY = isDucking ? 18 : 26;
+  ctx.beginPath();
+  ctx.roundRect(headX - 2, armY, 10, 5, 2);
+  ctx.fill();
+  ctx.fillStyle = '#34d399';
+  ctx.fillRect(headX + 6, armY + 2, 3, 2); // claws
+
+  // 5. Dynamic Running Legs (Cycling counter-motion)
+  const hipX1 = 16, hipX2 = 28;
+  const hipY = isDucking ? 26 : 40;
+
+  if (dino.grounded) {
+    // Left Leg
+    const l1 = legCycle * 8;
+    ctx.fillStyle = '#047857'; // back leg darker
+    ctx.beginPath();
+    ctx.moveTo(hipX1, hipY);
+    ctx.lineTo(hipX1 - l1, hipY + 10);
+    ctx.lineTo(hipX1 - l1 + 5, groundY - y);
+    ctx.lineWidth = 4.5;
+    ctx.strokeStyle = '#047857';
+    ctx.stroke();
+
+    // Right Leg
+    const l2 = -legCycle * 8;
+    ctx.strokeStyle = '#10b981'; // front leg brighter
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(hipX2, hipY);
+    ctx.lineTo(hipX2 + l2, hipY + 10);
+    ctx.lineTo(hipX2 + l2 + 5, groundY - y);
+    ctx.stroke();
+  } else {
+    // Jumping Pose (Tucked back legs)
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 4.5;
+    ctx.beginPath();
+    ctx.moveTo(hipX1, hipY);
+    ctx.lineTo(hipX1 - 8, hipY + 8);
+    ctx.lineTo(hipX1 - 2, hipY + 14);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(hipX2, hipY);
+    ctx.lineTo(hipX2 - 4, hipY + 8);
+    ctx.lineTo(hipX2 + 4, hipY + 14);
+    ctx.stroke();
+  }
+
+  // Energy Shield Aura (if active)
+  if (dino.hasShield) {
+    ctx.strokeStyle = '#38bdf8';
+    ctx.shadowColor = '#38bdf8';
+    ctx.shadowBlur = 16;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(w / 2, h / 2, w * 0.75, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+// Render Scene
 function draw() {
-  ctx.clearRect(0,0,360,240);
-  // Ground
-  ctx.strokeStyle = '#334155'; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.moveTo(0, 192); ctx.lineTo(360, 192); ctx.stroke();
-  // Dino
-  ctx.font = '32px sans-serif'; ctx.textAlign = 'center';
-  ctx.fillText('🦖', dino.x + dino.w/2, dino.y + dino.h);
-  // Obstacles
-  ctx.fillStyle = '#ef4444'; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 8;
-  obstacles.forEach(o => {
-    ctx.beginPath(); ctx.roundRect(o.x, 192 - o.h, o.w, o.h, 4); ctx.fill();
-  });
-  // Scores
-  ctx.shadowBlur = 0; ctx.fillStyle = '#fff'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'right';
-  ctx.fillText('HI ' + best + '  ' + Math.floor(score/5), 340, 30);
-  if (over) {
-    ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(0,0,360,240);
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('GAME OVER', 180, 110);
-    ctx.font = '14px sans-serif'; ctx.fillText('Tap to Restart', 180, 140);
+  ctx.clearRect(0, 0, W, H);
+
+  // 1. Sky Gradient & Retro Synthwave Sun
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, groundY);
+  skyGrad.addColorStop(0, '#0a0a1a');
+  skyGrad.addColorStop(0.65, '#1e1035');
+  skyGrad.addColorStop(1, '#3b1236');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W, groundY);
+
+  // Glowing Retro Sun
+  const sunX = W * 0.65;
+  const sunY = groundY - 60;
+  const sunGrad = ctx.createLinearGradient(sunX, sunY - 45, sunX, sunY + 45);
+  sunGrad.addColorStop(0, '#facc15');
+  sunGrad.addColorStop(0.5, '#f43f5e');
+  sunGrad.addColorStop(1, '#9333ea');
+  ctx.fillStyle = sunGrad;
+  ctx.shadowColor = '#f43f5e';
+  ctx.shadowBlur = 30;
+  ctx.beginPath();
+  ctx.arc(sunX, sunY, 45, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Sun horizontal scanline stripes
+  ctx.fillStyle = '#0a0a1a';
+  for (let s = 0; s < 5; s++) {
+    const sy = sunY + 8 + s * 7;
+    ctx.fillRect(sunX - 45, sy, 90, 2 + s * 0.6);
   }
+
+  // Stars
+  ctx.fillStyle = '#ffffff';
+  stars.forEach(st => {
+    ctx.globalAlpha = st.alpha;
+    ctx.fillRect(st.x, st.y, st.size, st.size);
+  });
+  ctx.globalAlpha = 1.0;
+
+  // Distant Neon Mountains
+  ctx.fillStyle = 'rgba(49, 46, 129, 0.45)';
+  ctx.beginPath();
+  ctx.moveTo(0, groundY);
+  ctx.lineTo(40, groundY - 50);
+  ctx.lineTo(110, groundY - 15);
+  ctx.lineTo(190, groundY - 70);
+  ctx.lineTo(270, groundY - 25);
+  ctx.lineTo(360, groundY - 80);
+  ctx.lineTo(W, groundY - 30);
+  ctx.lineTo(W, groundY);
+  ctx.closePath();
+  ctx.fill();
+
+  // Floating Cyber Clouds
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+  clouds.forEach(c => {
+    ctx.beginPath();
+    ctx.roundRect(c.x, c.y, c.w, 14, 7);
+    ctx.fill();
+  });
+
+  // 2. Ground Terrain & Neon Cyber Grid
+  const groundGrad = ctx.createLinearGradient(0, groundY, 0, H);
+  groundGrad.addColorStop(0, '#0f172a');
+  groundGrad.addColorStop(1, '#020617');
+  ctx.fillStyle = groundGrad;
+  ctx.fillRect(0, groundY, W, H - groundY);
+
+  // Glowing Green Horizon Line
+  ctx.strokeStyle = '#10b981';
+  ctx.shadowColor = '#10b981';
+  ctx.shadowBlur = 12;
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.moveTo(0, groundY);
+  ctx.lineTo(W, groundY);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Moving ground dashed grid markers
+  ctx.strokeStyle = 'rgba(16, 185, 129, 0.35)';
+  ctx.lineWidth = 2;
+  const gridOffset = (score * speed * 0.8) % 30;
+  for (let gx = -gridOffset; gx < W; gx += 30) {
+    ctx.beginPath();
+    ctx.moveTo(gx, groundY);
+    ctx.lineTo(gx - 15, groundY + 18);
+    ctx.stroke();
+  }
+
+  // Dust Particles
+  dustParticles.forEach(d => {
+    ctx.fillStyle = `rgba(16, 185, 129, ${d.life / 18})`;
+    ctx.beginPath();
+    ctx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // 3. Obstacles (Neon Cacti & Cyber Drones)
+  obstacles.forEach(o => {
+    if (o.type === 'cactus') {
+      ctx.fillStyle = '#ef4444';
+      ctx.shadowColor = '#ef4444';
+      ctx.shadowBlur = 14;
+      // Multi-stalk cactus
+      const stalkW = o.w / o.count;
+      for (let s = 0; s < o.count; s++) {
+        const cx = o.x + s * stalkW;
+        ctx.beginPath();
+        ctx.roundRect(cx + 2, o.y, stalkW - 4, o.h, 6);
+        ctx.fill();
+        // Arms
+        ctx.fillRect(cx - 3, o.y + 10, 5, 8);
+        ctx.fillRect(cx - 3, o.y + 10, 8, 3);
+        ctx.fillRect(cx + stalkW - 2, o.y + 14, 5, 8);
+        ctx.fillRect(cx + stalkW - 5, o.y + 14, 8, 3);
+      }
+      ctx.shadowBlur = 0;
+    } else if (o.type === 'drone') {
+      // Flying Cyber Drone / Pterodactyl
+      ctx.save();
+      ctx.translate(o.x, o.y);
+      ctx.fillStyle = '#f43f5e';
+      ctx.shadowColor = '#f43f5e';
+      ctx.shadowBlur = 12;
+
+      // Body & Eye
+      ctx.beginPath();
+      ctx.roundRect(4, 8, 26, 10, 4);
+      ctx.fill();
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(24, 11, 4, 3);
+
+      // Flapping Wings
+      const wingY = Math.sin(o.anim) * 10;
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.moveTo(14, 10);
+      ctx.lineTo(2, 10 - wingY);
+      ctx.lineTo(16, 10);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
+      ctx.shadowBlur = 0;
+    }
+  });
+
+  // 4. Collectibles (Golden Energy Orbs)
+  pickups.forEach(p => {
+    const bob = Math.sin(p.pulse) * 4;
+    ctx.save();
+    ctx.translate(p.x, p.y + bob);
+
+    ctx.shadowColor = '#facc15';
+    ctx.shadowBlur = 16;
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    ctx.arc(0, 0, p.r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Inner bright core
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(0, 0, p.r * 0.45, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+    ctx.shadowBlur = 0;
+  });
+
+  // 5. Draw Cyber T-Rex
+  drawDino(dino.x, dino.y, dino.w, dino.h);
 }
-function loop() { update(); draw(); requestAnimationFrame(loop); }
+
+function onGameOver() {
+  gameState = 'gameover';
+  Sound.play('crash');
+  haptic('error');
+
+  const finalM = Math.floor(score / 5);
+  if (finalM > highScore) {
+    highScore = finalM;
+    localStorage.setItem('cyber_dino_high', highScore);
+  }
+
+  document.getElementById('finalScore').textContent = `${finalM}m`;
+  document.getElementById('finalCoins').textContent = coins;
+  document.getElementById('modalGameOver').classList.remove('hidden');
+}
+
+// Loop
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
 loop();
+
+// Button Handlers
+document.getElementById('btnStartGame').addEventListener('click', () => {
+  Sound.init();
+  document.getElementById('modalStart').classList.add('hidden');
+  initGame();
+  gameState = 'playing';
+});
+
+document.getElementById('btnRestartGame').addEventListener('click', () => {
+  Sound.init();
+  document.getElementById('modalGameOver').classList.add('hidden');
+  initGame();
+  gameState = 'playing';
+});
+
+// Pause / Resume messages
+window.addEventListener('message', (e) => {
+  if (e.data?.type === 'PAUSE_GAME' && gameState === 'playing') {
+    gameState = 'paused';
+  } else if (e.data?.type === 'RESUME_GAME' && gameState === 'paused') {
+    gameState = 'playing';
+  }
+});
 </script>
 </body>
 </html>

@@ -1,73 +1,903 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Space Blaster</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>3D Galaxy Defender</title>
+<script src="../../js/three.min.js"></script>
+<script>
+  if (typeof THREE === 'undefined') {
+    document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
+  }
+</script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
-body{background:#040711;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
-#cvs{background:#000;border:3px solid #10b981;border-radius:18px;box-shadow:0 0 25px rgba(16,185,129,0.25);width:100%;max-width:340px;aspect-ratio:3/4;}
-.ctrls{display:flex;gap:12px;margin-top:10px;}
-.btn{background:#1e293b;border:1px solid #10b981;color:#10b981;font-weight:900;padding:12px 20px;border-radius:12px;font-size:1.2rem;cursor:pointer;}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #020617;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#gameContainer {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  height: 100%;
+  max-height: 750px;
+  background: #030712;
+  overflow: hidden;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+}
+#webglCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* TOP HUD */
+#hud {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+  z-index: 10;
+}
+.hud-pill {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 6px 14px;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hud-score {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #38bdf8;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+.hud-wave {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #facc15;
+}
+.hud-lives {
+  font-size: 0.95rem;
+  color: #ef4444;
+}
+
+/* Controls Hint */
+#ctrlHint {
+  position: absolute;
+  bottom: 14px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.05em;
+  pointer-events: none;
+}
+
+/* Modals */
+.game-modal {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 24px;
+}
+.game-modal.hidden { display: none !important; }
+.modal-box {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border: 2px solid rgba(56, 189, 248, 0.45);
+  border-radius: 26px;
+  padding: 28px 22px;
+  text-align: center;
+  max-width: 320px;
+  width: 100%;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.9), 0 0 35px rgba(56, 189, 248, 0.25);
+  animation: popIn 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes popIn {
+  0% { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.modal-title {
+  font-size: 1.65rem;
+  font-weight: 900;
+  margin-bottom: 6px;
+  color: #38bdf8;
+  letter-spacing: 0.02em;
+}
+.modal-sub {
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  margin-bottom: 18px;
+  line-height: 1.45;
+}
+.stats-grid {
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 16px;
+  padding: 12px;
+  margin-bottom: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.stat-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+.stat-val {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #f8fafc;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  font-size: 1.1rem;
+  font-weight: 900;
+  padding: 13px 24px;
+  width: 100%;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45);
+  transition: transform 0.1s ease;
+}
+.btn-primary:active { transform: scale(0.96); }
 </style>
 </head>
 <body>
-<div style="font-weight:900;color:#10b981;margin-bottom:6px;">👾 RETRO SPACE INVADERS</div>
-<canvas id="cvs" width="340" height="460"></canvas>
-<div class="ctrls">
-  <button class="btn" onclick="p.x=Math.max(20,p.x-30)">⬅️</button>
-  <button class="btn" onclick="shoot()">💥 FIRE</button>
-  <button class="btn" onclick="p.x=Math.min(300,p.x+30)">➡️</button>
+
+<div id="gameContainer">
+  <canvas id="webglCanvas"></canvas>
+
+  <div id="hud">
+    <div class="hud-pill">
+      <span class="hud-score" id="hudScore">0</span>
+      <span class="hud-wave" id="hudWave">WAVE 1</span>
+    </div>
+    <div class="hud-pill">
+      <span class="hud-lives" id="hudLives">❤️❤️❤️</span>
+    </div>
+  </div>
+
+  <div id="ctrlHint">DRAG SHIP TO MOVE • AUTO-FIRE ACTIVE</div>
+
+  <!-- Start Modal -->
+  <div id="modalStart" class="game-modal">
+    <div class="modal-box">
+      <div style="font-size: 3.2rem; margin-bottom: 6px;">🚀</div>
+      <h1 class="modal-title">GALAXY DEFENDER 3D</h1>
+      <p class="modal-sub">Pilot your 3D starfighter! Blast through alien swarms, dodge plasma volleys, and protect the star system!</p>
+      <button class="btn-primary" id="btnStartGame">▶ LAUNCH FIGHTER</button>
+    </div>
+  </div>
+
+  <!-- Game Over Modal -->
+  <div id="modalGameOver" class="game-modal hidden">
+    <div class="modal-box">
+      <div style="font-size: 3rem; margin-bottom: 6px;">💥</div>
+      <h1 class="modal-title" style="color: #ef4444;">SHIP DESTROYED!</h1>
+      <p class="modal-sub">The alien fleet overwhelmed your defenses!</p>
+      <div class="stats-grid">
+        <div>
+          <div class="stat-label">Final Score</div>
+          <div class="stat-val" style="color: #38bdf8;" id="finalScore">0</div>
+        </div>
+        <div>
+          <div class="stat-label">Waves Cleared</div>
+          <div class="stat-val" style="color: #facc15;" id="finalWave">1</div>
+        </div>
+      </div>
+      <button class="btn-primary" id="btnRestartGame" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">🔄 DEPLOY AGAIN</button>
+    </div>
+  </div>
 </div>
+
 <script>
-const cvs = document.getElementById('cvs'), ctx = cvs.getContext('2d');
-let p = {x: 155, y: 410, w: 30, h: 18};
-let bullets = [], aliens = [], score = 0, alienDir = 1;
-for(let r=0; r<4; r++) {
-  for(let c=0; c<6; c++) aliens.push({x: 35 + c*46, y: 45 + r*32, alive: true});
-}
-function shoot() { bullets.push({x: p.x + p.w/2, y: p.y, vy: -7}); }
-window.addEventListener('keydown', e => {
-  if (e.key==='ArrowLeft'||e.key==='a') p.x = Math.max(20, p.x - 20);
-  if (e.key==='ArrowRight'||e.key==='d') p.x = Math.min(290, p.x + 20);
-  if (e.code==='Space') shoot();
-});
-function update() {
-  bullets.forEach(b => { b.y += b.vy; });
-  bullets = bullets.filter(b => b.y > 0);
-  let hitWall = false;
-  aliens.forEach(a => {
-    if (!a.alive) return;
-    a.x += alienDir * 0.9;
-    if (a.x < 15 || a.x > 300) hitWall = true;
-    bullets.forEach(b => {
-      if (b.x > a.x && b.x < a.x + 26 && b.y > a.y && b.y < a.y + 20) {
-        a.alive = false; b.y = -10; score += 20;
+// --- Web Audio Synth ---
+const Sound = {
+  ctx: null,
+  init() {
+    if (!this.ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) this.ctx = new AC();
+    }
+  },
+  play(type) {
+    if (!this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      if (type === 'laser') {
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(880, t);
+        osc.frequency.exponentialRampToValueAtTime(140, t + 0.1);
+        g.gain.setValueAtTime(0.18, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        osc.connect(g); g.connect(this.ctx.destination);
+        osc.start(t); osc.stop(t + 0.11);
+      } else if (type === 'boom') {
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(180, t);
+        osc.frequency.exponentialRampToValueAtTime(30, t + 0.28);
+        g.gain.setValueAtTime(0.35, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+        osc.connect(g); g.connect(this.ctx.destination);
+        osc.start(t); osc.stop(t + 0.29);
+      } else if (type === 'power') {
+        [523.25, 659.25, 783.99].forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, t + idx * 0.08);
+          g.gain.setValueAtTime(0.2, t + idx * 0.08);
+          g.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.08 + 0.18);
+          osc.connect(g); g.connect(this.ctx.destination);
+          osc.start(t + idx * 0.08); osc.stop(t + idx * 0.08 + 0.2);
+        });
       }
-    });
-  });
-  if (hitWall) { alienDir = -alienDir; aliens.forEach(a => a.y += 12); }
+    } catch (_) {}
+  }
+};
+
+function haptic(type) {
+  try {
+    const tg = window.Telegram?.WebApp?.HapticFeedback;
+    if (tg) {
+      if (type === 'light') tg.impactOccurred('light');
+      else if (type === 'medium') tg.impactOccurred('medium');
+      else if (type === 'heavy') tg.impactOccurred('heavy');
+      else if (type === 'error') tg.notificationOccurred('error');
+    }
+  } catch (_) {}
 }
-function draw() {
-  ctx.clearRect(0,0,340,460);
-  ctx.font = 'bold 20px sans-serif'; ctx.fillStyle = '#fff';
-  ctx.fillText('SCORE: ' + score, 15, 30);
-  // Ship
-  ctx.fillStyle = '#10b981';
-  ctx.beginPath(); ctx.moveTo(p.x+15, p.y); ctx.lineTo(p.x, p.y+18); ctx.lineTo(p.x+30, p.y+18); ctx.fill();
-  // Bullets
-  ctx.fillStyle = '#facc15';
-  bullets.forEach(b => ctx.fillRect(b.x-2, b.y, 4, 10));
-  // Aliens
-  aliens.forEach(a => {
-    if (a.alive) {
-      ctx.font = '22px sans-serif'; ctx.textAlign='center';
-      ctx.fillText('👾', a.x + 13, a.y + 18);
+
+// --- Three.js Setup ---
+let scene, camera, renderer;
+let shipGroup, shipMesh, leftThruster, rightThruster;
+let starsParticles;
+let bullets = [], enemies = [], enemyBullets = [], particles = [], powerups = [];
+
+let score = 0, wave = 1, lives = 3;
+let highScore = parseInt(localStorage.getItem('galaxy_3d_high') || '0', 10);
+let gameState = 'ready'; // ready, playing, gameover, paused
+
+// Bounds
+const PLAY_W = 12.0;
+const PLAY_TOP = 15.0;
+const PLAY_BOTTOM = -12.0;
+
+let targetShipX = 0;
+let currentShipX = 0;
+let shootTimer = 0;
+let weaponTier = 1; // 1 = dual, 2 = triple, 3 = spread
+
+function initThree() {
+  const canvas = document.getElementById('webglCanvas');
+  const container = document.getElementById('gameContainer');
+  const W = container.clientWidth;
+  const H = container.clientHeight;
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x020617);
+  scene.fog = new THREE.FogExp2(0x020617, 0.022);
+
+  camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 100);
+  camera.position.set(0, -9.5, 18);
+  camera.lookAt(0, 2, 0);
+
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  // Lights
+  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambient);
+
+  const dirLight = new THREE.DirectionalLight(0x38bdf8, 1.2);
+  dirLight.position.set(5, 10, 15);
+  scene.add(dirLight);
+
+  const backLight = new THREE.DirectionalLight(0xa855f7, 0.8);
+  backLight.position.set(-5, -10, -5);
+  scene.add(backLight);
+
+  // Starfield
+  createStarfield();
+
+  // Build 3D Sci-Fi Fighter
+  createPlayerShip();
+
+  window.addEventListener('resize', onWindowResize);
+}
+
+function createStarfield() {
+  const starCount = 600;
+  const starGeo = new THREE.BufferGeometry();
+  const pos = new Float32Array(starCount * 3);
+
+  for (let i = 0; i < starCount; i++) {
+    pos[i * 3] = (Math.random() - 0.5) * 50;
+    pos[i * 3 + 1] = (Math.random() - 0.5) * 60;
+    pos[i * 3 + 2] = (Math.random() - 0.5) * 40;
+  }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+
+  const starMat = new THREE.PointsMaterial({
+    color: 0xffffff,
+    size: 0.15,
+    transparent: true,
+    opacity: 0.8,
+  });
+  starsParticles = new THREE.Points(starGeo, starMat);
+  scene.add(starsParticles);
+}
+
+// Build 3D Fighter Ship
+function createPlayerShip() {
+  shipGroup = new THREE.Group();
+
+  // Fuselage (Needle body)
+  const bodyGeo = new THREE.ConeGeometry(0.7, 3.2, 8);
+  bodyGeo.rotateX(Math.PI / 2);
+  const bodyMat = new THREE.MeshStandardMaterial({
+    color: 0x0284c7,
+    roughness: 0.25,
+    metalness: 0.6,
+  });
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
+  shipGroup.add(body);
+
+  // Glowing Cockpit Canopy
+  const glassGeo = new THREE.SphereGeometry(0.42, 16, 16);
+  glassGeo.scale(0.8, 1.6, 0.6);
+  glassGeo.translate(0, 0.2, 0.4);
+  const glassMat = new THREE.MeshStandardMaterial({
+    color: 0x38bdf8,
+    roughness: 0.1,
+    metalness: 0.9,
+    emissive: 0x0284c7,
+    emissiveIntensity: 0.6,
+  });
+  const canopy = new THREE.Mesh(glassGeo, glassMat);
+  shipGroup.add(canopy);
+
+  // Swept Delta Wings
+  const wingShape = new THREE.Shape();
+  wingShape.moveTo(0, -0.6);
+  wingShape.lineTo(2.4, -1.2);
+  wingShape.lineTo(2.2, -1.5);
+  wingShape.lineTo(0, -1.0);
+  wingShape.lineTo(-2.2, -1.5);
+  wingShape.lineTo(-2.4, -1.2);
+  wingShape.closePath();
+
+  const wingExtrude = new THREE.ExtrudeGeometry(wingShape, { depth: 0.12, bevelEnabled: false });
+  const wingMat = new THREE.MeshStandardMaterial({
+    color: 0x0369a1,
+    roughness: 0.3,
+    metalness: 0.5,
+  });
+  const wings = new THREE.Mesh(wingExtrude, wingMat);
+  wings.position.set(0, 0, -0.06);
+  shipGroup.add(wings);
+
+  // Dual Laser Cannons on wingtips
+  const cannonGeo = new THREE.CylinderGeometry(0.08, 0.08, 1.2, 8);
+  cannonGeo.rotateX(Math.PI / 2);
+  const cannonMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.2, metalness: 0.8 });
+  const leftCannon = new THREE.Mesh(cannonGeo, cannonMat);
+  leftCannon.position.set(-2.0, 0.2, 0);
+  shipGroup.add(leftCannon);
+
+  const rightCannon = new THREE.Mesh(cannonGeo, cannonMat);
+  rightCannon.position.set(2.0, 0.2, 0);
+  shipGroup.add(rightCannon);
+
+  // Twin Thruster Glow
+  const thrusterGeo = new THREE.ConeGeometry(0.28, 1.4, 8);
+  thrusterGeo.rotateX(-Math.PI / 2);
+  thrusterGeo.translate(0, -1.5, 0);
+  const thrusterMat = new THREE.MeshBasicMaterial({
+    color: 0x38bdf8,
+    transparent: true,
+    opacity: 0.85,
+  });
+  leftThruster = new THREE.Mesh(thrusterGeo, thrusterMat);
+  leftThruster.position.set(-0.6, 0, 0);
+  shipGroup.add(leftThruster);
+
+  rightThruster = new THREE.Mesh(thrusterGeo, thrusterMat);
+  rightThruster.position.set(0.6, 0, 0);
+  shipGroup.add(rightThruster);
+
+  shipGroup.position.set(0, -9.0, 0);
+  scene.add(shipGroup);
+}
+
+function onWindowResize() {
+  const container = document.getElementById('gameContainer');
+  const W = container.clientWidth;
+  const H = container.clientHeight;
+  camera.aspect = W / H;
+  camera.updateProjectionMatrix();
+  renderer.setSize(W, H);
+}
+
+// Reset Game
+function initGame() {
+  score = 0;
+  wave = 1;
+  lives = 3;
+  weaponTier = 1;
+  targetShipX = 0;
+  currentShipX = 0;
+
+  // Clear bullets & enemies
+  bullets.forEach(b => scene.remove(b.mesh));
+  bullets = [];
+  enemyBullets.forEach(b => scene.remove(b.mesh));
+  enemyBullets = [];
+  enemies.forEach(e => scene.remove(e.mesh));
+  enemies = [];
+  particles.forEach(p => scene.remove(p.mesh));
+  particles = [];
+  powerups.forEach(p => scene.remove(p.mesh));
+  powerups = [];
+
+  shipGroup.position.set(0, -9.0, 0);
+  shipGroup.rotation.z = 0;
+  shipGroup.visible = true;
+
+  spawnWave(wave);
+  updateHUD();
+}
+
+function updateHUD() {
+  document.getElementById('hudScore').textContent = score;
+  document.getElementById('hudWave').textContent = `WAVE ${wave}`;
+  document.getElementById('hudLives').textContent = '❤️'.repeat(Math.max(0, lives));
+}
+
+// Spawn Alien Attack Wave
+function spawnWave(w) {
+  const rows = Math.min(4, 2 + Math.floor(w / 2));
+  const cols = 5;
+  const startY = 8.5;
+  const spacingX = 2.0;
+  const spacingY = 1.8;
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const isHeavy = r === 0 && w >= 2;
+      const enemy = createAlienMesh(isHeavy ? 'heavy' : 'drone', w);
+      const ex = (c - (cols - 1) / 2) * spacingX;
+      const ey = startY + r * spacingY;
+      enemy.position.set(ex, ey + 10, 0); // Spawns from deep forward
+      scene.add(enemy);
+
+      enemies.push({
+        mesh: enemy,
+        targetY: ey,
+        baseX: ex,
+        baseY: ey,
+        hp: isHeavy ? 3 : 1,
+        maxHp: isHeavy ? 3 : 1,
+        isHeavy,
+        animTick: Math.random() * 10,
+        fireCooldown: Math.random() * 120 + 60,
+      });
+    }
+  }
+}
+
+// 3D Alien Ship Mesh
+function createAlienMesh(type, currentWave) {
+  const group = new THREE.Group();
+
+  if (type === 'heavy') {
+    // Heavy Cruiser (Hexagonal red mothership)
+    const geo = new THREE.DodecahedronGeometry(1.0, 0);
+    const mat = new THREE.MeshStandardMaterial({
+      color: 0xdc2626,
+      roughness: 0.3,
+      metalness: 0.7,
+      emissive: 0x7f1d1d,
+      emissiveIntensity: 0.4,
+    });
+    const m = new THREE.Mesh(geo, mat);
+    m.scale.set(1.4, 0.7, 0.9);
+    group.add(m);
+
+    // Glowing core
+    const coreGeo = new THREE.SphereGeometry(0.4, 12, 12);
+    const coreMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+    const core = new THREE.Mesh(coreGeo, coreMat);
+    core.position.z = 0.3;
+    group.add(core);
+  } else {
+    // Interceptor Drone (Sleek violet raider)
+    const geo = new THREE.ConeGeometry(0.7, 1.8, 4);
+    geo.rotateX(-Math.PI / 2);
+    const mat = new THREE.MeshStandardMaterial({
+      color: 0x9333ea,
+      roughness: 0.25,
+      metalness: 0.8,
+      emissive: 0x581c87,
+      emissiveIntensity: 0.5,
+    });
+    const m = new THREE.Mesh(geo, mat);
+    group.add(m);
+
+    // Wing fins
+    const finGeo = new THREE.BoxGeometry(2.0, 0.1, 0.6);
+    const finMat = new THREE.MeshStandardMaterial({ color: 0xec4899, roughness: 0.4 });
+    const fin = new THREE.Mesh(finGeo, finMat);
+    group.add(fin);
+  }
+
+  return group;
+}
+
+// Controls (Pointer drag & Keys)
+const canvasEl = document.getElementById('webglCanvas');
+let isPointerDown = false;
+
+canvasEl.addEventListener('pointerdown', (e) => {
+  isPointerDown = true;
+  updatePointerShip(e);
+  Sound.init();
+});
+window.addEventListener('pointermove', (e) => {
+  if (isPointerDown) updatePointerShip(e);
+});
+window.addEventListener('pointerup', () => { isPointerDown = false; });
+window.addEventListener('pointercancel', () => { isPointerDown = false; });
+
+function updatePointerShip(e) {
+  const rect = canvasEl.getBoundingClientRect();
+  const relX = (e.clientX - rect.left) / rect.width; // 0 to 1
+  targetShipX = (relX - 0.5) * PLAY_W;
+}
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft' || e.key === 'a') targetShipX = Math.max(-PLAY_W / 2, targetShipX - 1.2);
+  if (e.key === 'ArrowRight' || e.key === 'd') targetShipX = Math.min(PLAY_W / 2, targetShipX + 1.2);
+});
+
+// Shoot Laser
+function shootPlayerLaser() {
+  Sound.play('laser');
+  haptic('light');
+
+  const laserGeo = new THREE.CylinderGeometry(0.08, 0.08, 1.1, 6);
+  laserGeo.rotateX(Math.PI / 2);
+  const laserMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+
+  if (weaponTier === 1) {
+    [-1.0, 1.0].forEach(ox => {
+      const m = new THREE.Mesh(laserGeo, laserMat);
+      m.position.set(shipGroup.position.x + ox, shipGroup.position.y + 1.2, 0);
+      scene.add(m);
+      bullets.push({ mesh: m, vx: 0, vy: 0.65 });
+    });
+  } else if (weaponTier === 2) {
+    [-1.2, 0, 1.2].forEach(ox => {
+      const m = new THREE.Mesh(laserGeo, laserMat);
+      m.position.set(shipGroup.position.x + ox, shipGroup.position.y + 1.2, 0);
+      scene.add(m);
+      bullets.push({ mesh: m, vx: ox * 0.04, vy: 0.65 });
+    });
+  } else {
+    [-1.5, -0.6, 0.6, 1.5].forEach(ox => {
+      const m = new THREE.Mesh(laserGeo, laserMat);
+      m.position.set(shipGroup.position.x + ox, shipGroup.position.y + 1.2, 0);
+      scene.add(m);
+      bullets.push({ mesh: m, vx: ox * 0.06, vy: 0.68 });
+    });
+  }
+}
+
+// Particle Explosion
+function spawnExplosion(pos, colorHex, count = 20) {
+  for (let i = 0; i < count; i++) {
+    const geo = new THREE.SphereGeometry(0.12 + Math.random() * 0.12, 6, 6);
+    const mat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 1 });
+    const m = new THREE.Mesh(geo, mat);
+    m.position.copy(pos);
+    scene.add(m);
+
+    const a = Math.random() * Math.PI * 2;
+    const spd = 0.1 + Math.random() * 0.25;
+    particles.push({
+      mesh: m,
+      vx: Math.cos(a) * spd,
+      vy: Math.sin(a) * spd,
+      vz: (Math.random() - 0.5) * spd,
+      life: 25,
+      maxLife: 25,
+    });
+  }
+}
+
+// Update Loop
+function update() {
+  if (gameState !== 'playing') return;
+
+  // Starfield Speed Motion
+  const starPos = starsParticles.geometry.attributes.position.array;
+  for (let i = 1; i < starPos.length; i += 3) {
+    starPos[i] -= 0.25;
+    if (starPos[i] < -30) starPos[i] = 30;
+  }
+  starsParticles.geometry.attributes.position.needsUpdate = true;
+
+  // Smooth Ship Movement & Banking Tilt
+  const dx = targetShipX - currentShipX;
+  currentShipX += dx * 0.16;
+  shipGroup.position.x = currentShipX;
+  shipGroup.rotation.z = -dx * 0.14; // Banking roll!
+
+  // Thruster flame flicker
+  const flk = 0.8 + Math.random() * 0.4;
+  leftThruster.scale.set(flk, flk, flk);
+  rightThruster.scale.set(flk, flk, flk);
+
+  // Auto-Fire Lasers
+  shootTimer++;
+  if (shootTimer >= 14) {
+    shootTimer = 0;
+    shootPlayerLaser();
+  }
+
+  // Update Player Bullets
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    const b = bullets[i];
+    b.mesh.position.x += b.vx;
+    b.mesh.position.y += b.vy;
+
+    // Hit Enemy Check
+    let hit = false;
+    for (let j = enemies.length - 1; j >= 0; j--) {
+      const e = enemies[j];
+      const dist = b.mesh.position.distanceTo(e.mesh.position);
+      if (dist < (e.isHeavy ? 1.4 : 1.0)) {
+        e.hp--;
+        hit = true;
+        spawnExplosion(b.mesh.position, 0x38bdf8, 6);
+
+        if (e.hp <= 0) {
+          Sound.play('boom');
+          haptic('medium');
+          spawnExplosion(e.mesh.position, e.isHeavy ? 0xfacc15 : 0xec4899, 28);
+          scene.remove(e.mesh);
+          enemies.splice(j, 1);
+          score += e.isHeavy ? 100 : 40;
+
+          // Chance to drop powerup
+          if (Math.random() < 0.22) {
+            spawnPowerup(e.mesh.position);
+          }
+
+          updateHUD();
+        }
+        break;
+      }
+    }
+
+    if (hit || b.mesh.position.y > PLAY_TOP + 2) {
+      scene.remove(b.mesh);
+      bullets.splice(i, 1);
+    }
+  }
+
+  // Update Enemies & Waves
+  const time = Date.now() * 0.002;
+  enemies.forEach(e => {
+    // Entrance lerp
+    if (e.mesh.position.y > e.targetY) {
+      e.mesh.position.y += (e.targetY - e.mesh.position.y) * 0.06;
+    } else {
+      // Swaying formation motion
+      e.animTick += 0.04;
+      e.mesh.position.x = e.baseX + Math.sin(time + e.baseY) * 1.5;
+    }
+
+    // Alien firing
+    e.fireCooldown--;
+    if (e.fireCooldown <= 0) {
+      e.fireCooldown = 90 + Math.random() * 120;
+      spawnEnemyBullet(e.mesh.position);
     }
   });
+
+  // Next Wave
+  if (enemies.length === 0) {
+    wave++;
+    Sound.play('power');
+    spawnWave(wave);
+    updateHUD();
+  }
+
+  // Update Enemy Bullets & Player Hit
+  for (let i = enemyBullets.length - 1; i >= 0; i--) {
+    const eb = enemyBullets[i];
+    eb.mesh.position.y -= eb.vy;
+
+    // Player hit
+    if (eb.mesh.position.distanceTo(shipGroup.position) < 1.3) {
+      scene.remove(eb.mesh);
+      enemyBullets.splice(i, 1);
+      onPlayerHit();
+      continue;
+    }
+
+    if (eb.mesh.position.y < PLAY_BOTTOM - 2) {
+      scene.remove(eb.mesh);
+      enemyBullets.splice(i, 1);
+    }
+  }
+
+  // Update Powerups
+  for (let i = powerups.length - 1; i >= 0; i--) {
+    const p = powerups[i];
+    p.mesh.position.y -= 0.08;
+    p.mesh.rotation.y += 0.05;
+
+    // Picked up!
+    if (p.mesh.position.distanceTo(shipGroup.position) < 1.5) {
+      weaponTier = Math.min(3, weaponTier + 1);
+      score += 150;
+      Sound.play('power');
+      haptic('heavy');
+      scene.remove(p.mesh);
+      powerups.splice(i, 1);
+      updateHUD();
+      continue;
+    }
+
+    if (p.mesh.position.y < PLAY_BOTTOM) {
+      scene.remove(p.mesh);
+      powerups.splice(i, 1);
+    }
+  }
+
+  // Update Particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const pt = particles[i];
+    pt.mesh.position.x += pt.vx;
+    pt.mesh.position.y += pt.vy;
+    pt.mesh.position.z += pt.vz;
+    pt.life--;
+    pt.mesh.material.opacity = pt.life / pt.maxLife;
+
+    if (pt.life <= 0) {
+      scene.remove(pt.mesh);
+      particles.splice(i, 1);
+    }
+  }
 }
-function loop() { update(); draw(); requestAnimationFrame(loop); }
-loop();
+
+function spawnEnemyBullet(pos) {
+  const geo = new THREE.SphereGeometry(0.2, 8, 8);
+  const mat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+  const m = new THREE.Mesh(geo, mat);
+  m.position.copy(pos);
+  scene.add(m);
+  enemyBullets.push({ mesh: m, vy: 0.18 + Math.min(0.12, wave * 0.02) });
+}
+
+function spawnPowerup(pos) {
+  const geo = new THREE.OctahedronGeometry(0.45);
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xfacc15,
+    roughness: 0.2,
+    metalness: 0.8,
+    emissive: 0xeab308,
+    emissiveIntensity: 0.6,
+  });
+  const m = new THREE.Mesh(geo, mat);
+  m.position.copy(pos);
+  scene.add(m);
+  powerups.push({ mesh: m });
+}
+
+function onPlayerHit() {
+  lives--;
+  Sound.play('boom');
+  haptic('error');
+  spawnExplosion(shipGroup.position, 0xef4444, 25);
+  updateHUD();
+
+  if (lives <= 0) {
+    onGameOver();
+  }
+}
+
+function onGameOver() {
+  gameState = 'gameover';
+  shipGroup.visible = false;
+
+  if (score > highScore) {
+    highScore = score;
+    localStorage.setItem('galaxy_3d_high', highScore);
+  }
+
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('finalWave').textContent = wave;
+  document.getElementById('modalGameOver').classList.remove('hidden');
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  update();
+  renderer.render(scene, camera);
+}
+
+// Button Events
+document.getElementById('btnStartGame').addEventListener('click', () => {
+  Sound.init();
+  document.getElementById('modalStart').classList.add('hidden');
+  initGame();
+  gameState = 'playing';
+});
+
+document.getElementById('btnRestartGame').addEventListener('click', () => {
+  Sound.init();
+  document.getElementById('modalGameOver').classList.add('hidden');
+  initGame();
+  gameState = 'playing';
+});
+
+// Pause / Resume messages
+window.addEventListener('message', (e) => {
+  if (e.data?.type === 'PAUSE_GAME' && gameState === 'playing') {
+    gameState = 'paused';
+  } else if (e.data?.type === 'RESUME_GAME' && gameState === 'paused') {
+    gameState = 'playing';
+  }
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  initThree();
+  animate();
+});
 </script>
 </body>
 </html>

@@ -1143,31 +1143,37 @@
       const sections = [
         {
           icon: "⚡",
+          theme: "featured",
           title: "Featured & High-Stakes",
           matcher: (g) => /aviator|flipster|space race|sheep fight/i.test(g.title)
         },
         {
           icon: "🚀",
+          theme: "action",
           title: "Action & Endless Adventures",
           matcher: (g) => /chintu|mario|dino|space invaders|snake/i.test(g.title)
         },
         {
           icon: "⚔️",
+          theme: "pvp",
           title: "PvP & Reflex Battles",
           matcher: (g) => /knife|fruit|whack|pong|typer/i.test(g.title)
         },
         {
           icon: "🧱",
+          theme: "tower",
           title: "Tower & Block Physics",
           matcher: (g) => /tower|helix|tetris|breakout|pinball/i.test(g.title)
         },
         {
           icon: "🧩",
+          theme: "puzzle",
           title: "Puzzle & Brain Challenge",
           matcher: (g) => /roll the ball|2048|wordle|sudoku|puzzle|flood|memory|simon/i.test(g.title)
         },
         {
           icon: "🃏",
+          theme: "cards",
           title: "Cards & Tabletop Classics",
           matcher: (g) => /uno|connect 4|billiards|checkers|tic-tac-toe|solitaire/i.test(g.title)
         }
@@ -1189,7 +1195,9 @@
             <div class="arcade-category-section">
               <div class="arcade-section-header">
                 <div class="ash-left">
-                  <span class="ash-icon">${sec.icon}</span>
+                  <div class="ash-icon-badge ash-theme-${sec.theme}">
+                    <span class="ash-icon-anim">${sec.icon}</span>
+                  </div>
                   <span class="ash-title">${sec.title}</span>
                 </div>
                 <span class="ash-badge">${secGames.length} games</span>
@@ -1208,7 +1216,9 @@
           <div class="arcade-category-section">
             <div class="arcade-section-header">
               <div class="ash-left">
-                <span class="ash-icon">🎮</span>
+                <div class="ash-icon-badge ash-theme-arcade">
+                  <span class="ash-icon-anim">🎮</span>
+                </div>
                 <span class="ash-title">More Arcade Fun</span>
               </div>
               <span class="ash-badge">${moreGames.length} games</span>
@@ -1371,9 +1381,9 @@
     { title: "Fruit Slicer", url: "/static/games/fruit_slice/index.html", icon: "🍉", description: "Slice flying fruits with swipe blades", image_url: "/static/thumbnails/fruit_thumb.png" },
     { title: "2048 Classic", url: "/static/games/2048/index.html", icon: "🔢", description: "Slide tiles to merge and reach 2048!", image_url: "/static/banners/puzzle2048_promo.png" },
     { title: "Retro Tetris", url: "/static/games/tetris/index.html", icon: "🧩", description: "Falling tetromino block puzzle", image_url: "/static/banners/tetris_promo.png" },
-    { title: "T-Rex Desert Run", url: "/static/games/dino/index.html", icon: "🦖", description: "Endless runner cactus jumping challenge", image_url: "/static/banners/dino_promo.png" },
-    { title: "Neon Snake", url: "/static/games/snake/index.html", icon: "🐍", description: "Classic retro snake with smooth controls", image_url: "" },
-    { title: "Space Invaders", url: "/static/games/space_invaders/index.html", icon: "👾", description: "Defend galaxy from alien waves", image_url: "/static/banners/space_promo.png" },
+    { title: "T-Rex Cyber Run", url: "/static/games/dino/index.html", icon: "🦖", description: "3D-style endless neon desert runner with energy pickups", image_url: "/static/thumbnails/dino_thumb.png" },
+    { title: "Neon Snake 3D", url: "/static/games/snake/index.html", icon: "🐍", description: "3D cyber slither with glowing energy crystals", image_url: "/static/thumbnails/snake_thumb.png" },
+    { title: "Galaxy Defender 3D", url: "/static/games/space_invaders/index.html", icon: "🚀", description: "3D space fighter starship blasting alien swarms", image_url: "/static/thumbnails/galaxy_thumb.png" },
     { title: "Connect 4 Arena", url: "/static/games/connect4/index.html", icon: "🔴", description: "Align 4 chips in a row against AI", image_url: "/static/thumbnails/connect4_thumb.png" },
     { title: "Neon Tic-Tac-Toe", url: "/static/games/tictactoe/index.html", icon: "❌", description: "Glowing neon 3x3 XO against unbeatable AI", image_url: "/static/thumbnails/xo_thumb.png" },
   ];

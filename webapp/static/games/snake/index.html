@@ -1,77 +1,735 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Snake</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>3D Neon Snake</title>
+<script src="../../js/three.min.js"></script>
+<script>
+  if (typeof THREE === 'undefined') {
+    document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
+  }
+</script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
-body{background:#070b14;color:#f8fafc;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:10px;}
-.top{width:100%;max-width:360px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
-.score{font-weight:900;color:#10b981;font-size:1.2rem;}
-#canvas{background:#0f172a;border:3px solid #10b981;border-radius:16px;box-shadow:0 0 20px rgba(16,185,129,0.3);width:100%;max-width:360px;aspect-ratio:1;}
-.dpad{margin-top:12px;display:grid;grid-template-columns:repeat(3,60px);grid-template-rows:repeat(3,46px);gap:6px;}
-.d-btn{background:#1e293b;border:1px solid #334155;color:#fff;border-radius:12px;font-size:1.4rem;display:flex;align-items:center;justify-content:center;cursor:pointer;}
-.d-btn:active{background:#10b981;}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #030712;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#gameContainer {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  height: 100%;
+  max-height: 750px;
+  background: #050b14;
+  overflow: hidden;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+}
+#webglCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* TOP HUD */
+#hud {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+  z-index: 10;
+}
+.hud-pill {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 6px 14px;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hud-score {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #10b981;
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+.hud-best {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #94a3b8;
+}
+
+/* On-screen D-Pad Controls */
+.dpad-container {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(3, 58px);
+  grid-template-rows: repeat(3, 46px);
+  gap: 6px;
+  pointer-events: auto;
+  z-index: 20;
+}
+.d-btn {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+  border-radius: 14px;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  transition: transform 0.08s ease, background 0.08s ease;
+}
+.d-btn:active {
+  transform: scale(0.92);
+  background: rgba(16, 185, 129, 0.35);
+  color: #fff;
+}
+
+/* Modals */
+.game-modal {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 24px;
+}
+.game-modal.hidden { display: none !important; }
+.modal-box {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border: 2px solid rgba(16, 185, 129, 0.45);
+  border-radius: 26px;
+  padding: 28px 22px;
+  text-align: center;
+  max-width: 320px;
+  width: 100%;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.9), 0 0 35px rgba(16, 185, 129, 0.25);
+  animation: popIn 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes popIn {
+  0% { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.modal-title {
+  font-size: 1.65rem;
+  font-weight: 900;
+  margin-bottom: 6px;
+  color: #10b981;
+  letter-spacing: 0.02em;
+}
+.modal-sub {
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  margin-bottom: 18px;
+  line-height: 1.45;
+}
+.stats-grid {
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 16px;
+  padding: 12px;
+  margin-bottom: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.stat-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+.stat-val {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #f8fafc;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  font-size: 1.1rem;
+  font-weight: 900;
+  padding: 13px 24px;
+  width: 100%;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+  transition: transform 0.1s ease;
+}
+.btn-primary:active { transform: scale(0.96); }
 </style>
 </head>
 <body>
-<div class="top">
-  <div style="font-weight:900;color:#38bdf8;">🐍 NEON SNAKE</div>
-  <div class="score">SCORE: <span id="sc">0</span></div>
+
+<div id="gameContainer">
+  <canvas id="webglCanvas"></canvas>
+
+  <div id="hud">
+    <div class="hud-pill">
+      <span class="hud-score" id="hudScore">0</span>
+    </div>
+    <div class="hud-pill">
+      <span class="hud-best" id="hudBest">BEST: 0</span>
+    </div>
+  </div>
+
+  <div class="dpad-container">
+    <div></div><button class="d-btn" id="btnUp">▲</button><div></div>
+    <button class="d-btn" id="btnLeft">◀</button>
+    <button class="d-btn" id="btnPause" style="color: #94a3b8; font-size: 1rem;">⏸</button>
+    <button class="d-btn" id="btnRight">▶</button>
+    <div></div><button class="d-btn" id="btnDown">▼</button><div></div>
+  </div>
+
+  <!-- Start Modal -->
+  <div id="modalStart" class="game-modal">
+    <div class="modal-box">
+      <div style="font-size: 3.2rem; margin-bottom: 6px;">🐍</div>
+      <h1 class="modal-title">3D NEON SNAKE</h1>
+      <p class="modal-sub">Glide across the futuristic 3D grid! Slither to collect glowing energy crystals and grow your neon cyber tail!</p>
+      <button class="btn-primary" id="btnStartGame">▶ START SLITHERING</button>
+    </div>
+  </div>
+
+  <!-- Game Over Modal -->
+  <div id="modalGameOver" class="game-modal hidden">
+    <div class="modal-box">
+      <div style="font-size: 3rem; margin-bottom: 6px;">💥</div>
+      <h1 class="modal-title" style="color: #ef4444;">GAME OVER!</h1>
+      <p class="modal-sub">You crashed into yourself or the cyber boundary!</p>
+      <div class="stats-grid">
+        <div>
+          <div class="stat-label">Final Score</div>
+          <div class="stat-val" style="color: #10b981;" id="finalScore">0</div>
+        </div>
+        <div>
+          <div class="stat-label">Snake Length</div>
+          <div class="stat-val" style="color: #38bdf8;" id="finalLength">1</div>
+        </div>
+      </div>
+      <button class="btn-primary" id="btnRestartGame" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">🔄 PLAY AGAIN</button>
+    </div>
+  </div>
 </div>
-<canvas id="canvas" width="400" height="400"></canvas>
-<div class="dpad">
-  <div></div><button class="d-btn" onclick="setDir(0,-1)">⬆️</button><div></div>
-  <button class="d-btn" onclick="setDir(-1,0)">⬅️</button><button class="d-btn" onclick="reset()">🔄</button><button class="d-btn" onclick="setDir(1,0)">➡️</button>
-  <div></div><button class="d-btn" onclick="setDir(0,1)">⬇️</button><div></div>
-</div>
+
 <script>
-const cvs = document.getElementById('canvas'), ctx = cvs.getContext('2d');
-const GRID = 20, COUNT = 20;
-let snake = [{x:10,y:10}], food = {x:15,y:15}, dir = {x:1,y:0}, nextDir = {x:1,y:0}, score = 0, over = false;
-function reset() { snake = [{x:10,y:10}]; dir = {x:1,y:0}; nextDir = {x:1,y:0}; score = 0; over = false; spawnFood(); document.getElementById('sc').textContent = 0; }
-function spawnFood() { food = {x: Math.floor(Math.random()*COUNT), y: Math.floor(Math.random()*COUNT)}; }
-function setDir(x,y) { if (x !== -dir.x || y !== -dir.y) nextDir = {x,y}; }
-window.addEventListener('keydown', e => {
-  if (e.key==='ArrowUp'||e.key==='w') setDir(0,-1);
-  if (e.key==='ArrowDown'||e.key==='s') setDir(0,1);
-  if (e.key==='ArrowLeft'||e.key==='a') setDir(-1,0);
-  if (e.key==='ArrowRight'||e.key==='d') setDir(1,0);
-});
-let sx, sy;
-cvs.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, {passive:true});
-cvs.addEventListener('touchend', e => {
-  let dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
-  if (Math.abs(dx) > Math.abs(dy)) setDir(dx > 0 ? 1 : -1, 0);
-  else setDir(0, dy > 0 ? 1 : -1);
-}, {passive:true});
-function update() {
-  if (over) return;
-  dir = nextDir;
-  let head = {x: (snake[0].x + dir.x + COUNT) % COUNT, y: (snake[0].y + dir.y + COUNT) % COUNT};
-  if (snake.some(s => s.x === head.x && s.y === head.y)) { over = true; return; }
-  snake.unshift(head);
-  if (head.x === food.x && head.y === food.y) { score += 10; document.getElementById('sc').textContent = score; spawnFood(); }
-  else snake.pop();
+// --- Web Audio Synth ---
+const Sound = {
+  ctx: null,
+  init() {
+    if (!this.ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) this.ctx = new AC();
+    }
+  },
+  play(type) {
+    if (!this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      if (type === 'eat') {
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, t);
+        osc.frequency.setValueAtTime(880, t + 0.08);
+        g.gain.setValueAtTime(0.25, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+        osc.connect(g); g.connect(this.ctx.destination);
+        osc.start(t); osc.stop(t + 0.18);
+      } else if (type === 'turn') {
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(280, t);
+        osc.frequency.exponentialRampToValueAtTime(180, t + 0.06);
+        g.gain.setValueAtTime(0.1, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+        osc.connect(g); g.connect(this.ctx.destination);
+        osc.start(t); osc.stop(t + 0.07);
+      } else if (type === 'crash') {
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(140, t);
+        osc.frequency.exponentialRampToValueAtTime(20, t + 0.35);
+        g.gain.setValueAtTime(0.4, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+        osc.connect(g); g.connect(this.ctx.destination);
+        osc.start(t); osc.stop(t + 0.36);
+      }
+    } catch (_) {}
+  }
+};
+
+function haptic(type) {
+  try {
+    const tg = window.Telegram?.WebApp?.HapticFeedback;
+    if (tg) {
+      if (type === 'light') tg.impactOccurred('light');
+      else if (type === 'medium') tg.impactOccurred('medium');
+      else if (type === 'error') tg.notificationOccurred('error');
+    }
+  } catch (_) {}
 }
-function draw() {
-  ctx.fillStyle = '#0f172a'; ctx.fillRect(0,0,400,400);
-  ctx.fillStyle = '#ef4444'; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 10;
-  ctx.beginPath(); ctx.arc(food.x*GRID+GRID/2, food.y*GRID+GRID/2, GRID/2.2, 0, Math.PI*2); ctx.fill();
-  snake.forEach((s,i) => {
-    ctx.fillStyle = i===0 ? '#38bdf8' : '#10b981';
-    ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 8;
-    ctx.beginPath(); ctx.roundRect(s.x*GRID+1, s.y*GRID+1, GRID-2, GRID-2, 6); ctx.fill();
+
+// --- 3D Scene Constants ---
+const GRID_SIZE = 16;
+const CELL_SIZE = 1.0;
+const HALF_GRID = (GRID_SIZE * CELL_SIZE) / 2;
+
+let scene, camera, renderer;
+let boardGroup, foodMesh, foodLight;
+let snakeMeshes = [];
+let particles = [];
+
+let score = 0;
+let highScore = parseInt(localStorage.getItem('snake_3d_high') || '0', 10);
+let gameState = 'ready'; // ready, playing, gameover, paused
+
+// Snake Logic
+let snake = [];
+let dir = { x: 1, z: 0 };
+let nextDir = { x: 1, z: 0 };
+let foodPos = { x: 12, z: 12 };
+let tickTimer = 0;
+let tickSpeed = 0.12; // seconds per step
+
+function initThree() {
+  const canvas = document.getElementById('webglCanvas');
+  const container = document.getElementById('gameContainer');
+  const W = container.clientWidth;
+  const H = container.clientHeight;
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x050b14);
+  scene.fog = new THREE.Fog(0x050b14, 18, 42);
+
+  // Isometric / Tilt Perspective Camera
+  camera = new THREE.PerspectiveCamera(46, W / H, 0.1, 100);
+  camera.position.set(0, 16.5, 14.5);
+  camera.lookAt(0, -1.0, 0);
+
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+
+  // Lights
+  const ambient = new THREE.AmbientLight(0xffffff, 0.45);
+  scene.add(ambient);
+
+  const dirLight = new THREE.DirectionalLight(0x10b981, 1.2);
+  dirLight.position.set(8, 18, 12);
+  dirLight.castShadow = true;
+  scene.add(dirLight);
+
+  const blueLight = new THREE.DirectionalLight(0x38bdf8, 0.8);
+  blueLight.position.set(-8, 12, -8);
+  scene.add(blueLight);
+
+  // Build 3D Arena Board
+  createBoard();
+
+  // Create 3D Food Mesh
+  createFoodMesh();
+
+  window.addEventListener('resize', onWindowResize);
+}
+
+function createBoard() {
+  boardGroup = new THREE.Group();
+
+  // Platform Floor
+  const floorGeo = new THREE.BoxGeometry(GRID_SIZE * CELL_SIZE + 0.6, 0.4, GRID_SIZE * CELL_SIZE + 0.6);
+  const floorMat = new THREE.MeshStandardMaterial({
+    color: 0x0f172a,
+    roughness: 0.6,
+    metalness: 0.2,
   });
-  if (over) {
-    ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(0,0,400,400);
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('GAME OVER', 200, 190);
-    ctx.font = '16px sans-serif'; ctx.fillText('Tap 🔄 to Play Again', 200, 230);
+  const floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.position.y = -0.22;
+  floor.receiveShadow = true;
+  boardGroup.add(floor);
+
+  // Glowing Grid Lines
+  const gridHelper = new THREE.GridHelper(GRID_SIZE * CELL_SIZE, GRID_SIZE, 0x10b981, 0x1e293b);
+  gridHelper.position.y = 0.01;
+  boardGroup.add(gridHelper);
+
+  // Glowing Outer Neon Rails
+  const railMat = new THREE.MeshStandardMaterial({
+    color: 0x10b981,
+    roughness: 0.2,
+    emissive: 0x059669,
+    emissiveIntensity: 0.6,
+  });
+
+  const railH = 0.35, railW = 0.18;
+  const len = GRID_SIZE * CELL_SIZE + 0.6;
+
+  // North & South
+  [-HALF_GRID - 0.15, HALF_GRID + 0.15].forEach(z => {
+    const geo = new THREE.BoxGeometry(len, railH, railW);
+    const m = new THREE.Mesh(geo, railMat);
+    m.position.set(0, railH / 2, z);
+    boardGroup.add(m);
+  });
+  // East & West
+  [-HALF_GRID - 0.15, HALF_GRID + 0.15].forEach(x => {
+    const geo = new THREE.BoxGeometry(railW, railH, len);
+    const m = new THREE.Mesh(geo, railMat);
+    m.position.set(x, railH / 2, 0);
+    boardGroup.add(m);
+  });
+
+  scene.add(boardGroup);
+}
+
+function createFoodMesh() {
+  const geo = new THREE.DodecahedronGeometry(0.38, 0);
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xef4444,
+    roughness: 0.15,
+    metalness: 0.8,
+    emissive: 0xdc2626,
+    emissiveIntensity: 0.7,
+  });
+  foodMesh = new THREE.Mesh(geo, mat);
+  foodMesh.castShadow = true;
+  scene.add(foodMesh);
+
+  // Food glow point light
+  foodLight = new THREE.PointLight(0xef4444, 1.5, 3.5);
+  foodMesh.add(foodLight);
+}
+
+function gridToWorld(gx, gz) {
+  return {
+    x: (gx + 0.5) * CELL_SIZE - HALF_GRID,
+    z: (gz + 0.5) * CELL_SIZE - HALF_GRID,
+  };
+}
+
+function onWindowResize() {
+  const container = document.getElementById('gameContainer');
+  const W = container.clientWidth;
+  const H = container.clientHeight;
+  camera.aspect = W / H;
+  camera.updateProjectionMatrix();
+  renderer.setSize(W, H);
+}
+
+// Reset Game
+function initGame() {
+  score = 0;
+  dir = { x: 1, z: 0 };
+  nextDir = { x: 1, z: 0 };
+
+  // Initial 3 segments
+  snake = [
+    { x: 5, z: 8 },
+    { x: 4, z: 8 },
+    { x: 3, z: 8 },
+  ];
+
+  spawnFood();
+  updateHUD();
+}
+
+function spawnFood() {
+  while (true) {
+    const rx = Math.floor(Math.random() * GRID_SIZE);
+    const rz = Math.floor(Math.random() * GRID_SIZE);
+    if (!snake.some(s => s.x === rx && s.z === rz)) {
+      foodPos = { x: rx, z: rz };
+      const wp = gridToWorld(rx, rz);
+      foodMesh.position.set(wp.x, 0.45, wp.z);
+      break;
+    }
   }
 }
-setInterval(()=>{ update(); draw(); }, 120);
-reset();
+
+function updateHUD() {
+  document.getElementById('hudScore').textContent = score;
+  document.getElementById('hudBest').textContent = `BEST: ${Math.max(score, highScore)}`;
+}
+
+// Direction Handler
+function setDirection(dx, dz) {
+  if (dx !== -dir.x || dz !== -dir.z) {
+    nextDir = { x: dx, z: dz };
+    Sound.play('turn');
+  }
+}
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowUp' || e.key === 'w') setDirection(0, -1);
+  if (e.key === 'ArrowDown' || e.key === 's') setDirection(0, 1);
+  if (e.key === 'ArrowLeft' || e.key === 'a') setDirection(-1, 0);
+  if (e.key === 'ArrowRight' || e.key === 'd') setDirection(1, 0);
+});
+
+// Swipe Gestures
+let touchStartX = 0, touchStartY = 0;
+const canvasEl = document.getElementById('webglCanvas');
+canvasEl.addEventListener('touchstart', (e) => {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+  Sound.init();
+}, { passive: true });
+
+canvasEl.addEventListener('touchend', (e) => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    if (Math.abs(dx) > 25) setDirection(dx > 0 ? 1 : -1, 0);
+  } else {
+    if (Math.abs(dy) > 25) setDirection(0, dy > 0 ? 1 : -1);
+  }
+}, { passive: true });
+
+document.getElementById('btnUp').addEventListener('click', () => setDirection(0, -1));
+document.getElementById('btnDown').addEventListener('click', () => setDirection(0, 1));
+document.getElementById('btnLeft').addEventListener('click', () => setDirection(-1, 0));
+document.getElementById('btnRight').addEventListener('click', () => setDirection(1, 0));
+document.getElementById('btnPause').addEventListener('click', () => {
+  if (gameState === 'playing') gameState = 'paused';
+  else if (gameState === 'paused') gameState = 'playing';
+});
+
+// Particle Burst on food pickup
+function spawnEatParticles(pos) {
+  for (let i = 0; i < 16; i++) {
+    const geo = new THREE.SphereGeometry(0.08 + Math.random() * 0.08, 6, 6);
+    const mat = new THREE.MeshBasicMaterial({ color: 0xfacc15, transparent: true, opacity: 1 });
+    const m = new THREE.Mesh(geo, mat);
+    m.position.copy(pos);
+    scene.add(m);
+
+    const a = Math.random() * Math.PI * 2;
+    const spd = 0.08 + Math.random() * 0.18;
+    particles.push({
+      mesh: m,
+      vx: Math.cos(a) * spd,
+      vy: 0.1 + Math.random() * 0.2,
+      vz: Math.sin(a) * spd,
+      life: 25,
+      maxLife: 25,
+    });
+  }
+}
+
+// Logic Tick
+function stepSnake() {
+  dir = nextDir;
+  const newHead = { x: snake[0].x + dir.x, z: snake[0].z + dir.z };
+
+  // Wall Collision Check
+  if (newHead.x < 0 || newHead.x >= GRID_SIZE || newHead.z < 0 || newHead.z >= GRID_SIZE) {
+    onGameOver();
+    return;
+  }
+
+  // Self Collision Check
+  if (snake.some(s => s.x === newHead.x && s.z === newHead.z)) {
+    onGameOver();
+    return;
+  }
+
+  snake.unshift(newHead);
+
+  // Eat Food Check
+  if (newHead.x === foodPos.x && newHead.z === foodPos.z) {
+    score += 10;
+    if (score > highScore) {
+      highScore = score;
+      localStorage.setItem('snake_3d_high', highScore);
+    }
+    updateHUD();
+    Sound.play('eat');
+    haptic('medium');
+
+    const wp = gridToWorld(foodPos.x, foodPos.z);
+    spawnEatParticles(new THREE.Vector3(wp.x, 0.45, wp.z));
+    spawnFood();
+  } else {
+    snake.pop();
+  }
+}
+
+// Update 3D Meshes
+function updateSnakeVisuals() {
+  // Sync mesh count with snake length
+  while (snakeMeshes.length < snake.length) {
+    const idx = snakeMeshes.length;
+    const isHead = (idx === 0);
+
+    const geo = new THREE.BoxGeometry(0.85, 0.72, 0.85);
+    const color = isHead ? 0x38bdf8 : (idx % 2 === 0 ? 0x10b981 : 0x059669);
+    const mat = new THREE.MeshStandardMaterial({
+      color: color,
+      roughness: 0.25,
+      metalness: 0.4,
+      emissive: isHead ? 0x0284c7 : 0x047857,
+      emissiveIntensity: 0.4,
+    });
+    const m = new THREE.Mesh(geo, mat);
+    m.castShadow = true;
+    m.receiveShadow = true;
+
+    // Glowing eyes on head
+    if (isHead) {
+      const eyeGeo = new THREE.SphereGeometry(0.12, 8, 8);
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+      leftEye.position.set(-0.25, 0.25, 0.42);
+      m.add(leftEye);
+      const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+      rightEye.position.set(0.25, 0.25, 0.42);
+      m.add(rightEye);
+    }
+
+    scene.add(m);
+    snakeMeshes.push(m);
+  }
+
+  // Update segment positions
+  for (let i = 0; i < snake.length; i++) {
+    const s = snake[i];
+    const m = snakeMeshes[i];
+    const wp = gridToWorld(s.x, s.z);
+
+    // Smooth lerp to cell position
+    m.position.x += (wp.x - m.position.x) * 0.45;
+    m.position.y = 0.42;
+    m.position.z += (wp.z - m.position.z) * 0.45;
+
+    // Head rotation
+    if (i === 0) {
+      if (dir.x === 1) m.rotation.y = -Math.PI / 2;
+      else if (dir.x === -1) m.rotation.y = Math.PI / 2;
+      else if (dir.z === 1) m.rotation.y = 0;
+      else if (dir.z === -1) m.rotation.y = Math.PI;
+    }
+  }
+
+  // Bob and rotate food
+  const time = Date.now() * 0.003;
+  foodMesh.rotation.y += 0.04;
+  foodMesh.rotation.x += 0.02;
+  foodMesh.position.y = 0.45 + Math.sin(time) * 0.12;
+
+  // Update Particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const pt = particles[i];
+    pt.mesh.position.x += pt.vx;
+    pt.mesh.position.y += pt.vy;
+    pt.mesh.position.z += pt.vz;
+    pt.vy -= 0.012; // Gravity
+    pt.life--;
+    pt.mesh.material.opacity = pt.life / pt.maxLife;
+
+    if (pt.life <= 0) {
+      scene.remove(pt.mesh);
+      particles.splice(i, 1);
+    }
+  }
+}
+
+function onGameOver() {
+  gameState = 'gameover';
+  Sound.play('crash');
+  haptic('error');
+
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('finalLength').textContent = snake.length;
+  document.getElementById('modalGameOver').classList.remove('hidden');
+}
+
+// Loop
+let lastTime = performance.now();
+function animate(currentTime) {
+  requestAnimationFrame(animate);
+
+  const delta = (currentTime - lastTime) / 1000;
+  lastTime = currentTime;
+
+  if (gameState === 'playing') {
+    tickTimer += delta;
+    if (tickTimer >= tickSpeed) {
+      tickTimer = 0;
+      stepSnake();
+    }
+  }
+
+  updateSnakeVisuals();
+  renderer.render(scene, camera);
+}
+
+// Button Events
+document.getElementById('btnStartGame').addEventListener('click', () => {
+  Sound.init();
+  document.getElementById('modalStart').classList.add('hidden');
+  initGame();
+  gameState = 'playing';
+});
+
+document.getElementById('btnRestartGame').addEventListener('click', () => {
+  Sound.init();
+  document.getElementById('modalGameOver').classList.add('hidden');
+  initGame();
+  gameState = 'playing';
+});
+
+// Pause / Resume messages
+window.addEventListener('message', (e) => {
+  if (e.data?.type === 'PAUSE_GAME' && gameState === 'playing') {
+    gameState = 'paused';
+  } else if (e.data?.type === 'RESUME_GAME' && gameState === 'paused') {
+    gameState = 'playing';
+  }
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  initThree();
+  animate(performance.now());
+});
 </script>
 </body>
 </html>
