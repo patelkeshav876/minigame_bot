@@ -50,7 +50,7 @@ def compute_level(xp: int) -> tuple[int, int, int]:
 
 DEFAULT_HTML5_GAMES: list[tuple[str, str, str, str, str]] = [
     # ⚡ High-Stakes Duel & Personal Wager
-    ("Aviator Rocket", "/static/games/aviator/index.html", "🚀", "High-stakes rocket multiplier curve! Cash out before the blast", "/static/banners/aviator_promo.png"),
+    ("Aviator Rocket", "/static/games/aviator/index.html", "🚀", "High-stakes rocket multiplier curve! Cash out before the blast", "/static/thumbnails/aviator_thumb.png"),
 
     # 🕹️ Arcade Classics (Self-Hosted & 100% Working)
     ("Neon Snake", "/static/games/snake/index.html", "🐍", "Classic retro snake with smooth controls", ""),
@@ -484,7 +484,7 @@ class GameStorage:
             img = entry[4] if len(entry) > 4 else ""
             row = conn.execute("SELECT id, image_url FROM custom_games WHERE title = ? OR url = ?", (title, url)).fetchone()
             if row:
-                current_img = row["image_url"] if (row["image_url"] and row["image_url"].strip()) else img
+                current_img = img if (img and "aviator_thumb" in img) else (row["image_url"] if (row["image_url"] and row["image_url"].strip()) else img)
                 conn.execute(
                     "UPDATE custom_games SET url = ?, icon = ?, description = ?, image_url = ? WHERE id = ?",
                     (url, icon, desc, current_img, row["id"]),
@@ -1057,6 +1057,28 @@ class GameStorage:
                 conn.commit()
                 rows = conn.execute(query).fetchall()
             return [dict(r) for r in rows]
+
+    def update_custom_game(
+        self,
+        game_id: int | str,
+        title: str,
+        url: str,
+        icon: str = "🎮",
+        description: str = "",
+        image_url: str = "",
+    ) -> dict[str, Any] | None:
+        with self._lock, self._connect() as conn:
+            conn.execute(
+                """
+                UPDATE custom_games
+                SET title = ?, url = ?, icon = ?, description = ?, image_url = ?
+                WHERE id = ?
+                """,
+                (title, url, icon, description, image_url, int(game_id)),
+            )
+            conn.commit()
+            row = conn.execute("SELECT * FROM custom_games WHERE id = ?", (int(game_id),)).fetchone()
+            return dict(row) if row else None
 
     def delete_custom_game(self, game_id: int | str) -> bool:
         with self._lock, self._connect() as conn:

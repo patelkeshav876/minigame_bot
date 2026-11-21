@@ -509,9 +509,11 @@ function throwKnife() {
   flyingKnife = {
     x: W / 2,
     y: H - 120,
-    vy: -26,
+    vy: -68,
     width: 14,
     height: 60,
+    tapTargetAngle: targetAngle,
+    prevY: H - 120,
   };
 
   remainingKnivesToThrow--;
@@ -528,6 +530,7 @@ cvs.addEventListener('pointerdown', throwKnife);
 function checkKnifeHit() {
   if (!flyingKnife) return;
 
+  flyingKnife.prevY = flyingKnife.y;
   flyingKnife.y += flyingKnife.vy;
 
   // Target center
@@ -536,8 +539,8 @@ function checkKnifeHit() {
   const targetRadius = 65;
 
   if (flyingKnife.y <= targetY + targetRadius + 20) {
-    // Calculate angle on target
-    const hitAngle = (-targetAngle + Math.PI / 2) % (Math.PI * 2);
+    // Calculate angle on target locked precisely to tap angle for zero-latency hit
+    const hitAngle = (-flyingKnife.tapTargetAngle + Math.PI / 2) % (Math.PI * 2);
 
     // 1. Check clash with embedded knives
     let clashed = currentKnives.some(kAngle => {
@@ -815,8 +818,16 @@ function drawGame() {
     drawTarget(tx, ty, tr);
   }
 
-  // Flying knife
+  // Flying knife with high-speed motion streak
   if (flyingKnife) {
+    ctx.save();
+    const trailGrad = ctx.createLinearGradient(flyingKnife.x, flyingKnife.y + 60, flyingKnife.x, flyingKnife.y + 130);
+    trailGrad.addColorStop(0, 'rgba(255, 255, 255, 0.65)');
+    trailGrad.addColorStop(1, 'rgba(245, 158, 11, 0)');
+    ctx.fillStyle = trailGrad;
+    ctx.fillRect(flyingKnife.x - 3, flyingKnife.y + 55, 6, 75);
+    ctx.restore();
+
     drawKnife(flyingKnife.x, flyingKnife.y);
   } else if (remainingKnivesToThrow > 0 && gameState === 'playing') {
     // Ready knife at bottom

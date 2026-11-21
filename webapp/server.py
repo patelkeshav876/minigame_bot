@@ -267,6 +267,35 @@ async def upload_game_logo(req: LogoUploadRequest) -> dict[str, str]:
     return {"image_url": f"/static/thumbnails/{safe_name}"}
 
 
+@app.put("/api/admin/games/{game_id}")
+async def update_custom_game(game_id: int, req: CustomGameRequest) -> dict[str, Any]:
+    if not _is_admin(req.user_id, req.admin_secret):
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+
+    clean_url = req.url.strip()
+    if not (
+        clean_url.startswith("https://")
+        or clean_url.startswith("http://localhost")
+        or clean_url.startswith("/static/")
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Game URL must start with https://, /static/, or http://localhost",
+        )
+
+    game = storage.update_custom_game(
+        game_id=game_id,
+        title=req.title,
+        url=clean_url,
+        icon=req.icon or "🎮",
+        description=req.description,
+        image_url=req.image_url or "",
+    )
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return {"game": game}
+
+
 @app.delete("/api/admin/games/{game_id}")
 async def delete_custom_game(
     game_id: int,

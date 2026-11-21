@@ -60,10 +60,8 @@
     document.getElementById("bottomNav")?.classList.toggle("hidden", isFullscreen);
     document.querySelector(".topbar")?.classList.toggle("hidden", isFullscreen);
 
-    if (isFullscreen || name === "battle") {
-      try { tg?.expand(); } catch (_) {}
-      try { if (tg?.requestFullscreen) tg.requestFullscreen(); } catch (_) {}
-    }
+    // Expand view to comfortable full viewport with safe headroom (no aggressive requestFullscreen to prevent overlapping top controls)
+    try { tg?.expand(); } catch (_) {}
 
     if (window.lucide) {
       setTimeout(() => { window.lucide.createIcons(); }, 10);
@@ -594,13 +592,72 @@
     container.appendChild(boardEl);
   }
 
+  function get3dTicTacToePiece(type) {
+    if (type === "X") {
+      return `
+        <svg class="ttt-3d-svg ttt-3d-x" viewBox="0 0 72 72">
+          <defs>
+            <filter id="tttXGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#0284c7" flood-opacity="0.65"/>
+            </filter>
+            <linearGradient id="tttXGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#38bdf8"/>
+              <stop offset="50%" stop-color="#0284c7"/>
+              <stop offset="100%" stop-color="#1e3a8a"/>
+            </linearGradient>
+            <linearGradient id="tttXShine" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+              <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <g transform="translate(0, 4)" opacity="0.6">
+            <line x1="18" y1="18" x2="54" y2="54" stroke="#082f49" stroke-width="13" stroke-linecap="round"/>
+            <line x1="54" y1="18" x2="18" y2="54" stroke="#082f49" stroke-width="13" stroke-linecap="round"/>
+          </g>
+          <g filter="url(#tttXGlow)">
+            <line x1="18" y1="18" x2="54" y2="54" stroke="url(#tttXGrad)" stroke-width="11" stroke-linecap="round"/>
+            <line x1="54" y1="18" x2="18" y2="54" stroke="url(#tttXGrad)" stroke-width="11" stroke-linecap="round"/>
+            <line x1="20" y1="19" x2="52" y2="51" stroke="url(#tttXShine)" stroke-width="3" stroke-linecap="round"/>
+            <line x1="52" y1="19" x2="20" y2="51" stroke="url(#tttXShine)" stroke-width="3" stroke-linecap="round"/>
+          </g>
+        </svg>`;
+    }
+    if (type === "O") {
+      return `
+        <svg class="ttt-3d-svg ttt-3d-o" viewBox="0 0 72 72">
+          <defs>
+            <filter id="tttOGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#ec4899" flood-opacity="0.65"/>
+            </filter>
+            <linearGradient id="tttOGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#fb7185"/>
+              <stop offset="50%" stop-color="#ec4899"/>
+              <stop offset="100%" stop-color="#9333ea"/>
+            </linearGradient>
+            <linearGradient id="tttOShine" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+              <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <circle cx="36" cy="40" r="20" fill="none" stroke="#581c87" stroke-width="12" opacity="0.6"/>
+          <g filter="url(#tttOGlow)">
+            <circle cx="36" cy="36" r="20" fill="none" stroke="url(#tttOGrad)" stroke-width="10.5"/>
+            <circle cx="36" cy="34" r="19" fill="none" stroke="url(#tttOShine)" stroke-width="2.5"/>
+          </g>
+        </svg>`;
+    }
+    return "";
+  }
+
   function renderTicTacToeBoard(container, room, myTurn) {
     const boardEl = document.createElement("div");
     boardEl.className = "ttt-board";
     room.state.board.forEach((cell, index) => {
       const cellEl = document.createElement("div");
       cellEl.className = "ttt-cell";
-      cellEl.textContent = cell === "X" ? "❌" : cell === "O" ? "⭕" : "";
+      if (cell) {
+        cellEl.innerHTML = get3dTicTacToePiece(cell);
+      }
       cellEl.addEventListener("click", () => {
         if (!myTurn || cell !== "") return;
         haptic("light");
@@ -1046,7 +1103,7 @@
   });
 
   const FALLBACK_DEFAULT_GAMES = [
-    { title: "Aviator Rocket", url: "/static/games/aviator/index.html", icon: "🚀", description: "High-stakes rocket multiplier curve! Cash out before blast", image_url: "/static/banners/aviator_promo.png" },
+    { title: "Aviator Rocket", url: "/static/games/aviator/index.html", icon: "🚀", description: "High-stakes rocket multiplier curve! Cash out before blast", image_url: "/static/thumbnails/aviator_thumb.png" },
     { title: "Knife Master", url: "/static/games/knife_hit/index.html", icon: "🗡️", description: "Throw knives into rotating target log", image_url: "/static/thumbnails/knife_thumb.png" },
     { title: "Fruit Slicer", url: "/static/games/fruit_slice/index.html", icon: "🍉", description: "Slice flying fruits with swipe blades", image_url: "/static/thumbnails/fruit_thumb.png" },
     { title: "2048 Classic", url: "/static/games/2048/index.html", icon: "🔢", description: "Slide tiles to merge and reach 2048!", image_url: "/static/banners/puzzle2048_promo.png" },
@@ -1755,16 +1812,45 @@
       .map(
         (g) => {
           const logoEl = g.image_url
-            ? `<img src="${g.image_url}" style="width:24px;height:24px;border-radius:6px;object-fit:cover;vertical-align:middle;margin-right:6px;" alt="">`
+            ? `<img src="${g.image_url}" style="width:26px;height:26px;border-radius:6px;object-fit:cover;vertical-align:middle;margin-right:6px;" alt="">`
             : `<span style="font-size:1.1rem;margin-right:6px;">${g.icon || "🎮"}</span>`;
           return `
-      <div class="admin-game-row">
-        <span>${logoEl} <strong>${g.title}</strong></span>
-        <button class="btn small danger" data-del="${g.id}">🗑️</button>
+      <div class="admin-game-row" style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <span style="display:flex;align-items:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">${logoEl} <strong>${g.title}</strong></span>
+        <div style="display:flex;gap:6px;">
+          <button class="btn small primary" data-edit="${g.id}" title="Edit Game & Logo">✏️</button>
+          <button class="btn small danger" data-del="${g.id}" title="Delete Game">🗑️</button>
+        </div>
       </div>`;
         }
       )
       .join("");
+
+    listEl.querySelectorAll("[data-edit]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.edit;
+        const g = (data.games || []).find((item) => String(item.id) === String(id));
+        if (!g) return;
+        state.editingGameId = g.id;
+
+        document.getElementById("inputGameTitle").value = g.title || "";
+        document.getElementById("inputGameUrl").value = g.url || "";
+        document.getElementById("inputGameIcon").value = g.icon || "🎮";
+        document.getElementById("inputGameDesc").value = g.description || "";
+        if (inputGameLogoUrl) inputGameLogoUrl.value = g.image_url || "";
+        originalRawLogoSrc = g.image_url || "";
+        setLogoFocal(50, 50, 100);
+        updateLogoPreview(g.image_url || "");
+
+        const modalTitle = document.getElementById("adminModalTitle");
+        if (modalTitle) modalTitle.textContent = `✏️ Edit: ${g.title}`;
+        const submitBtn = document.getElementById("btnSubmitAddGame");
+        if (submitBtn) submitBtn.textContent = "💾 Update Game Logo & Details";
+        document.getElementById("btnCancelEditGame")?.classList.remove("hidden");
+
+        document.querySelector("#modalAddGame .modal-card")?.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    });
 
     listEl.querySelectorAll("[data-del]").forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -1782,6 +1868,25 @@
       });
     });
   }
+
+  function resetAdminGameForm() {
+    state.editingGameId = null;
+    document.getElementById("inputGameTitle").value = "";
+    document.getElementById("inputGameUrl").value = "";
+    document.getElementById("inputGameDesc").value = "";
+    if (inputGameLogoUrl) inputGameLogoUrl.value = "";
+    if (inputGameLogoFile) inputGameLogoFile.value = "";
+    originalRawLogoSrc = "";
+    setLogoFocal(50, 50, 100);
+    updateLogoPreview("");
+    const modalTitle = document.getElementById("adminModalTitle");
+    if (modalTitle) modalTitle.textContent = "⚙️ Manage Web Games";
+    const submitBtn = document.getElementById("btnSubmitAddGame");
+    if (submitBtn) submitBtn.textContent = "🚀 Add Game to Mini App";
+    document.getElementById("btnCancelEditGame")?.classList.add("hidden");
+  }
+
+  document.getElementById("btnCancelEditGame")?.addEventListener("click", resetAdminGameForm);
 
   document.getElementById("btnCloseGamePlayer")?.addEventListener("click", (e) => {
     e.preventDefault();
@@ -1829,25 +1934,37 @@
   const previewLogoImg = document.getElementById("previewLogoImg");
   const previewEmoji = document.getElementById("previewEmoji");
 
-  let logoFocal = { x: 50, y: 50 };
+  let logoFocal = { x: 50, y: 50, zoom: 100 };
   let originalRawLogoSrc = "";
 
   const sliderFocalX = document.getElementById("sliderFocalX");
   const sliderFocalY = document.getElementById("sliderFocalY");
+  const sliderFocalZoom = document.getElementById("sliderFocalZoom");
   const valFocalX = document.getElementById("valFocalX");
   const valFocalY = document.getElementById("valFocalY");
+  const valFocalZoom = document.getElementById("valFocalZoom");
   const lblFocalValue = document.getElementById("lblFocalValue");
 
-  function setLogoFocal(x, y) {
+  function setLogoFocal(x, y, zoom) {
     logoFocal.x = Math.max(0, Math.min(100, x));
     logoFocal.y = Math.max(0, Math.min(100, y));
+    if (zoom !== undefined && zoom !== null) {
+      logoFocal.zoom = Math.max(100, Math.min(250, parseInt(zoom, 10) || 100));
+    }
+
     if (sliderFocalX) sliderFocalX.value = logoFocal.x;
     if (sliderFocalY) sliderFocalY.value = logoFocal.y;
+    if (sliderFocalZoom) sliderFocalZoom.value = logoFocal.zoom;
+
     if (valFocalX) valFocalX.textContent = `${logoFocal.x}%`;
     if (valFocalY) valFocalY.textContent = `${logoFocal.y}%`;
-    if (lblFocalValue) lblFocalValue.textContent = `${logoFocal.x}% ${logoFocal.y}%`;
+    if (valFocalZoom) valFocalZoom.textContent = `${(logoFocal.zoom / 100).toFixed(1)}x`;
+    if (lblFocalValue) lblFocalValue.textContent = `${logoFocal.x}% ${logoFocal.y}% (${(logoFocal.zoom / 100).toFixed(1)}x)`;
+
     if (previewLogoImg) {
       previewLogoImg.style.objectPosition = `${logoFocal.x}% ${logoFocal.y}%`;
+      previewLogoImg.style.transform = logoFocal.zoom > 100 ? `scale(${logoFocal.zoom / 100})` : "none";
+      previewLogoImg.style.transformOrigin = `${logoFocal.x}% ${logoFocal.y}%`;
     }
     document.querySelectorAll(".btn-lfc").forEach((btn) => {
       const bx = parseInt(btn.dataset.fx, 10);
@@ -1860,18 +1977,21 @@
     btn.addEventListener("click", () => {
       const fx = parseInt(btn.dataset.fx, 10) || 50;
       const fy = parseInt(btn.dataset.fy, 10) || 50;
-      setLogoFocal(fx, fy);
+      setLogoFocal(fx, fy, logoFocal.zoom);
     });
   });
 
   sliderFocalX?.addEventListener("input", (e) => {
-    setLogoFocal(parseInt(e.target.value, 10), logoFocal.y);
+    setLogoFocal(parseInt(e.target.value, 10), logoFocal.y, logoFocal.zoom);
   });
   sliderFocalY?.addEventListener("input", (e) => {
-    setLogoFocal(logoFocal.x, parseInt(e.target.value, 10));
+    setLogoFocal(logoFocal.x, parseInt(e.target.value, 10), logoFocal.zoom);
+  });
+  sliderFocalZoom?.addEventListener("input", (e) => {
+    setLogoFocal(logoFocal.x, logoFocal.y, parseInt(e.target.value, 10));
   });
 
-  function cropImageWithFocal(imgSrc, fx, fy) {
+  function cropImageWithFocal(imgSrc, fx, fy, zoomVal = 100) {
     return new Promise((resolve) => {
       const img = new Image();
       img.crossOrigin = "anonymous";
@@ -1885,10 +2005,14 @@
 
           const srcW = img.naturalWidth || img.width;
           const srcH = img.naturalHeight || img.height;
-          const side = Math.min(srcW, srcH);
+          const baseSide = Math.min(srcW, srcH);
+          const zoomFactor = Math.max(1, (zoomVal || 100) / 100);
+          const side = Math.max(20, baseSide / zoomFactor);
 
-          const cropX = ((srcW - side) * fx) / 100;
-          const cropY = ((srcH - side) * fy) / 100;
+          const maxCropX = Math.max(0, srcW - side);
+          const maxCropY = Math.max(0, srcH - side);
+          const cropX = Math.min(maxCropX, Math.max(0, (maxCropX * fx) / 100));
+          const cropY = Math.min(maxCropY, Math.max(0, (maxCropY * fy) / 100));
 
           ctx.drawImage(img, cropX, cropY, side, side, 0, 0, targetSize, targetSize);
           resolve(canvas.toDataURL("image/png"));
@@ -1974,7 +2098,7 @@
     const sourceImage = originalRawLogoSrc || (previewLogoImg && previewLogoImg.src ? previewLogoImg.src : "");
     if (sourceImage && (sourceImage.startsWith("data:") || sourceImage.startsWith("blob:") || !finalImageUrl)) {
       try {
-        const croppedBase64 = await cropImageWithFocal(sourceImage, logoFocal.x, logoFocal.y);
+        const croppedBase64 = await cropImageWithFocal(sourceImage, logoFocal.x, logoFocal.y, logoFocal.zoom);
         const upRes = await fetch("/api/admin/upload-logo", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1994,8 +2118,12 @@
       }
     }
 
-    const res = await fetch("/api/admin/games", {
-      method: "POST",
+    const isEdit = Boolean(state.editingGameId);
+    const endpoint = isEdit ? `/api/admin/games/${state.editingGameId}` : "/api/admin/games";
+    const method = isEdit ? "PUT" : "POST";
+
+    const res = await fetch(endpoint, {
+      method: method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title,
@@ -2008,20 +2136,13 @@
       }),
     });
     if (res.ok) {
-      document.getElementById("inputGameTitle").value = "";
-      document.getElementById("inputGameUrl").value = "";
-      document.getElementById("inputGameDesc").value = "";
-      if (inputGameLogoUrl) inputGameLogoUrl.value = "";
-      if (inputGameLogoFile) inputGameLogoFile.value = "";
-      originalRawLogoSrc = "";
-      setLogoFocal(50, 50);
-      updateLogoPreview("");
+      resetAdminGameForm();
       loadAdminGamesList();
       loadCustomGames();
-      alert("✅ Game successfully added to Mini App!");
+      alert(isEdit ? "✅ Game logo & details successfully updated!" : "✅ Game successfully added to Mini App!");
     } else {
       const err = await res.json();
-      alert(`Error: ${err.detail || "Could not add game."}`);
+      alert(`Error: ${err.detail || "Could not save game."}`);
     }
   });
 

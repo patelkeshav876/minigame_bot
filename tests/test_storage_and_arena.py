@@ -215,13 +215,29 @@ def test_custom_games_admin_api(tmp_path, monkeypatch):
             assert res.status_code == 200
             game_id = res.json()["game"]["id"]
 
-            # 3. List active custom games
+            # 3. Update existing game logo & title
+            put_res = await client.put(
+                f"/api/admin/games/{game_id}",
+                json={
+                    "title": "Space Blaster 3D",
+                    "url": "https://games.example.com/space",
+                    "icon": "🛸",
+                    "image_url": "/static/thumbnails/custom_test.png",
+                    "description": "Updated 3D arcade",
+                    "admin_secret": ADMIN_SECRET,
+                },
+            )
+            assert put_res.status_code == 200
+            assert put_res.json()["game"]["title"] == "Space Blaster 3D"
+            assert put_res.json()["game"]["image_url"] == "/static/thumbnails/custom_test.png"
+
+            # 4. List active custom games
             list_res = await client.get("/api/custom-games")
             assert list_res.status_code == 200
             games = list_res.json()["games"]
-            assert any(g["title"] == "Space Blaster" for g in games)
+            assert any(g["title"] == "Space Blaster 3D" for g in games)
 
-            # 4. Delete custom game
+            # 5. Delete custom game
             del_res = await client.delete(
                 f"/api/admin/games/{game_id}?admin_secret={ADMIN_SECRET}"
             )

@@ -546,18 +546,40 @@
         </div>
       </div>
 
-      <div class="player-card" id="opponentCard">
-        <div class="p-name">Waiting for opponent...</div>
-        <div class="p-meta"><span class="p-elo">-- ELO</span> <span class="p-clock">0:00</span></div>
+      <div class="player-card match-player-card" id="opponentCard">
+        <div class="p-left">
+          <div class="p-avatar-wrap">
+            <span class="p-avatar-icon" id="oppAvatarIcon">🤖</span>
+            <span class="p-turn-indicator"></span>
+          </div>
+          <div class="p-info">
+            <div class="p-name">Waiting for opponent...</div>
+            <div class="p-sub"><span class="p-elo">-- ELO</span></div>
+          </div>
+        </div>
+        <div class="p-right">
+          <div class="p-clock-badge">⏱️ <span class="p-clock">0:00</span></div>
+        </div>
       </div>
 
       <div id="statusBanner" class="status-banner">Waiting for opponent to join...</div>
 
       <div id="boardContainer" class="board-container"></div>
 
-      <div class="player-card self" id="selfCard">
-        <div class="p-name">You</div>
-        <div class="p-meta"><span class="p-elo">1200 ELO</span> <span class="p-clock">0:00</span></div>
+      <div class="player-card self match-player-card" id="selfCard">
+        <div class="p-left">
+          <div class="p-avatar-wrap">
+            <span class="p-avatar-icon" id="selfAvatarIcon">👤</span>
+            <span class="p-turn-indicator"></span>
+          </div>
+          <div class="p-info">
+            <div class="p-name">You</div>
+            <div class="p-sub"><span class="p-elo">1200 ELO</span></div>
+          </div>
+        </div>
+        <div class="p-right">
+          <div class="p-clock-badge">⏱️ <span class="p-clock">0:00</span></div>
+        </div>
       </div>
 
       <div class="match-controls" id="matchControls">
@@ -927,15 +949,16 @@
     <div id="modalAddGame" class="modal hidden">
       <div class="modal-card">
         <div class="modal-header">
-          <h3>⚙️ Manage Web Games</h3>
+          <h3 id="adminModalTitle">⚙️ Manage Web Games</h3>
           <button id="btnCloseModal" class="btn small">✖</button>
         </div>
+        <button type="button" id="btnCancelEditGame" class="btn small outline hidden" style="margin-bottom: 10px; width: 100%;">↩️ Switch Back to Add New Game</button>
         <form id="formAddGame" class="modal-form">
           <label>Game Title</label>
           <input id="inputGameTitle" type="text" placeholder="e.g. Space Shooter" required />
           
-          <label>Game Website Link (HTTPS)</label>
-          <input id="inputGameUrl" type="url" placeholder="https://yourgame.com" required />
+          <label>Game Website Link (HTTPS or /static/...)</label>
+          <input id="inputGameUrl" type="text" placeholder="https://yourgame.com or /static/games/..." required />
           
           <label>Game Profile Picture / Logo</label>
           <div class="logo-upload-group">
@@ -955,7 +978,7 @@
           <!-- Logo Crop & Focal Position Option for Admin -->
           <div class="logo-focus-control">
             <div class="lfc-header">
-              <label style="margin: 0; font-size: 0.8rem; font-weight: 700; color: var(--text);">🎯 Logo Focus / Crop Portion</label>
+              <label style="margin: 0; font-size: 0.8rem; font-weight: 700; color: var(--text);">🎯 Logo Focus & Zoom Crop</label>
               <span id="lblFocalValue" class="lfc-badge">Center (50% 50%)</span>
             </div>
             <div class="lfc-btn-group">
@@ -974,6 +997,10 @@
                 <span class="lfc-slider-lbl">Vertical: <b id="valFocalY">50%</b></span>
                 <input type="range" id="sliderFocalY" min="0" max="100" value="50" class="focus-slider" />
               </div>
+              <div class="lfc-slider-item">
+                <span class="lfc-slider-lbl">Zoom / Crop Size: <b id="valFocalZoom">1.0x</b></span>
+                <input type="range" id="sliderFocalZoom" min="100" max="250" value="100" class="focus-slider" />
+              </div>
             </div>
           </div>
 
@@ -991,11 +1018,11 @@
           <label>Short Description</label>
           <input id="inputGameDesc" type="text" placeholder="e.g. Fast-paced arcade shooter" />
 
-          <button type="submit" class="btn primary full">🚀 Add Game to Mini App</button>
+          <button type="submit" id="btnSubmitAddGame" class="btn primary full">🚀 Add Game to Mini App</button>
         </form>
 
         <div class="modal-divider"></div>
-        <h4>Existing Web Games</h4>
+        <h4>Existing Web Games (Edit Logo / Remove)</h4>
         <div id="adminGamesList" class="admin-games-list">Loading...</div>
       </div>
     </div>
