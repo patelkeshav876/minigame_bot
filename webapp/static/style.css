@@ -394,6 +394,55 @@ body {
 }
 
 /* Custom Web Games & Arcade Grid */
+.arcade-sections-container {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  width: 100%;
+}
+
+.arcade-category-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.arcade-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 4px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ash-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ash-icon {
+  font-size: 18px;
+}
+
+.ash-title {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #f1f5f9;
+}
+
+.ash-badge {
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(30, 41, 59, 0.85);
+  color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
 .custom-games-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

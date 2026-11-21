@@ -241,9 +241,19 @@
     state.botUsername = data.bot_username || "";
     state.isAdmin = Boolean(data.is_admin);
 
-    if (state.isAdmin) {
-      document.getElementById("btnOpenAddGameModal").classList.remove("hidden");
-    }
+    const adminGameButtons = [
+      document.getElementById("btnOpenAddGameModal"),
+      document.getElementById("btnNavAddGame"),
+      document.getElementById("btnShortcutAddGame"),
+    ];
+    adminGameButtons.forEach((btn) => {
+      if (!btn) return;
+      if (state.isAdmin) {
+        btn.classList.remove("hidden");
+      } else {
+        btn.classList.add("hidden");
+      }
+    });
 
     renderProfileSummary(data.profile);
     refreshLiveRooms();
@@ -1066,32 +1076,8 @@
     return "casual";
   }
 
-  function renderFilteredGames() {
-    const el = document.getElementById("customGamesGrid");
-    if (!el) return;
-    const cat = state.gameFilterCat || "all";
-    const q = (state.gameSearchQuery || "").toLowerCase().trim();
-
-    const filtered = (state.allCustomGames || []).filter((g) => {
-      const matchCat = cat === "all" || classifyGameCategory(g) === cat;
-      const matchQ = !q || g.title.toLowerCase().includes(q) || (g.description && g.description.toLowerCase().includes(q));
-      return matchCat && matchQ;
-    });
-
-    const countEl = document.getElementById("totalGamesCount");
-    if (countEl) countEl.textContent = `${state.allCustomGames.length}`;
-
-    if (!filtered.length) {
-      el.innerHTML = `
-        <div class="empty-games-hint">
-          No games found matching "${q}". Try another search keyword!
-        </div>`;
-      return;
-    }
-
-    el.innerHTML = filtered
-      .map(
-        (g) => `
+  function makeGameCardHtml(g) {
+    return `
       <button class="custom-game-card" data-url="${encodeURI(g.url)}" data-title="${g.title}" data-icon="${g.icon}">
         <div class="cgc-top">
           <div class="cgc-icon">
@@ -1103,9 +1089,117 @@
           <div class="cgc-title">${g.title}</div>
           <div class="cgc-desc">${g.description || "Tap to play instantly"}</div>
         </div>
-      </button>`
-      )
-      .join("");
+      </button>`;
+  }
+
+  function renderFilteredGames() {
+    const el = document.getElementById("customGamesGrid");
+    if (!el) return;
+    const cat = state.gameFilterCat || "all";
+    const q = (state.gameSearchQuery || "").toLowerCase().trim();
+
+    const countEl = document.getElementById("totalGamesCount");
+    if (countEl) countEl.textContent = `${state.allCustomGames.length}`;
+
+    // If searching or filtering by a specific category, display standard filtered grid
+    if (q || cat !== "all") {
+      const filtered = (state.allCustomGames || []).filter((g) => {
+        const matchCat = cat === "all" || classifyGameCategory(g) === cat;
+        const matchQ = !q || g.title.toLowerCase().includes(q) || (g.description && g.description.toLowerCase().includes(q));
+        return matchCat && matchQ;
+      });
+
+      if (!filtered.length) {
+        el.className = "custom-games-grid";
+        el.innerHTML = `
+          <div class="empty-games-hint">
+            No games found matching "${q}". Try another search keyword!
+          </div>`;
+        return;
+      }
+
+      el.className = "custom-games-grid";
+      el.innerHTML = filtered.map(makeGameCardHtml).join("");
+    } else {
+      // Categorized sections in Arcade view ("different sections of games instead of one list")
+      const sections = [
+        {
+          icon: "⚡",
+          title: "Featured & High-Stakes",
+          matcher: (g) => /aviator|flipster|space race|sheep fight/i.test(g.title)
+        },
+        {
+          icon: "🚀",
+          title: "Action & Endless Adventures",
+          matcher: (g) => /chintu|mario|dino|flappy|space invaders|asteroids|snake/i.test(g.title)
+        },
+        {
+          icon: "⚔️",
+          title: "PvP & Reflex Battles",
+          matcher: (g) => /knife|fruit|whack|pong|typer/i.test(g.title)
+        },
+        {
+          icon: "🧱",
+          title: "Tower & Block Physics",
+          matcher: (g) => /tower|helix|tetris|breakout|pinball|hextris/i.test(g.title)
+        },
+        {
+          icon: "🧩",
+          title: "Puzzle & Brain Challenge",
+          matcher: (g) => /roll the ball|2048|minesweeper|wordle|sudoku|puzzle|flood|memory|simon/i.test(g.title)
+        },
+        {
+          icon: "🃏",
+          title: "Cards & Tabletop Classics",
+          matcher: (g) => /uno|connect 4|billiards|checkers|tic-tac-toe|solitaire/i.test(g.title)
+        }
+      ];
+
+      const assigned = new Set();
+      let html = "";
+
+      sections.forEach(sec => {
+        const secGames = (state.allCustomGames || []).filter(g => sec.matcher(g));
+        secGames.forEach(g => assigned.add(g.title));
+        if (secGames.length > 0) {
+          html += `
+            <div class="arcade-category-section">
+              <div class="arcade-section-header">
+                <div class="ash-left">
+                  <span class="ash-icon">${sec.icon}</span>
+                  <span class="ash-title">${sec.title}</span>
+                </div>
+                <span class="ash-badge">${secGames.length} games</span>
+              </div>
+              <div class="custom-games-grid">
+                ${secGames.map(makeGameCardHtml).join("")}
+              </div>
+            </div>
+          `;
+        }
+      });
+
+      const moreGames = (state.allCustomGames || []).filter(g => !assigned.has(g.title));
+      if (moreGames.length > 0) {
+        html += `
+          <div class="arcade-category-section">
+            <div class="arcade-section-header">
+              <div class="ash-left">
+                <span class="ash-icon">🎮</span>
+                <span class="ash-title">More Arcade Fun</span>
+              </div>
+              <span class="ash-badge">${moreGames.length} games</span>
+            </div>
+            <div class="custom-games-grid">
+              ${moreGames.map(makeGameCardHtml).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      el.className = "arcade-sections-container";
+      el.innerHTML = html;
+    }
 
     el.querySelectorAll(".custom-game-card").forEach((card) => {
       card.addEventListener("click", () => {
@@ -2056,6 +2150,11 @@
   }
 
   function openAddGameModal() {
+    if (!state.isAdmin) {
+      if (typeof showToast === "function") showToast("Admin access required to manage games");
+      else alert("Admin access required to manage games");
+      return;
+    }
     modalAddGame?.classList.remove("hidden");
     loadAdminGamesList();
   }

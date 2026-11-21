@@ -165,8 +165,7 @@ def _is_admin(user_id: str, admin_secret: str = "") -> bool:
         return True
     if user_id and str(user_id) in ADMIN_USER_IDS:
         return True
-    # If no ADMIN_USER_IDS are configured, permit admin actions in local dev mode
-    return len(ADMIN_USER_IDS) == 0
+    return False
 
 
 def _resolve_user(init_data: str, guest_id: str, guest_name: str) -> dict[str, Any]:
