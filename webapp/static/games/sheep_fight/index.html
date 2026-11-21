@@ -195,13 +195,13 @@ canvas {
   <div id="hudTop">
     <div class="hud-card">
       <span style="font-size:0.72rem; color:#38bdf8; font-weight:800;">YOU HP</span>
-      <span class="hud-score-p1" id="scoreP1">15</span>
+      <span class="hud-score-p1" id="scoreP1">100</span>
     </div>
     <div class="hud-card" style="font-weight:900; font-size:0.85rem; color:#fde047; letter-spacing:0.04em;">
       ⚔️ VS ⚔️
     </div>
     <div class="hud-card">
-      <span class="hud-score-p2" id="scoreP2">15</span>
+      <span class="hud-score-p2" id="scoreP2">100</span>
       <span style="font-size:0.72rem; color:#ef4444; font-weight:800;" id="oppNameLabel">BLACK RAM</span>
     </div>
   </div>
@@ -344,7 +344,7 @@ const SHEEP_TYPES = {
 };
 
 // Game State (HP based tug-of-war, no timer)
-const STARTING_HP = 15;
+const STARTING_HP = 100;
 let gameState = 'ready'; // ready, playing, gameover
 let selectedType = 'small';
 let energy = 40;
@@ -575,12 +575,30 @@ function updatePhysics() {
         leadP1.y += pushSpeed;
         leadP2.y = leadP1.y - touchDist;
 
-        // Propagate push to chain
+        // Propagate push to chain AND keep non-pushing sheep marching forward
         for (let i = 1; i < p1Sheep.length; i++) {
-          if (p1Sheep[i].isPushing) p1Sheep[i].y = p1Sheep[i-1].y + (p1Sheep[i].radius + p1Sheep[i-1].radius);
+          if (p1Sheep[i].isPushing) {
+            p1Sheep[i].y = p1Sheep[i-1].y + (p1Sheep[i].radius + p1Sheep[i-1].radius);
+          } else {
+            p1Sheep[i].y += p1Sheep[i].vy;
+            const minDist = p1Sheep[i].radius + p1Sheep[i-1].radius;
+            if (p1Sheep[i].y - p1Sheep[i-1].y <= minDist) {
+              p1Sheep[i].y = p1Sheep[i-1].y + minDist;
+              p1Sheep[i].isPushing = true;
+            }
+          }
         }
         for (let i = p2Sheep.length - 2; i >= 0; i--) {
-          if (p2Sheep[i].isPushing) p2Sheep[i].y = p2Sheep[i+1].y - (p2Sheep[i+1].radius + p2Sheep[i].radius);
+          if (p2Sheep[i].isPushing) {
+            p2Sheep[i].y = p2Sheep[i+1].y - (p2Sheep[i+1].radius + p2Sheep[i].radius);
+          } else {
+            p2Sheep[i].y += p2Sheep[i].vy;
+            const minDist = p2Sheep[i].radius + p2Sheep[i+1].radius;
+            if (p2Sheep[i+1].y - p2Sheep[i].y <= minDist) {
+              p2Sheep[i].y = p2Sheep[i+1].y - minDist;
+              p2Sheep[i].isPushing = true;
+            }
+          }
         }
 
         // Soft spongy cartoon pop sound & gentle sparks
@@ -604,14 +622,50 @@ function updatePhysics() {
           }
         }
       } else {
-        // Free movement
-        p1Sheep.forEach(s => { s.isPushing = false; s.y += s.vy; });
-        p2Sheep.forEach(s => { s.isPushing = false; s.y += s.vy; });
+        // Free movement when sheep haven't clashed yet in this lane
+        for (let i = 0; i < p1Sheep.length; i++) {
+          p1Sheep[i].isPushing = false;
+          p1Sheep[i].y += p1Sheep[i].vy;
+          if (i > 0) {
+            const minDist = p1Sheep[i].radius + p1Sheep[i-1].radius;
+            if (p1Sheep[i].y - p1Sheep[i-1].y < minDist) {
+              p1Sheep[i].y = p1Sheep[i-1].y + minDist;
+            }
+          }
+        }
+        for (let i = p2Sheep.length - 1; i >= 0; i--) {
+          p2Sheep[i].isPushing = false;
+          p2Sheep[i].y += p2Sheep[i].vy;
+          if (i < p2Sheep.length - 1) {
+            const minDist = p2Sheep[i].radius + p2Sheep[i+1].radius;
+            if (p2Sheep[i+1].y - p2Sheep[i].y < minDist) {
+              p2Sheep[i].y = p2Sheep[i+1].y - minDist;
+            }
+          }
+        }
       }
     } else {
-      // Free movement when no opposing sheep in lane
-      p1Sheep.forEach(s => { s.isPushing = false; s.y += s.vy; });
-      p2Sheep.forEach(s => { s.isPushing = false; s.y += s.vy; });
+      // Free movement when only one side has sheep in this lane
+      for (let i = 0; i < p1Sheep.length; i++) {
+        p1Sheep[i].isPushing = false;
+        p1Sheep[i].y += p1Sheep[i].vy;
+        if (i > 0) {
+          const minDist = p1Sheep[i].radius + p1Sheep[i-1].radius;
+          if (p1Sheep[i].y - p1Sheep[i-1].y < minDist) {
+            p1Sheep[i].y = p1Sheep[i-1].y + minDist;
+          }
+        }
+      }
+      for (let i = p2Sheep.length - 1; i >= 0; i--) {
+        p2Sheep[i].isPushing = false;
+        p2Sheep[i].y += p2Sheep[i].vy;
+        if (i < p2Sheep.length - 1) {
+          const minDist = p2Sheep[i].radius + p2Sheep[i+1].radius;
+          if (p2Sheep[i+1].y - p2Sheep[i].y < minDist) {
+            p2Sheep[i].y = p2Sheep[i+1].y - minDist;
+          }
+        }
+      }
     }
   }
 
@@ -889,20 +943,73 @@ function drawSheep(s) {
   ctx.fill();
   ctx.restore();
 
-  // 5. Curved Ram Horns (for Medium & Giant weights)
+  // 5. Cute Little Ram Horns on Head (Cute compact horns instead of big circular loops)
   if (s.typeKey === 'medium' || s.typeKey === 'giant') {
-    const hornSpan = s.typeKey === 'giant' ? 16 : 11;
-    ctx.strokeStyle = hornColor;
-    ctx.lineWidth = s.typeKey === 'giant' ? 5.5 : 3.8;
-    ctx.lineCap = 'round';
+    const isGiant = s.typeKey === 'giant';
+    const hornScale = isGiant ? 1.25 : 0.9;
+    const hColor = isP1 ? '#f59e0b' : '#64748b';
+    const hDark = isP1 ? '#d97706' : '#475569';
+    const hLight = isP1 ? '#fef08a' : '#94a3b8';
 
+    ctx.save();
+    // Left Little Horn
+    ctx.save();
+    ctx.translate(-s.radius * 0.32, headY - s.radius * 0.32);
+    ctx.rotate(-0.35);
+    // Base cone
+    ctx.fillStyle = hColor;
     ctx.beginPath();
-    ctx.arc(-s.radius * 0.64, headY - 3, hornSpan, 0.7, Math.PI * 1.35, false);
+    ctx.moveTo(-3 * hornScale, 2);
+    ctx.quadraticCurveTo(-5 * hornScale, -7 * hornScale, -2 * hornScale, -12 * hornScale);
+    ctx.quadraticCurveTo(2 * hornScale, -7 * hornScale, 3 * hornScale, 2);
+    ctx.closePath();
+    ctx.fill();
+    // Ridge ring 1
+    ctx.strokeStyle = hDark;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.ellipse(0, -4 * hornScale, 2.8 * hornScale, 1.2 * hornScale, 0, 0, Math.PI);
     ctx.stroke();
+    // Ridge ring 2
+    ctx.beginPath();
+    ctx.ellipse(-1 * hornScale, -8 * hornScale, 2.0 * hornScale, 1.0 * hornScale, 0, 0, Math.PI);
+    ctx.stroke();
+    // Shiny highlight tip
+    ctx.fillStyle = hLight;
+    ctx.beginPath();
+    ctx.arc(-2 * hornScale, -12 * hornScale, 1.5 * hornScale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
 
+    // Right Little Horn (Symmetrical)
+    ctx.save();
+    ctx.translate(s.radius * 0.32, headY - s.radius * 0.32);
+    ctx.rotate(0.35);
+    ctx.fillStyle = hColor;
     ctx.beginPath();
-    ctx.arc(s.radius * 0.64, headY - 3, hornSpan, -0.35, Math.PI * 0.3, true);
+    ctx.moveTo(-3 * hornScale, 2);
+    ctx.quadraticCurveTo(-2 * hornScale, -7 * hornScale, 2 * hornScale, -12 * hornScale);
+    ctx.quadraticCurveTo(5 * hornScale, -7 * hornScale, 3 * hornScale, 2);
+    ctx.closePath();
+    ctx.fill();
+    // Ridge ring 1
+    ctx.strokeStyle = hDark;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.ellipse(0, -4 * hornScale, 2.8 * hornScale, 1.2 * hornScale, 0, 0, Math.PI);
     ctx.stroke();
+    // Ridge ring 2
+    ctx.beginPath();
+    ctx.ellipse(1 * hornScale, -8 * hornScale, 2.0 * hornScale, 1.0 * hornScale, 0, 0, Math.PI);
+    ctx.stroke();
+    // Shiny highlight tip
+    ctx.fillStyle = hLight;
+    ctx.beginPath();
+    ctx.arc(2 * hornScale, -12 * hornScale, 1.5 * hornScale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.restore();
   }
 
   // 6. Round Cute Head (Screenshot 3)
