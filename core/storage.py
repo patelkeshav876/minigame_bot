@@ -66,11 +66,11 @@ DEFAULT_HTML5_GAMES: list[tuple[str, str, str, str, str]] = [
     ("Helix Drop", "/static/games/helix_jump/index.html", "🌀", "Bounce ball through gaps in rotating tower", ""),
     ("Tower Stack", "/static/games/tower_stack/index.html", "🏢", "Slice and stack tower blocks as high as you can", ""),
     ("Neon Pinball", "/static/games/pinball/index.html", "🪩", "Arcade pinball with flippers & bumpers", ""),
-    ("Space Race", "/static/games/space_race/index.html", "🚀", "Shoot asteroid obstacles & upgrade spaceship stats", ""),
-    ("Chintu's Royal Run", "/static/games/indian_mario/index.html", "👳", "Indian Mario platformer with spicy chili attacks & laddoos", ""),
+    ("Space Race", "/static/games/space_race/index.html", "🚀", "Shoot asteroid obstacles & upgrade spaceship stats", "/static/thumbnails/space_race_thumb.png"),
+    ("Chintu's Royal Run", "/static/games/indian_mario/index.html", "👳", "Indian Mario platformer with spicy chili attacks & laddoos", "/static/thumbnails/indian_mario_thumb.png"),
 
     # 🧩 Puzzle & Brain (Self-Hosted)
-    ("Roll the Ball", "/static/games/roll_ball/index.html", "🪵", "Slide wooden track tiles to roll ball into goal", ""),
+    ("Roll the Ball", "/static/games/roll_ball/index.html", "🪵", "Slide wooden track tiles to roll ball into goal", "/static/thumbnails/roll_ball_thumb.png"),
     ("2048 Classic", "/static/games/2048/index.html", "🔢", "Slide tiles to merge and reach 2048!", "/static/banners/puzzle2048_promo.png"),
     ("Wordle Guess", "/static/games/wordle/index.html", "🟩", "Guess secret 5-letter word in 6 attempts", ""),
     ("Sudoku Master", "/static/games/sudoku/index.html", "🧩", "Classic 9x9 number placement logic grid", ""),
@@ -80,7 +80,7 @@ DEFAULT_HTML5_GAMES: list[tuple[str, str, str, str, str]] = [
     ("Simon Memory", "/static/games/simon/index.html", "🔔", "Repeat growing sequence of lights & sounds", ""),
 
     # 🃏 Cards & Board Classics (Self-Hosted)
-    ("UNO Classic Arena", "/static/games/uno/index.html", "🃏", "Classic 1v1 UNO card battle against AI with wild cards", ""),
+    ("UNO Classic Arena", "/static/games/uno/index.html", "🃏", "Classic 1v1 UNO card battle against AI with wild cards", "/static/thumbnails/uno_thumb.png"),
     ("8-Ball Billiards", "/static/games/billiards/index.html", "🎱", "Pocket balls with realistic pool physics", ""),
     ("Connect 4 Arena", "/static/games/connect4/index.html", "🔴", "Align 4 chips in a row against AI", "/static/thumbnails/connect4_thumb.png"),
     ("Checkers Classic", "/static/games/checkers/index.html", "⚪", "Jump and capture enemy checkers to king", ""),
@@ -484,7 +484,12 @@ class GameStorage:
             img = entry[4] if len(entry) > 4 else ""
             row = conn.execute("SELECT id, image_url FROM custom_games WHERE title = ? OR url = ?", (title, url)).fetchone()
             if row:
-                current_img = row["image_url"] if (row["image_url"] and row["image_url"].strip()) else img
+                saved = row["image_url"] if (row["image_url"] and row["image_url"].strip()) else ""
+                # Auto-heal ephemeral logo paths wiped in previous ephemeral container deploys
+                if "custom_logo_" in saved:
+                    current_img = img if img else saved
+                else:
+                    current_img = saved if saved else img
                 conn.execute(
                     "UPDATE custom_games SET url = ?, icon = ?, description = ?, image_url = ? WHERE id = ?",
                     (url, icon, desc, current_img, row["id"]),

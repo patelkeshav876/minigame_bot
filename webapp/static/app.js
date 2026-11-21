@@ -1081,7 +1081,7 @@
       <button class="custom-game-card" data-url="${encodeURI(g.url)}" data-title="${g.title}" data-icon="${g.icon}">
         <div class="cgc-top">
           <div class="cgc-icon">
-            ${g.image_url ? `<img src="${g.image_url}" class="cgc-box-img" alt="${g.title}" />` : (g.icon || "🎮")}
+            ${g.image_url ? `<img src="${g.image_url}" class="cgc-box-img" alt="${g.title}" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-block';" /><span class="cgc-fallback-emoji" style="display:none;">${g.icon || "🎮"}</span>` : (g.icon || "🎮")}
           </div>
           <span class="cgc-play-badge">PLAY</span>
         </div>
@@ -1241,7 +1241,7 @@
     row.innerHTML = displayList.map(g => `
       <button class="carousel-game-card" data-url="${encodeURI(g.url)}" data-title="${g.title}" data-icon="${g.icon}">
         <div class="cgc-thumb-wrap">
-          ${g.image_url ? `<img src="${g.image_url}" class="cgc-thumb-img" alt="${g.title}" />` : `<span class="cgc-art">${g.icon || "🎮"}</span>`}
+          ${g.image_url ? `<img src="${g.image_url}" class="cgc-thumb-img" alt="${g.title}" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-block';" /><span class="cgc-art" style="display:none;">${g.icon || "🎮"}</span>` : `<span class="cgc-art">${g.icon || "🎮"}</span>`}
         </div>
         <div class="cgc-card-title">${g.title}</div>
         <div class="cgc-card-tag">${classifyGameCategory(g).toUpperCase()}</div>
@@ -1276,7 +1276,7 @@
       <div class="trending-game-card" data-url="${encodeURI(g.url)}" data-title="${g.title}" data-icon="${g.icon}">
         <div class="tgc-left">
           <div class="tgc-thumb">
-            ${g.image_url ? `<img src="${g.image_url}" class="tgc-thumb-img" alt="${g.title}" />` : (g.icon || "🎮")}
+            ${g.image_url ? `<img src="${g.image_url}" class="tgc-thumb-img" alt="${g.title}" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-block';" /><span class="tgc-fallback-emoji" style="display:none;">${g.icon || "🎮"}</span>` : (g.icon || "🎮")}
           </div>
           <div class="tgc-info">
             <div class="tgc-title">${g.title}</div>

@@ -18,3 +18,5 @@ data/*.sqlite*
 .idea/
 .DS_Store
 Thumbs.db
+
+*.db
