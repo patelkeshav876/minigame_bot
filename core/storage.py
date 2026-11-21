@@ -54,13 +54,11 @@ DEFAULT_HTML5_GAMES: list[tuple[str, str, str, str, str]] = [
 
     # 🕹️ Arcade Classics (Self-Hosted & 100% Working)
     ("Neon Snake", "/static/games/snake/index.html", "🐍", "Classic retro snake with smooth controls", ""),
-    ("Flappy Ghost", "/static/games/flappy/index.html", "👻", "Tap to flap and dodge obstacles", ""),
     ("Brick Breaker", "/static/games/breakout/index.html", "🧱", "Smash neon bricks with bouncing ball", ""),
     ("Retro Tetris", "/static/games/tetris/index.html", "🧩", "Falling tetromino block puzzle", "/static/banners/tetris_promo.png"),
     ("T-Rex Desert Run", "/static/games/dino/index.html", "🦖", "Endless runner cactus jumping challenge", "/static/banners/dino_promo.png"),
     ("Neon Pong", "/static/games/pong/index.html", "🏓", "Fast table tennis rally against AI", ""),
     ("Space Invaders", "/static/games/space_invaders/index.html", "👾", "Defend galaxy from alien waves", "/static/banners/space_promo.png"),
-    ("Asteroid Blaster", "/static/games/asteroids/index.html", "🚀", "Space vector rock shooter with thrusters", ""),
     ("Fruit Slicer", "/static/games/fruit_slice/index.html", "🍉", "Slice flying fruits with swipe blades", "/static/thumbnails/fruit_thumb.png"),
     ("Knife Master", "/static/games/knife_hit/index.html", "🗡️", "Throw knives into rotating target log", "/static/thumbnails/knife_thumb.png"),
     ("Sheep Fight Royale", "/static/games/sheep_fight/index.html", "🐑", "Hago 1v1 sheep pushing battle arena", "/static/thumbnails/sheep_thumb.png"),
@@ -70,13 +68,10 @@ DEFAULT_HTML5_GAMES: list[tuple[str, str, str, str, str]] = [
     ("Neon Pinball", "/static/games/pinball/index.html", "🪩", "Arcade pinball with flippers & bumpers", ""),
     ("Space Race", "/static/games/space_race/index.html", "🚀", "Shoot asteroid obstacles & upgrade spaceship stats", ""),
     ("Chintu's Royal Run", "/static/games/indian_mario/index.html", "👳", "Indian Mario platformer with spicy chili attacks & laddoos", ""),
-    ("Ghost Clicker", "/static/games/cookie_clicker/index.html", "🍪", "Idle tap clicker with auto-ghost upgrades", ""),
-    ("Hextris Rotation", "/static/games/hextris/index.html", "🔷", "Hexagonal rotation match puzzle", ""),
 
     # 🧩 Puzzle & Brain (Self-Hosted)
     ("Roll the Ball", "/static/games/roll_ball/index.html", "🪵", "Slide wooden track tiles to roll ball into goal", ""),
     ("2048 Classic", "/static/games/2048/index.html", "🔢", "Slide tiles to merge and reach 2048!", "/static/banners/puzzle2048_promo.png"),
-    ("Minesweeper Retro", "/static/games/minesweeper/index.html", "💣", "Clear the minefield without detonating bombs", ""),
     ("Wordle Guess", "/static/games/wordle/index.html", "🟩", "Guess secret 5-letter word in 6 attempts", ""),
     ("Sudoku Master", "/static/games/sudoku/index.html", "🧩", "Classic 9x9 number placement logic grid", ""),
     ("15-Puzzle Slider", "/static/games/sliding_puzzle/index.html", "🔲", "Classic sliding numbered block puzzle", ""),
@@ -499,8 +494,11 @@ class GameStorage:
                     "INSERT INTO custom_games (title, url, icon, description, image_url, is_active, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)",
                     (title, url, icon, desc, img, now),
                 )
-        broken = ["helixjump2", "canvaspool", "cardgames.io", "funhtml5games", "fruitninjafree", "monkeytype", "playtictactoe", "playsnake", "orteil.dashnet"]
-        for b in broken:
+        removed = [
+            "cookie_clicker", "minesweeper", "hextris", "asteroids", "flappy",
+            "helixjump2", "canvaspool", "cardgames.io", "funhtml5games", "fruitninjafree", "monkeytype", "playtictactoe", "playsnake", "orteil.dashnet"
+        ]
+        for b in removed:
             conn.execute("DELETE FROM custom_games WHERE url LIKE ?", (f"%{b}%",))
 
     def _seed_default_custom_games(self, conn: sqlite3.Connection) -> None:

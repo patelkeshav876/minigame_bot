@@ -299,7 +299,7 @@ const Sound = {
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(180, t);
         osc.frequency.exponentialRampToValueAtTime(70, t + 0.14);
-        g.gain.setValueAtTime(0.28, t);
+        g.gain.setValueAtTime(0.06, t);
         g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
         osc.connect(g); g.connect(this.ctx.destination);
         osc.start(t); osc.stop(t + 0.16);
@@ -636,7 +636,7 @@ function updatePhysics() {
     if (s.side === 'p1' && s.y <= goalTopY) {
       scoreP1 += s.weight;
       updateScoresUi();
-      Sound.play('goal');
+      triggerWallBreakVibration();
       triggerGoalCelebration(s.x, goalTopY, '#38bdf8');
       broadcastScore();
       return false;
@@ -645,7 +645,7 @@ function updatePhysics() {
     if (s.side === 'p2' && s.y >= goalBottomY) {
       scoreP2 += s.weight;
       updateScoresUi();
-      Sound.play('goal');
+      triggerWallBreakVibration();
       triggerGoalCelebration(s.x, goalBottomY, '#ef4444');
       broadcastScore();
       return false;
@@ -657,6 +657,17 @@ function updatePhysics() {
   if (scoreP1 >= 15 || scoreP2 >= 15) {
     finishGame();
   }
+}
+
+function triggerWallBreakVibration() {
+  try {
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+      window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+    } else if (navigator.vibrate) {
+      navigator.vibrate([90, 40, 130]);
+    }
+  } catch (_) {}
 }
 
 function triggerGoalCelebration(x, y, color) {
@@ -1076,12 +1087,34 @@ function drawGame() {
   particles = particles.filter(p => p.life > 0);
 }
 
+let animFrameId = null;
+
+function stopEntireGame() {
+  gameState = 'stopped';
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  if (animFrameId) {
+    cancelAnimationFrame(animFrameId);
+    animFrameId = null;
+  }
+  if (Sound.ctx) {
+    try {
+      Sound.ctx.suspend();
+      Sound.ctx.close();
+    } catch (_) {}
+    Sound.ctx = null;
+  }
+}
+
 function loop() {
+  if (gameState === 'stopped') return;
   if (gameState === 'playing') {
     updatePhysics();
   }
   drawGame();
-  requestAnimationFrame(loop);
+  animFrameId = requestAnimationFrame(loop);
 }
 loop();
 
@@ -1097,12 +1130,34 @@ document.getElementById('btnRestartGame').addEventListener('click', () => {
   gameState = 'playing';
 });
 
-// Pause / Resume messages from parent
+// Strict Pause / Resume / Destroy lifecycle
 window.addEventListener('message', (e) => {
-  if (e.data?.type === 'PAUSE_GAME' && gameState === 'playing') {
-    gameState = 'paused';
-  } else if (e.data?.type === 'RESUME_GAME' && gameState === 'paused') {
-    gameState = 'playing';
+  const act = e.data?.action || e.data?.type;
+  if (act === 'destroy' || act === 'stop' || act === 'close') {
+    stopEntireGame();
+  } else if (act === 'pause' || act === 'PAUSE_GAME') {
+    if (gameState === 'playing') gameState = 'paused';
+    if (Sound.ctx && Sound.ctx.state === 'running') {
+      try { Sound.ctx.suspend(); } catch(_) {}
+    }
+  } else if (act === 'resume' || act === 'RESUME_GAME') {
+    if (gameState === 'paused') {
+      gameState = 'playing';
+      if (Sound.ctx && Sound.ctx.state === 'suspended') {
+        try { Sound.ctx.resume(); } catch(_) {}
+      }
+    }
+  }
+});
+
+window.addEventListener('pagehide', stopEntireGame);
+window.addEventListener('unload', stopEntireGame);
+window.addEventListener('beforeunload', stopEntireGame);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (Sound.ctx && Sound.ctx.state === 'running') {
+      try { Sound.ctx.suspend(); } catch(_) {}
+    }
   }
 });
 </script>

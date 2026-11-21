@@ -1131,7 +1131,7 @@
         {
           icon: "🚀",
           title: "Action & Endless Adventures",
-          matcher: (g) => /chintu|mario|dino|flappy|space invaders|asteroids|snake/i.test(g.title)
+          matcher: (g) => /chintu|mario|dino|space invaders|snake/i.test(g.title)
         },
         {
           icon: "⚔️",
@@ -1141,12 +1141,12 @@
         {
           icon: "🧱",
           title: "Tower & Block Physics",
-          matcher: (g) => /tower|helix|tetris|breakout|pinball|hextris/i.test(g.title)
+          matcher: (g) => /tower|helix|tetris|breakout|pinball/i.test(g.title)
         },
         {
           icon: "🧩",
           title: "Puzzle & Brain Challenge",
-          matcher: (g) => /roll the ball|2048|minesweeper|wordle|sudoku|puzzle|flood|memory|simon/i.test(g.title)
+          matcher: (g) => /roll the ball|2048|wordle|sudoku|puzzle|flood|memory|simon/i.test(g.title)
         },
         {
           icon: "🃏",
@@ -1393,7 +1393,21 @@
 
   function exitGameToHome() {
     const iframe = document.getElementById("customGameIframe");
-    if (iframe) iframe.src = "";
+    if (iframe) {
+      try {
+        iframe.contentWindow?.postMessage({ action: "destroy" }, "*");
+        iframe.contentWindow?.postMessage({ action: "pause" }, "*");
+      } catch (_) {}
+      iframe.src = "about:blank";
+      try {
+        const parent = iframe.parentNode;
+        if (parent) {
+          const freshIframe = iframe.cloneNode(false);
+          freshIframe.src = "about:blank";
+          parent.replaceChild(freshIframe, iframe);
+        }
+      } catch (_) {}
+    }
     state.currentGameUrl = "";
     try { tg?.exitFullscreen?.(); } catch (_) {}
     try { tg?.BackButton?.hide?.(); } catch (_) {}
@@ -2012,13 +2026,14 @@
     tictactoe: { title: "XO Blitz", url: "/static/games/tictactoe/index.html", icon: "❌" },
     xo: { title: "XO Blitz", url: "/static/games/tictactoe/index.html", icon: "❌" },
     "2048": { title: "2048 Neon", url: "/static/games/2048/index.html", icon: "🔢" },
-    flappy: { title: "Flappy Ghost", url: "/static/games/flappy/index.html", icon: "👻" },
+    space_race: { title: "Space Race", url: "/static/games/space_race/index.html", icon: "🚀" },
     breakout: { title: "Neon Breakout", url: "/static/games/breakout/index.html", icon: "🧱" },
     snake: { title: "Retro Snake", url: "/static/games/snake/index.html", icon: "🐍" },
     helix_jump: { title: "Helix Spiral", url: "/static/games/helix_jump/index.html", icon: "🌀" },
     fruit_slice: { title: "Fruit Ninja", url: "/static/games/fruit_slice/index.html", icon: "🍉" },
     tower_stack: { title: "Tower Stack", url: "/static/games/tower_stack/index.html", icon: "🏗️" },
-    minesweeper: { title: "Minesweeper Pro", url: "/static/games/minesweeper/index.html", icon: "💣" },
+    roll_ball: { title: "Roll the Ball", url: "/static/games/roll_ball/index.html", icon: "🪵" },
+    uno: { title: "UNO Classic Arena", url: "/static/games/uno/index.html", icon: "🃏" },
     speed_typer: { title: "Speed Typer", url: "/static/games/speed_typer/index.html", icon: "⌨️" },
     wordle: { title: "Wordle Guess", url: "/static/games/wordle/index.html", icon: "🔤" },
   };
