@@ -68,6 +68,8 @@ DEFAULT_HTML5_GAMES: list[tuple[str, str, str, str, str]] = [
     ("Neon Pinball", "/static/games/pinball/index.html", "🪩", "Arcade pinball with flippers & bumpers", ""),
     ("Space Race", "/static/games/space_race/index.html", "🚀", "Shoot asteroid obstacles & upgrade spaceship stats", "/static/thumbnails/space_race_thumb.png"),
     ("Chintu's Royal Run", "/static/games/indian_mario/index.html", "👳", "Indian Mario platformer with spicy chili attacks & laddoos", "/static/thumbnails/indian_mario_thumb.png"),
+    ("Plinko Fortune", "/static/games/plinko/index.html", "🪙", "Lucky drop coin board with 100x center jackpot", "/static/thumbnails/plinko_thumb.png"),
+    ("Virus Breaker", "/static/games/virus_breaker/index.html", "👾", "Modern spaceship blaster popping bouncing virus swarms", "/static/thumbnails/virus_thumb.png"),
 
     # 🧩 Puzzle & Brain (Self-Hosted)
     ("Roll the Ball", "/static/games/roll_ball/index.html", "🪵", "Slide wooden track tiles to roll ball into goal", "/static/thumbnails/roll_ball_thumb.png"),

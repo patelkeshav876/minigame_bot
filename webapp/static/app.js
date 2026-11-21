@@ -1107,7 +1107,7 @@
     const t = `${g.title} ${g.description}`.toLowerCase();
     if (/puzzle|wordle|sudoku|minesweeper|2048|crossword|nonogram|hanoi|flood|matrix|memory|hextris|15 puzzle/.test(t)) return "puzzle";
     if (/sport|billiards|pool|pong|golf|soccer|basketball|hockey|tennis/.test(t)) return "sport";
-    if (/arcade|pac-man|pacman|dino|flappy|jump|tower|breakout|invaders|asteroids|snake|pinball|duck|mole|geometry|fruit|knife|slither|paper|helix/.test(t)) return "arcade";
+    if (/arcade|pac-man|pacman|dino|flappy|jump|tower|breakout|invaders|asteroids|snake|pinball|duck|mole|geometry|fruit|knife|slither|paper|helix|plinko|virus|cannon/.test(t)) return "arcade";
     if (/solitaire|card|mahjong|checkers|reversi|othello|backgammon|domino|yahtzee|hearts|spades|rummy|cribbage|freecell/.test(t)) return "cards";
     return "casual";
   }
@@ -1442,6 +1442,8 @@
     { title: "Neon Pinball", url: "/static/games/pinball/index.html", icon: "🪩", description: "Arcade pinball with flippers & bumpers", image_url: "" },
     { title: "Space Race", url: "/static/games/space_race/index.html", icon: "🚀", description: "Shoot asteroid obstacles & upgrade spaceship stats", image_url: "/static/thumbnails/space_race_thumb.png" },
     { title: "Chintu's Royal Run", url: "/static/games/indian_mario/index.html", icon: "👳", description: "Indian Mario platformer with spicy chili attacks & laddoos", image_url: "/static/thumbnails/indian_mario_thumb.png" },
+    { title: "Plinko Fortune", url: "/static/games/plinko/index.html", icon: "🪙", description: "Lucky drop coin board with 100x center jackpot", image_url: "/static/thumbnails/plinko_thumb.png" },
+    { title: "Virus Breaker", url: "/static/games/virus_breaker/index.html", icon: "👾", description: "Modern spaceship blaster popping bouncing virus swarms", image_url: "/static/thumbnails/virus_thumb.png" },
     { title: "Roll the Ball", url: "/static/games/roll_ball/index.html", icon: "🪵", description: "Slide wooden track tiles to roll ball into goal", image_url: "/static/thumbnails/roll_ball_thumb.png" },
     { title: "2048 Classic", url: "/static/games/2048/index.html", icon: "🔢", description: "Slide tiles to merge and reach 2048!", image_url: "/static/banners/puzzle2048_promo.png" },
     { title: "Wordle Guess", url: "/static/games/wordle/index.html", icon: "🟩", description: "Guess secret 5-letter word in 6 attempts", image_url: "" },
@@ -1482,8 +1484,17 @@
       clearTimeout(timer);
       const data = await res.json();
       const rawGames = (data.games && data.games.length) ? data.games : (state.allCustomGames || FALLBACK_DEFAULT_GAMES);
+      const combined = [...rawGames];
+      const existingUrls = new Set(combined.map(g => (g.url || "").trim().toLowerCase()));
+      for (const fallback of FALLBACK_DEFAULT_GAMES) {
+        const u = (fallback.url || "").trim().toLowerCase();
+        if (!existingUrls.has(u)) {
+          combined.push(fallback);
+          existingUrls.add(u);
+        }
+      }
       const seenF = new Set();
-      state.allCustomGames = rawGames.filter(g => {
+      state.allCustomGames = combined.filter(g => {
         const k = ((g.url || "") + "::" + (g.title || "")).trim().toLowerCase();
         if (seenF.has(k)) return false;
         seenF.add(k);
