@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Chintu's Royal Run - Indian Adventure</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700;800&family=Outfit:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+    body {
+      background: #111827;
+      font-family: 'Fredoka', 'Outfit', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+      color: #ffffff;
+    }
+    .game-box {
+      width: 100%;
+      max-width: 420px;
+      height: 100vh;
+      max-height: 860px;
+      position: relative;
+      background: #fef3c7;
+      overflow: hidden;
+      box-shadow: 0 0 35px rgba(0,0,0,0.7);
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    /* Top HUD */
+    .hud-bar {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .hud-pill {
+      background: rgba(30, 27, 75, 0.82);
+      border: 2px solid #f59e0b;
+      border-radius: 18px;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    /* Mobile On-Screen Controls */
+    .controls-overlay {
+      position: absolute;
+      bottom: 16px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      z-index: 15;
+      pointer-events: none;
+    }
+    .d-pad {
+      display: flex;
+      gap: 12px;
+      pointer-events: auto;
+    }
+    .action-pad {
+      display: flex;
+      gap: 12px;
+      pointer-events: auto;
+    }
+    .ctrl-btn {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: rgba(30, 27, 75, 0.78);
+      border: 3px solid #fbbf24;
+      color: #ffffff;
+      font-size: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #b45309;
+      transition: transform 0.08s, box-shadow 0.08s;
+    }
+    .ctrl-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #b45309;
+    }
+    .btn-chili {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      border-color: #fca5a5;
+    }
+    .btn-jump {
+      background: linear-gradient(135deg, #10b981, #059669);
+      border-color: #a7f3d0;
+    }
+    /* Modals */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(4px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 50;
+      padding: 24px;
+      text-align: center;
+    }
+    .modal-card {
+      width: 100%;
+      max-width: 320px;
+      background: #ffffff;
+      border-radius: 28px;
+      padding: 24px 20px;
+      color: #1e293b;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+    .btn-royal {
+      background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: 18px;
+      padding: 14px 24px;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 0 #92400e;
+      cursor: pointer;
+      margin-top: 14px;
+      width: 100%;
+    }
+    .btn-royal:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #92400e;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-box">
+    <canvas id="gameCanvas" width="420" height="800"></canvas>
+
+    <!-- Top HUD -->
+    <div class="hud-bar">
+      <div class="hud-pill">
+        <span>❤️</span>
+        <span id="hudLives">3</span>
+      </div>
+      <div class="hud-pill">
+        <span>🟡</span>
+        <span id="hudLaddoos">0</span>
+      </div>
+      <div class="hud-pill">
+        <span>⭐</span>
+        <span id="hudScore">0</span>
+      </div>
+    </div>
+
+    <!-- On-screen Touch Controls -->
+    <div class="controls-overlay">
+      <div class="d-pad">
+        <button class="ctrl-btn" id="btnLeft">◀</button>
+        <button class="ctrl-btn" id="btnRight">▶</button>
+      </div>
+      <div class="action-pad">
+        <button class="ctrl-btn btn-chili" id="btnAttack" title="Chili Attack">🌶️</button>
+        <button class="ctrl-btn btn-jump" id="btnJump" title="Jump">⬆️</button>
+      </div>
+    </div>
+
+    <!-- Game Over / Victory Modal -->
+    <div class="modal-overlay" id="endModal" style="display:none;">
+      <div class="modal-card">
+        <h2 id="modalTitle" style="font-size:26px; color:#b45309; margin-bottom:8px;">SHABAASH! VICTORY!</h2>
+        <p id="modalMsg" style="color:#64748b; font-size:15px; margin-bottom:14px;">Chintu reached the royal palace safely!</p>
+        <div style="font-size:22px; margin-bottom:12px;">Score: <b id="finalScore" style="color:#d97706;">0</b></div>
+        <button class="btn-royal" onclick="startGame()">PLAY AGAIN 🔄</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Audio Synthesizer
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let actx = null;
+    function getAudio() {
+      if (!actx) actx = new AudioCtx();
+      if (actx.state === 'suspended') actx.resume();
+      return actx;
+    }
+    function playJumpSound() {
+      try {
+        const a = getAudio();
+        const osc = a.createOscillator();
+        const gain = a.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(260, a.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(520, a.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.2, a.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, a.currentTime + 0.12);
+        osc.connect(gain);
+        gain.connect(a.destination);
+        osc.start();
+        osc.stop(a.currentTime + 0.12);
+      } catch(e){}
+    }
+    function playChiliSound() {
+      try {
+        const a = getAudio();
+        const osc = a.createOscillator();
+        const gain = a.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(600, a.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(200, a.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.18, a.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, a.currentTime + 0.1);
+        osc.connect(gain);
+        gain.connect(a.destination);
+        osc.start();
+        osc.stop(a.currentTime + 0.1);
+      } catch(e){}
+    }
+    function playCoinSound() {
+      try {
+        const a = getAudio();
+        const osc = a.createOscillator();
+        const gain = a.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(880, a.currentTime);
+        osc.frequency.setValueAtTime(1320, a.currentTime + 0.06);
+        gain.gain.setValueAtTime(0.2, a.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, a.currentTime + 0.15);
+        osc.connect(gain);
+        gain.connect(a.destination);
+        osc.start();
+        osc.stop(a.currentTime + 0.15);
+      } catch(e){}
+    }
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = 420;
+    const H = 800;
+
+    // Platformer State
+    let lives = 3;
+    let laddoos = 0;
+    let score = 0;
+    let cameraX = 0;
+    let levelLength = 2600;
+
+    // Chintu Hero (Screenshot 4: Turban with peacock feather, handlebar mustache, royal achkan)
+    const hero = {
+      x: 80,
+      y: 500,
+      w: 44,
+      h: 64,
+      vx: 0,
+      vy: 0,
+      speed: 4.5,
+      jumpPower: -13.5,
+      onGround: false,
+      facing: 1, // 1: right, -1: left
+      trot: 0
+    };
+
+    let chilis = [];
+    let enemies = [];
+    let collectibles = [];
+    let platforms = [];
+    let particles = [];
+
+    // Inputs
+    const keys = { left: false, right: false, jump: false, attack: false };
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
+      if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
+      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === ' ') {
+        if (!keys.jump && hero.onGround) doJump();
+        keys.jump = true;
+      }
+      if (e.key === 'z' || e.key === 'j' || e.key === 'Enter') {
+        if (!keys.attack) throwChili();
+        keys.attack = true;
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false;
+      if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
+      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === ' ') keys.jump = false;
+      if (e.key === 'z' || e.key === 'j' || e.key === 'Enter') keys.attack = false;
+    });
+
+    // Touch controls binding
+    function bindTouch(btnId, downFn, upFn) {
+      const btn = document.getElementById(btnId);
+      btn.addEventListener('pointerdown', (e) => { e.preventDefault(); downFn(); });
+      btn.addEventListener('pointerup', (e) => { e.preventDefault(); upFn(); });
+      btn.addEventListener('pointerleave', (e) => { e.preventDefault(); upFn(); });
+    }
+    bindTouch('btnLeft', () => { keys.left = true; }, () => { keys.left = false; });
+    bindTouch('btnRight', () => { keys.right = true; }, () => { keys.right = false; });
+    bindTouch('btnJump', () => { if (hero.onGround) doJump(); }, () => {});
+    bindTouch('btnAttack', () => { throwChili(); }, () => {});
+
+    function doJump() {
+      hero.vy = hero.jumpPower;
+      hero.onGround = false;
+      playJumpSound();
+    }
+
+    function throwChili() {
+      chilis.push({
+        x: hero.x + hero.facing * 20,
+        y: hero.y - 10,
+        vx: hero.facing * 9,
+        vy: -2,
+        life: 50
+      });
+      playChiliSound();
+    }
+
+    function buildLevel() {
+      platforms = [
+        // Ground segments
+        { x: 0, y: 680, w: 900, h: 120 },
+        { x: 1000, y: 680, w: 700, h: 120 },
+        { x: 1800, y: 680, w: 900, h: 120 },
+
+        // Raised Haveli / Palace Stone Platforms
+        { x: 260, y: 550, w: 140, h: 24 },
+        { x: 480, y: 440, w: 160, h: 24 },
+        { x: 720, y: 530, w: 150, h: 24 },
+
+        { x: 1100, y: 560, w: 140, h: 24 },
+        { x: 1320, y: 460, w: 180, h: 24 },
+        { x: 1580, y: 540, w: 140, h: 24 },
+
+        { x: 1950, y: 560, w: 150, h: 24 },
+        { x: 2200, y: 460, w: 200, h: 24 }
+      ];
+
+      // Collectible Sweet Laddoos & Jalebis
+      collectibles = [];
+      for (let x = 160; x < 2400; x += 110) {
+        collectibles.push({
+          x: x,
+          y: (x % 300 === 0) ? 420 : 640,
+          type: (x % 220 === 0) ? 'jalebi' : 'laddoo',
+          collected: false
+        });
+      }
+
+      // Cute Green Horned Asuras (Screenshot 4 Enemies)
+      enemies = [
+        { x: 420, y: 645, vx: -1.2, minX: 320, maxX: 600, hp: 1 },
+        { x: 780, y: 645, vx: -1.5, minX: 700, maxX: 880, hp: 1 },
+        { x: 1240, y: 645, vx: -1.4, minX: 1150, maxX: 1400, hp: 1 },
+        { x: 1480, y: 425, vx: -1.0, minX: 1340, maxX: 1480, hp: 1 },
+        { x: 2050, y: 645, vx: -1.6, minX: 1900, maxX: 2200, hp: 1 }
+      ];
+    }
+
+    function startGame() {
+      lives = 3;
+      laddoos = 0;
+      score = 0;
+      hero.x = 80;
+      hero.y = 500;
+      hero.vx = 0;
+      hero.vy = 0;
+      cameraX = 0;
+      chilis = [];
+      particles = [];
+      buildLevel();
+
+      document.getElementById('endModal').style.display = 'none';
+      document.getElementById('hudLives').innerText = lives;
+      document.getElementById('hudLaddoos').innerText = laddoos;
+      document.getElementById('hudScore').innerText = score;
+    }
+
+    function update() {
+      // Horizontal Movement
+      if (keys.left) {
+        hero.vx = -hero.speed;
+        hero.facing = -1;
+        hero.trot += 0.2;
+      } else if (keys.right) {
+        hero.vx = hero.speed;
+        hero.facing = 1;
+        hero.trot += 0.2;
+      } else {
+        hero.vx *= 0.7;
+      }
+
+      // Gravity
+      hero.vy += 0.65;
+      if (hero.vy > 14) hero.vy = 14;
+
+      hero.x += hero.vx;
+      hero.y += hero.vy;
+
+      // Platform Collision (AABB)
+      hero.onGround = false;
+      const hLeft = hero.x - hero.w / 2;
+      const hRight = hero.x + hero.w / 2;
+      const hBottom = hero.y + hero.h / 2;
+      const hTop = hero.y - hero.h / 2;
+
+      platforms.forEach(p => {
+        if (hRight > p.x && hLeft < p.x + p.w) {
+          // Landing on top
+          if (hero.vy >= 0 && hBottom >= p.y && hBottom - hero.vy <= p.y + 12) {
+            hero.y = p.y - hero.h / 2;
+            hero.vy = 0;
+            hero.onGround = true;
+          }
+        }
+      });
+
+      // Pit fall death
+      if (hero.y > 850) {
+        loseLife();
+      }
+
+      // Camera Follows Chintu
+      const targetCamX = hero.x - W / 3;
+      cameraX += (targetCamX - cameraX) * 0.1;
+      cameraX = Math.max(0, Math.min(levelLength - W, cameraX));
+
+      // Update Chilis
+      chilis.forEach(ch => {
+        ch.x += ch.vx;
+        ch.y += ch.vy;
+        ch.vy += 0.25;
+        ch.life--;
+
+        // Check vs Enemies
+        enemies.forEach(en => {
+          if (en.hp > 0 && Math.hypot(ch.x - en.x, ch.y - en.y) < 26) {
+            en.hp = 0;
+            ch.life = 0;
+            score += 50;
+            // Chili spark explosion
+            for (let i = 0; i < 10; i++) {
+              particles.push({
+                x: en.x, y: en.y,
+                vx: (Math.random() - 0.5) * 6,
+                vy: (Math.random() - 0.5) * 6,
+                color: '#ef4444',
+                life: 16
+              });
+            }
+          }
+        });
+      });
+      chilis = chilis.filter(ch => ch.life > 0);
+
+      // Update Enemies
+      enemies.forEach(en => {
+        if (en.hp <= 0) return;
+        en.x += en.vx;
+        if (en.x < en.minX || en.x > en.maxX) en.vx *= -1;
+
+        // Collision with Hero
+        const dist = Math.hypot(hero.x - en.x, hero.y - en.y);
+        if (dist < 34) {
+          // Stomp on top?
+          if (hero.vy > 0 && hero.y < en.y - 12) {
+            en.hp = 0;
+            hero.vy = -9;
+            score += 40;
+            playJumpSound();
+          } else {
+            loseLife();
+          }
+        }
+      });
+
+      // Collectibles
+      collectibles.forEach(col => {
+        if (!col.collected && Math.hypot(hero.x - col.x, hero.y - col.y) < 32) {
+          col.collected = true;
+          laddoos++;
+          score += (col.type === 'jalebi' ? 25 : 10);
+          playCoinSound();
+          document.getElementById('hudLaddoos').innerText = laddoos;
+          document.getElementById('hudScore').innerText = score;
+        }
+      });
+
+      // Particles
+      particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.life--; });
+      particles = particles.filter(p => p.life > 0);
+
+      // Check Victory Flag at end of level (x > 2500)
+      if (hero.x >= 2500) {
+        showVictory();
+      }
+    }
+
+    function loseLife() {
+      lives--;
+      document.getElementById('hudLives').innerText = lives;
+      if (lives <= 0) {
+        showGameOver();
+      } else {
+        hero.x = Math.max(80, hero.x - 200);
+        hero.y = 500;
+        hero.vy = 0;
+      }
+    }
+
+    function showVictory() {
+      const m = document.getElementById('endModal');
+      document.getElementById('modalTitle').innerText = 'ROYAL VICTORY! 👑';
+      document.getElementById('modalMsg').innerText = 'Chintu cleared all obstacles and reached the Golden Palace!';
+      document.getElementById('finalScore').innerText = score;
+      m.style.display = 'flex';
+    }
+
+    function showGameOver() {
+      const m = document.getElementById('endModal');
+      document.getElementById('modalTitle').innerText = 'ALVIDA! GAME OVER';
+      document.getElementById('modalTitle').style.color = '#ef4444';
+      document.getElementById('modalMsg').innerText = 'Chintu tripped! Tap to try again!';
+      document.getElementById('finalScore').innerText = score;
+      m.style.display = 'flex';
+    }
+
+    // DRAW CHINTU "INDIAN MARIO" (Screenshot 4 Reference)
+    function drawChintu(x, y, facing, trot) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(facing, 1);
+
+      // 1. White Dhoti / Trousers with gold trim
+      const legBob = Math.sin(trot) * 4;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.roundRect(-12, 14 + legBob, 10, 16, 4);
+      ctx.roundRect(2, 14 - legBob, 10, 16, 4);
+      ctx.fill();
+
+      // Curled Jutti Shoes (Brown with golden tip)
+      ctx.fillStyle = '#92400e';
+      ctx.beginPath();
+      ctx.roundRect(-14, 26 + legBob, 14, 6, 3);
+      ctx.roundRect(0, 26 - legBob, 14, 6, 3);
+      ctx.fill();
+
+      // 2. Royal Crimson & Gold Achkan Coat
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.roundRect(-15, -4, 30, 22, 6);
+      ctx.fill();
+
+      // Gold embroidery trim & Blue waist sash
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(-15, 8, 30, 5);
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(-15, -4, 30, 22);
+
+      // 3. Cute Head
+      ctx.fillStyle = '#fed7aa'; // Peach skin
+      ctx.beginPath();
+      ctx.arc(0, -18, 16, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Golden Kundal (Hoop Earring)
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(-16, -16, 4, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 4. Grand Handlebar Mustache! (Screenshot 4 Trademark)
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.moveTo(-16, -14);
+      ctx.bezierCurveTo(-8, -20, 0, -14, 16, -14);
+      ctx.bezierCurveTo(4, -8, -6, -8, -16, -14);
+      ctx.fill();
+
+      // Cute Eyes & Eyebrow
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(4, -22, 3, 0, Math.PI * 2);
+      ctx.fill();
+      // Eyebrow
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(1, -26);
+      ctx.lineTo(8, -25);
+      ctx.stroke();
+
+      // 5. Majestic Royal Turban (Pagdi) - Saffron/Red brocade
+      ctx.fillStyle = '#f97316';
+      ctx.beginPath();
+      ctx.ellipse(0, -32, 22, 14, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Turban swirl wrap folds
+      ctx.fillStyle = '#ea580c';
+      ctx.beginPath();
+      ctx.ellipse(4, -34, 18, 10, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Golden Brocade Jewel Pin
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.arc(-8, -36, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Turquoise Peacock Feather! (Screenshot 4)
+      ctx.fillStyle = '#0d9488';
+      ctx.beginPath();
+      ctx.moveTo(-8, -38);
+      ctx.bezierCurveTo(-14, -54, -24, -46, -18, -38);
+      ctx.fill();
+
+      // 6. Spicy Chili in Hand!
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.ellipse(16, 4, 8, 4, -0.4, 0, Math.PI * 2);
+      ctx.fill();
+      // Green chili stem
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(22, 0, 4, 3);
+
+      ctx.restore();
+    }
+
+    // DRAW CUTE GREEN ASURA ENEMY (Screenshot 4 Reference)
+    function drawAsura(x, y) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      // Chubby Green Body
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(0, 0, 16, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Tiny Devil Horns
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.moveTo(-10, -12); ctx.lineTo(-14, -22); ctx.lineTo(-6, -14);
+      ctx.moveTo(10, -12); ctx.lineTo(14, -22); ctx.lineTo(6, -14);
+      ctx.fill();
+
+      // Goofy Eyes
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(-5, -3, 5, 0, Math.PI * 2);
+      ctx.arc(5, -3, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(-4, -3, 2.5, 0, Math.PI * 2);
+      ctx.arc(6, -3, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Cute Little Fang Mouth
+      ctx.strokeStyle = '#047857';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 5, 6, 0, Math.PI);
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-2, 5, 4, 3);
+
+      ctx.restore();
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, W, H);
+
+      // Royal Sunset Gradient Sky
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+      skyGrad.addColorStop(0, '#fed7aa');
+      skyGrad.addColorStop(0.5, '#fef08a');
+      skyGrad.addColorStop(1, '#ffedd5');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.save();
+      ctx.translate(-cameraX, 0);
+
+      // Background Royal Palace Silhouette / Haveli Minarets
+      ctx.fillStyle = '#fcd34d';
+      for (let i = 0; i < 6; i++) {
+        const px = i * 450 + 40;
+        // Dome & Pillar
+        ctx.fillRect(px, 380, 80, 300);
+        ctx.beginPath();
+        ctx.arc(px + 40, 380, 40, Math.PI, 0);
+        ctx.fill();
+      }
+
+      // Draw Platforms (Carved Sandstone Haveli Ground)
+      platforms.forEach(p => {
+        ctx.fillStyle = '#b45309';
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+        // Sandstone top brick trim
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(p.x, p.y, p.w, 6);
+      });
+
+      // Collectibles (Laddoos & Jalebis)
+      collectibles.forEach(col => {
+        if (col.collected) return;
+        if (col.type === 'laddoo') {
+          // Sweet Golden Motichoor Laddoo
+          ctx.fillStyle = '#f59e0b';
+          ctx.beginPath();
+          ctx.arc(col.x, col.y, 11, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#fef08a';
+          ctx.beginPath();
+          ctx.arc(col.x - 3, col.y - 3, 3, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Crispy Orange Jalebi Spiral
+          ctx.strokeStyle = '#ea580c';
+          ctx.lineWidth = 3.5;
+          ctx.beginPath();
+          ctx.arc(col.x, col.y, 12, 0, Math.PI * 2);
+          ctx.arc(col.x, col.y, 6, 0, Math.PI * 1.5);
+          ctx.stroke();
+        }
+      });
+
+      // Flying Chili Projectiles
+      chilis.forEach(ch => {
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.ellipse(ch.x, ch.y, 8, 4, 0.4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Enemies
+      enemies.forEach(en => {
+        if (en.hp > 0) drawAsura(en.x, en.y);
+      });
+
+      // Particles
+      particles.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // End Level Royal Palace Gate & Flag (x = 2500)
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(2500, 480, 20, 200);
+      ctx.fillStyle = '#f97316';
+      ctx.beginPath();
+      ctx.moveTo(2520, 490);
+      ctx.lineTo(2580, 515);
+      ctx.lineTo(2520, 540);
+      ctx.fill();
+
+      // Chintu Hero
+      drawChintu(hero.x, hero.y, hero.facing, hero.trot);
+
+      ctx.restore();
+    }
+
+    function loop() {
+      update();
+      render();
+      requestAnimationFrame(loop);
+    }
+
+    startGame();
+    loop();
+  </script>
+</body>
+</html>

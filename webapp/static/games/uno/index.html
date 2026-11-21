@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>UNO Classic Arena</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700;800&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+    body {
+      background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+      font-family: 'Fredoka', 'Outfit', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+      color: #ffffff;
+    }
+    .table-container {
+      width: 100%;
+      max-width: 420px;
+      height: 100vh;
+      max-height: 860px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 12px 18px;
+      position: relative;
+      background: radial-gradient(ellipse at center, #15803d 0%, #166534 60%, #14532d 100%);
+      border: 6px solid #27272a;
+      box-shadow: inset 0 0 50px rgba(0,0,0,0.6), 0 0 30px rgba(0,0,0,0.8);
+    }
+    /* Top: Opponent Area */
+    .opponent-area {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .player-badge {
+      background: rgba(15, 23, 42, 0.75);
+      border: 2px solid #38bdf8;
+      border-radius: 20px;
+      padding: 4px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .bot-cards-fan {
+      display: flex;
+      justify-content: center;
+      height: 65px;
+      margin-top: 4px;
+    }
+    .card-back {
+      width: 46px;
+      height: 68px;
+      background: #0f172a;
+      border: 2px solid #ffffff;
+      border-radius: 6px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-left: -24px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      transform-origin: bottom center;
+    }
+    .card-back:first-child { margin-left: 0; }
+    .card-back-oval {
+      width: 32px;
+      height: 48px;
+      background: #dc2626;
+      border-radius: 50%;
+      transform: rotate(-25deg);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: 900;
+      font-size: 11px;
+      color: #fbbf24;
+      border: 1px solid #fef08a;
+    }
+    /* Center Play Table */
+    .center-table {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+    }
+    .status-banner {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      padding: 6px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fef08a;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      max-width: 90%;
+      text-align: center;
+    }
+    .piles-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 28px;
+    }
+    .draw-pile-btn {
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .draw-pile-btn:active {
+      transform: scale(0.95);
+    }
+    .active-color-ring {
+      position: absolute;
+      width: 96px;
+      height: 136px;
+      border-radius: 12px;
+      border: 4px solid #f59e0b;
+      box-shadow: 0 0 20px #f59e0b;
+      pointer-events: none;
+      animation: pulseGlow 1.5s infinite alternate;
+    }
+    @keyframes pulseGlow {
+      0% { opacity: 0.6; transform: scale(1); }
+      100% { opacity: 1; transform: scale(1.05); }
+    }
+    /* UNO Card UI */
+    .uno-card {
+      width: 76px;
+      height: 112px;
+      border-radius: 10px;
+      border: 3px solid #ffffff;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.45);
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      flex-shrink: 0;
+    }
+    .uno-card.red { background: #ef4444; }
+    .uno-card.blue { background: #3b82f6; }
+    .uno-card.green { background: #22c55e; }
+    .uno-card.yellow { background: #eab308; }
+    .uno-card.wild { background: #1e293b; }
+
+    .card-center-oval {
+      width: 58px;
+      height: 86px;
+      background: #ffffff;
+      border-radius: 50%;
+      transform: rotate(-25deg);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 34px;
+      font-weight: 900;
+      color: #0f172a;
+    }
+    .uno-card.red .card-center-oval { color: #ef4444; }
+    .uno-card.blue .card-center-oval { color: #3b82f6; }
+    .uno-card.green .card-center-oval { color: #22c55e; }
+    .uno-card.yellow .card-center-oval { color: #ca8a04; }
+
+    /* Wild 4-color oval */
+    .card-center-oval.wild-quad {
+      background: conic-gradient(#ef4444 0% 25%, #3b82f6 25% 50%, #eab308 50% 75%, #22c55e 75% 100%);
+      color: #ffffff;
+      font-size: 22px;
+      border: 2px solid #ffffff;
+    }
+
+    .corner-symbol {
+      position: absolute;
+      font-size: 14px;
+      font-weight: 900;
+      color: #ffffff;
+    }
+    .corner-symbol.top-left { top: 4px; left: 6px; }
+    .corner-symbol.bottom-right { bottom: 4px; right: 6px; transform: rotate(180deg); }
+
+    /* Player Hand Fan Area */
+    .player-area {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .hand-scroll-container {
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: center;
+      scrollbar-width: none;
+    }
+    .hand-scroll-container::-webkit-scrollbar { display: none; }
+
+    .player-cards-fan {
+      display: flex;
+      justify-content: center;
+      gap: -14px;
+    }
+    .player-cards-fan .uno-card {
+      margin-left: -22px;
+    }
+    .player-cards-fan .uno-card:first-child { margin-left: 0; }
+    .player-cards-fan .uno-card:hover, .player-cards-fan .uno-card:active {
+      transform: translateY(-16px) scale(1.1);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.6);
+      z-index: 50;
+    }
+
+    /* Action Buttons */
+    .controls-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn-uno {
+      background: linear-gradient(135deg, #ef4444, #b91c1c);
+      color: #fef08a;
+      border: 3px solid #fef08a;
+      border-radius: 20px;
+      padding: 8px 22px;
+      font-size: 18px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.5);
+      animation: pulseUno 1s infinite alternate;
+    }
+    @keyframes pulseUno {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.08); }
+    }
+    .btn-draw-card {
+      background: #0284c7;
+      color: white;
+      border: none;
+      border-radius: 16px;
+      padding: 8px 18px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #0369a1;
+    }
+
+    /* Color Picker Modal */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(5px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .color-picker-box {
+      background: #1e293b;
+      border-radius: 24px;
+      padding: 24px 20px;
+      text-align: center;
+      border: 2px solid #475569;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+    .color-quad-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 16px;
+    }
+    .color-choice-btn {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      border: 3px solid #ffffff;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .color-choice-btn:active { transform: scale(0.92); }
+  </style>
+</head>
+<body>
+  <div class="table-container">
+    <!-- Opponent Area -->
+    <div class="opponent-area">
+      <div class="player-badge">
+        <span>🤖</span>
+        <span>Bot Opponent</span>
+        <span id="botCountBadge">(7 cards)</span>
+      </div>
+      <div class="bot-cards-fan" id="botFan"></div>
+    </div>
+
+    <!-- Center Play Area -->
+    <div class="center-table">
+      <div class="status-banner" id="statusBanner">Your turn! Match color or number.</div>
+      <div class="piles-row">
+        <!-- Draw Pile -->
+        <div class="draw-pile-btn" onclick="playerDrawCard()" title="Draw Card">
+          <div class="card-back" style="width:76px; height:112px; margin-left:0; border-radius:10px;">
+            <div class="card-back-oval" style="width:56px; height:80px; font-size:18px;">UNO</div>
+          </div>
+        </div>
+
+        <!-- Discard Pile -->
+        <div style="position:relative;">
+          <div class="active-color-ring" id="activeColorRing"></div>
+          <div id="topDiscardCard"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Player Area -->
+    <div class="player-area">
+      <div class="controls-row">
+        <button class="btn-draw-card" onclick="playerDrawCard()">+ Draw Card</button>
+        <button class="btn-uno" id="btnUno" style="display:none;" onclick="callUno()">UNO!</button>
+      </div>
+      <div class="player-badge">
+        <span>👤</span>
+        <span>Your Hand</span>
+        <span id="playerCountBadge">(7 cards)</span>
+      </div>
+      <div class="hand-scroll-container">
+        <div class="player-cards-fan" id="playerFan"></div>
+      </div>
+    </div>
+
+    <!-- Color Chooser Modal -->
+    <div class="modal-overlay" id="colorModal">
+      <div class="color-picker-box">
+        <h3 style="font-size:22px; color:#ffffff;">CHOOSE COLOR</h3>
+        <div class="color-quad-grid">
+          <div class="color-choice-btn" style="background:#ef4444;" onclick="selectColor('red')"></div>
+          <div class="color-choice-btn" style="background:#3b82f6;" onclick="selectColor('blue')"></div>
+          <div class="color-choice-btn" style="background:#22c55e;" onclick="selectColor('green')"></div>
+          <div class="color-choice-btn" style="background:#eab308;" onclick="selectColor('yellow')"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Victory / Game Over Modal -->
+    <div class="modal-overlay" id="gameOverModal">
+      <div class="color-picker-box" style="max-width:320px;">
+        <h2 id="gameOverTitle" style="font-size:28px; margin-bottom:8px;">YOU WIN!</h2>
+        <p id="gameOverMsg" style="color:#94a3b8; font-size:15px; margin-bottom:16px;">Congratulations! You cleared all your cards!</p>
+        <button class="btn-draw-card" style="width:100%; padding:14px; font-size:18px;" onclick="initGame()">PLAY AGAIN 🔄</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Audio Synthesizer
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let actx = null;
+    function getAudio() {
+      if (!actx) actx = new AudioCtx();
+      if (actx.state === 'suspended') actx.resume();
+      return actx;
+    }
+    function playCardSound() {
+      try {
+        const a = getAudio();
+        const osc = a.createOscillator();
+        const gain = a.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(320, a.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(120, a.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.2, a.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, a.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(a.destination);
+        osc.start();
+        osc.stop(a.currentTime + 0.08);
+      } catch(e){}
+    }
+    function playWinSound() {
+      try {
+        const a = getAudio();
+        [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+          const osc = a.createOscillator();
+          const gain = a.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(f, a.currentTime + i * 0.1);
+          gain.gain.setValueAtTime(0.3, a.currentTime + i * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.01, a.currentTime + i * 0.1 + 0.3);
+          osc.connect(gain);
+          gain.connect(a.destination);
+          osc.start(a.currentTime + i * 0.1);
+          osc.stop(a.currentTime + i * 0.1 + 0.3);
+        });
+      } catch(e){}
+    }
+
+    const COLORS = ['red', 'blue', 'green', 'yellow'];
+    const NUMBERS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    const ACTIONS = ['skip', 'reverse', '+2'];
+
+    let deck = [];
+    let playerHand = [];
+    let botHand = [];
+    let discardPile = [];
+    let currentColor = 'red';
+    let currentTurn = 'player'; // 'player' or 'bot'
+    let pendingWildCard = null;
+
+    function buildDeck() {
+      const d = [];
+      COLORS.forEach(color => {
+        NUMBERS.forEach(num => {
+          d.push({ color, value: num });
+          if (num !== '0') d.push({ color, value: num });
+        });
+        ACTIONS.forEach(act => {
+          d.push({ color, value: act });
+          d.push({ color, value: act });
+        });
+      });
+      // Wild & Wild +4
+      for (let i = 0; i < 4; i++) {
+        d.push({ color: 'wild', value: 'wild' });
+        d.push({ color: 'wild', value: '+4' });
+      }
+      // Shuffle
+      for (let i = d.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [d[i], d[j]] = [d[j], d[i]];
+      }
+      return d;
+    }
+
+    function initGame() {
+      document.getElementById('gameOverModal').classList.remove('active');
+      deck = buildDeck();
+      playerHand = [];
+      botHand = [];
+      discardPile = [];
+
+      // Deal 7 cards each
+      for (let i = 0; i < 7; i++) {
+        playerHand.push(deck.pop());
+        botHand.push(deck.pop());
+      }
+
+      // Initial top card (non-wild)
+      let firstCard = deck.pop();
+      while (firstCard.color === 'wild') {
+        deck.unshift(firstCard);
+        firstCard = deck.pop();
+      }
+      discardPile.push(firstCard);
+      currentColor = firstCard.color;
+      currentTurn = 'player';
+
+      updateUI();
+      setStatus("Game started! Your turn to match color or value.");
+    }
+
+    function canPlay(card) {
+      const top = discardPile[discardPile.length - 1];
+      if (card.color === 'wild') return true;
+      if (card.color === currentColor) return true;
+      if (card.value === top.value) return true;
+      return false;
+    }
+
+    function playerPlayCard(idx) {
+      if (currentTurn !== 'player') return;
+      const card = playerHand[idx];
+      if (!canPlay(card)) {
+        setStatus("Can't play that card! Must match color or number.");
+        return;
+      }
+
+      playerHand.splice(idx, 1);
+      playCardSound();
+
+      if (card.color === 'wild') {
+        pendingWildCard = card;
+        document.getElementById('colorModal').classList.add('active');
+      } else {
+        commitPlay(card, 'player');
+      }
+    }
+
+    function selectColor(col) {
+      document.getElementById('colorModal').classList.remove('active');
+      currentColor = col;
+      commitPlay(pendingWildCard, 'player');
+      pendingWildCard = null;
+    }
+
+    function commitPlay(card, who) {
+      discardPile.push(card);
+      if (card.color !== 'wild') {
+        currentColor = card.color;
+      }
+
+      // Check win
+      if (who === 'player' && playerHand.length === 0) {
+        endGame('win');
+        return;
+      } else if (who === 'bot' && botHand.length === 0) {
+        endGame('lose');
+        return;
+      }
+
+      // Action card effects
+      let skipTurn = false;
+      if (card.value === 'skip') {
+        setStatus(`${who === 'player' ? 'You' : 'Bot'} played Skip! 🚫`);
+        skipTurn = true;
+      } else if (card.value === 'reverse') {
+        setStatus(`${who === 'player' ? 'You' : 'Bot'} played Reverse! 🔄`);
+        skipTurn = true;
+      } else if (card.value === '+2') {
+        setStatus(`${who === 'player' ? 'Bot' : 'You'} drew 2 cards! +2`);
+        drawMultiple(who === 'player' ? 'bot' : 'player', 2);
+        skipTurn = true;
+      } else if (card.value === '+4') {
+        setStatus(`${who === 'player' ? 'Bot' : 'You'} drew 4 cards! +4`);
+        drawMultiple(who === 'player' ? 'bot' : 'player', 4);
+        skipTurn = true;
+      }
+
+      updateUI();
+
+      if (skipTurn) {
+        if (who === 'player') {
+          setStatus("Bot's turn was skipped! Your turn again.");
+          currentTurn = 'player';
+        } else {
+          setStatus("Your turn was skipped! Bot plays again.");
+          setTimeout(botTurn, 1000);
+        }
+      } else {
+        // Toggle turn
+        if (who === 'player') {
+          currentTurn = 'bot';
+          setStatus("Bot is thinking...");
+          setTimeout(botTurn, 1000);
+        } else {
+          currentTurn = 'player';
+          setStatus("Your turn! Match color or number.");
+        }
+      }
+    }
+
+    function drawMultiple(who, count) {
+      for (let i = 0; i < count; i++) {
+        if (deck.length === 0) deck = buildDeck();
+        if (who === 'player') playerHand.push(deck.pop());
+        else botHand.push(deck.pop());
+      }
+    }
+
+    function playerDrawCard() {
+      if (currentTurn !== 'player') return;
+      if (deck.length === 0) deck = buildDeck();
+      const drawn = deck.pop();
+      playerHand.push(drawn);
+      playCardSound();
+      setStatus("You drew a card.");
+      updateUI();
+
+      // Pass turn to bot
+      currentTurn = 'bot';
+      setTimeout(botTurn, 1000);
+    }
+
+    function botTurn() {
+      if (currentTurn !== 'bot') return;
+
+      // Find playable cards
+      const playable = [];
+      botHand.forEach((c, idx) => {
+        if (canPlay(c)) playable.push(idx);
+      });
+
+      if (playable.length > 0) {
+        // Choose best card (prefer non-wild, or +2/+4)
+        const chosenIdx = playable[0];
+        const card = botHand.splice(chosenIdx, 1)[0];
+        playCardSound();
+
+        if (card.color === 'wild') {
+          // Choose color bot holds most of
+          const counts = { red: 0, blue: 0, green: 0, yellow: 0 };
+          botHand.forEach(c => { if (c.color !== 'wild') counts[c.color]++; });
+          currentColor = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+        }
+        commitPlay(card, 'bot');
+      } else {
+        // Bot draws
+        if (deck.length === 0) deck = buildDeck();
+        botHand.push(deck.pop());
+        setStatus("Bot had no playable cards and drew a card.");
+        updateUI();
+        currentTurn = 'player';
+      }
+    }
+
+    function setStatus(msg) {
+      document.getElementById('statusBanner').innerText = msg;
+    }
+
+    function updateUI() {
+      // Top discard card
+      const top = discardPile[discardPile.length - 1];
+      const topContainer = document.getElementById('topDiscardCard');
+      topContainer.innerHTML = '';
+      if (top) {
+        topContainer.appendChild(createCardElement(top));
+      }
+
+      // Glowing active color ring
+      const ring = document.getElementById('activeColorRing');
+      const colorMap = { red: '#ef4444', blue: '#3b82f6', green: '#22c55e', yellow: '#eab308' };
+      ring.style.borderColor = colorMap[currentColor] || '#ffffff';
+      ring.style.boxShadow = `0 0 25px ${colorMap[currentColor] || '#ffffff'}`;
+
+      // Bot hand representation
+      const botFan = document.getElementById('botFan');
+      botFan.innerHTML = '';
+      for (let i = 0; i < botHand.length; i++) {
+        const b = document.createElement('div');
+        b.className = 'card-back';
+        b.innerHTML = '<div class="card-back-oval">UNO</div>';
+        botFan.appendChild(b);
+      }
+      document.getElementById('botCountBadge').innerText = `(${botHand.length} cards)`;
+
+      // Player hand
+      const playerFan = document.getElementById('playerFan');
+      playerFan.innerHTML = '';
+      playerHand.forEach((card, idx) => {
+        const cardEl = createCardElement(card);
+        cardEl.onclick = () => playerPlayCard(idx);
+        playerFan.appendChild(cardEl);
+      });
+      document.getElementById('playerCountBadge').innerText = `(${playerHand.length} cards)`;
+
+      // UNO Button
+      const btnUno = document.getElementById('btnUno');
+      if (playerHand.length === 1) {
+        btnUno.style.display = 'block';
+      } else {
+        btnUno.style.display = 'none';
+      }
+    }
+
+    function createCardElement(card) {
+      const div = document.createElement('div');
+      div.className = `uno-card ${card.color}`;
+
+      const sym = card.value === 'skip' ? '🚫' : (card.value === 'reverse' ? '🔄' : card.value);
+
+      div.innerHTML = `
+        <span class="corner-symbol top-left">${sym}</span>
+        <div class="card-center-oval ${card.color === 'wild' ? 'wild-quad' : ''}">${sym}</div>
+        <span class="corner-symbol bottom-right">${sym}</span>
+      `;
+      return div;
+    }
+
+    function callUno() {
+      setStatus("YOU CALLED UNO! 🔥");
+      document.getElementById('btnUno').style.display = 'none';
+    }
+
+    function endGame(res) {
+      const modal = document.getElementById('gameOverModal');
+      const title = document.getElementById('gameOverTitle');
+      const msg = document.getElementById('gameOverMsg');
+
+      if (res === 'win') {
+        playWinSound();
+        title.innerText = 'VICTORY! 🏆';
+        title.style.color = '#22c55e';
+        msg.innerText = 'You cleared your hand and conquered the UNO Arena!';
+      } else {
+        title.innerText = 'DEFEAT! 💀';
+        title.style.color = '#ef4444';
+        msg.innerText = 'Bot played all its cards first. Try again!';
+      }
+      modal.classList.add('active');
+    }
+
+    initGame();
+  </script>
+</body>
+</html>

@@ -68,10 +68,13 @@ DEFAULT_HTML5_GAMES: list[tuple[str, str, str, str, str]] = [
     ("Helix Drop", "/static/games/helix_jump/index.html", "🌀", "Bounce ball through gaps in rotating tower", ""),
     ("Tower Stack", "/static/games/tower_stack/index.html", "🏢", "Slice and stack tower blocks as high as you can", ""),
     ("Neon Pinball", "/static/games/pinball/index.html", "🪩", "Arcade pinball with flippers & bumpers", ""),
+    ("Space Race", "/static/games/space_race/index.html", "🚀", "Shoot asteroid obstacles & upgrade spaceship stats", ""),
+    ("Chintu's Royal Run", "/static/games/indian_mario/index.html", "👳", "Indian Mario platformer with spicy chili attacks & laddoos", ""),
     ("Ghost Clicker", "/static/games/cookie_clicker/index.html", "🍪", "Idle tap clicker with auto-ghost upgrades", ""),
     ("Hextris Rotation", "/static/games/hextris/index.html", "🔷", "Hexagonal rotation match puzzle", ""),
 
     # 🧩 Puzzle & Brain (Self-Hosted)
+    ("Roll the Ball", "/static/games/roll_ball/index.html", "🪵", "Slide wooden track tiles to roll ball into goal", ""),
     ("2048 Classic", "/static/games/2048/index.html", "🔢", "Slide tiles to merge and reach 2048!", "/static/banners/puzzle2048_promo.png"),
     ("Minesweeper Retro", "/static/games/minesweeper/index.html", "💣", "Clear the minefield without detonating bombs", ""),
     ("Wordle Guess", "/static/games/wordle/index.html", "🟩", "Guess secret 5-letter word in 6 attempts", ""),
@@ -82,6 +85,7 @@ DEFAULT_HTML5_GAMES: list[tuple[str, str, str, str, str]] = [
     ("Simon Memory", "/static/games/simon/index.html", "🔔", "Repeat growing sequence of lights & sounds", ""),
 
     # 🃏 Cards & Board Classics (Self-Hosted)
+    ("UNO Classic Arena", "/static/games/uno/index.html", "🃏", "Classic 1v1 UNO card battle against AI with wild cards", ""),
     ("8-Ball Billiards", "/static/games/billiards/index.html", "🎱", "Pocket balls with realistic pool physics", ""),
     ("Connect 4 Arena", "/static/games/connect4/index.html", "🔴", "Align 4 chips in a row against AI", "/static/thumbnails/connect4_thumb.png"),
     ("Checkers Classic", "/static/games/checkers/index.html", "⚪", "Jump and capture enemy checkers to king", ""),

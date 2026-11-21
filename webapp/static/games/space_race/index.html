@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Space Race - Shooter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700;800&family=Outfit:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+    body {
+      background: #090b1c;
+      font-family: 'Fredoka', 'Outfit', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+      color: #ffffff;
+    }
+    .game-wrapper {
+      width: 100%;
+      max-width: 420px;
+      height: 100vh;
+      max-height: 860px;
+      position: relative;
+      background: radial-gradient(circle at 50% 20%, #151a3d 0%, #070919 100%);
+      overflow: hidden;
+      box-shadow: 0 0 40px rgba(0,0,0,0.8);
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    /* HUD Overlay */
+    .hud {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .hud-stat {
+      background: rgba(13, 19, 43, 0.8);
+      border: 2px solid #2563eb;
+      border-radius: 18px;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    .hud-icon {
+      font-size: 18px;
+    }
+    /* Screen Overlays */
+    .screen-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(7, 9, 25, 0.92);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 20;
+      padding: 24px;
+      text-align: center;
+      transition: opacity 0.25s ease;
+    }
+    .screen-overlay.hidden {
+      display: none;
+    }
+    /* 3D Bubble Cartoon Title */
+    .game-title {
+      font-size: 44px;
+      font-weight: 900;
+      line-height: 1.05;
+      text-transform: uppercase;
+      background: linear-gradient(180deg, #93c5fd 0%, #38bdf8 45%, #0284c7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 6px 0 #034f75) drop-shadow(0 10px 18px rgba(2, 132, 199, 0.6));
+      margin-bottom: 30px;
+      letter-spacing: 1px;
+    }
+    /* Orange Hexagonal / Angled Game Buttons (Screenshot 2) */
+    .btn-hex {
+      width: 200px;
+      background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 45%, #d97706 100%);
+      color: #ffffff;
+      border: none;
+      padding: 13px 18px;
+      margin: 8px 0;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      clip-path: polygon(14px 0%, calc(100% - 14px) 0%, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0% 50%);
+      box-shadow: 0 6px 0 #92400e, 0 10px 20px rgba(217, 119, 6, 0.4);
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.1s;
+    }
+    .btn-hex:active {
+      transform: translateY(3px);
+      box-shadow: 0 3px 0 #92400e;
+    }
+    /* Beveled Space Upgrade Box (Screenshot 2 Panel) */
+    .space-panel {
+      width: 100%;
+      max-width: 330px;
+      background: linear-gradient(180deg, #1e3a8a 0%, #0f172a 100%);
+      border: 3px solid #38bdf8;
+      border-radius: 22px;
+      padding: 20px 18px;
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.3), inset 0 0 20px rgba(0, 0, 0, 0.6);
+      margin: 16px 0;
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 10px 0;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .stat-bars {
+      display: flex;
+      gap: 3px;
+      align-items: center;
+    }
+    .stat-pip {
+      width: 14px;
+      height: 10px;
+      background: #1e293b;
+      border-radius: 2px;
+    }
+    .stat-pip.filled {
+      background: #38bdf8;
+      box-shadow: 0 0 6px #38bdf8;
+    }
+    .btn-plus {
+      width: 22px;
+      height: 22px;
+      background: #f59e0b;
+      border: none;
+      border-radius: 5px;
+      color: #78350f;
+      font-size: 14px;
+      font-weight: 900;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-left: 6px;
+      cursor: pointer;
+      box-shadow: 0 2px 0 #b45309;
+    }
+    .btn-plus:active {
+      transform: translateY(2px);
+      box-shadow: none;
+    }
+    /* Level Up Stars */
+    .stars-header {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      font-size: 42px;
+      margin: 10px 0 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-wrapper">
+    <canvas id="gameCanvas" width="420" height="800"></canvas>
+
+    <!-- Top In-Game HUD -->
+    <div class="hud" id="inGameHud" style="display:none;">
+      <div class="hud-stat">
+        <span class="hud-icon">⭐</span>
+        <span id="hudCoins">0</span>
+      </div>
+      <div class="hud-stat">
+        <span class="hud-icon">🚀</span>
+        <span>STAGE <b id="hudStage">1</b></span>
+      </div>
+      <div class="hud-stat">
+        <span class="hud-icon">💥</span>
+        <span id="hudScore">0</span>
+      </div>
+    </div>
+
+    <!-- 1. MAIN MENU SCREEN (Screenshot 2 Top) -->
+    <div class="screen-overlay" id="menuScreen">
+      <div class="game-title">SPACE<br>RACE</div>
+      <button class="btn-hex" onclick="startGame()">PLAY</button>
+      <button class="btn-hex" onclick="openShipSelect()">MY SPACESHIP</button>
+      <button class="btn-hex" onclick="openShipSelect()">UPGRADES</button>
+    </div>
+
+    <!-- 2. SELECT SPACESHIP / UPGRADES (Screenshot 2 Middle) -->
+    <div class="screen-overlay hidden" id="shipScreen">
+      <h2 style="font-size: 26px; color:#93c5fd; text-transform:uppercase; margin-bottom:12px;">SELECT SPACESHIP</h2>
+      <div style="height: 120px; display:flex; justify-content:center; align-items:center;">
+        <canvas id="shipPreviewCanvas" width="160" height="120"></canvas>
+      </div>
+      <div class="space-panel">
+        <div class="stat-row">
+          <span>SPEED</span>
+          <div class="stat-bars" id="barSpeed"></div>
+          <button class="btn-plus" onclick="upgradeStat('speed')">+</button>
+        </div>
+        <div class="stat-row">
+          <span>FIRE RATE</span>
+          <div class="stat-bars" id="barFireRate"></div>
+          <button class="btn-plus" onclick="upgradeStat('fireRate')">+</button>
+        </div>
+        <div class="stat-row">
+          <span>DAMAGE</span>
+          <div class="stat-bars" id="barDamage"></div>
+          <button class="btn-plus" onclick="upgradeStat('damage')">+</button>
+        </div>
+        <div class="stat-row">
+          <span>SHIELD</span>
+          <div class="stat-bars" id="barShield"></div>
+          <button class="btn-plus" onclick="upgradeStat('shield')">+</button>
+        </div>
+      </div>
+      <p style="color:#fbbf24; font-size:14px; margin-bottom:8px;">Bank: <b id="shopCoins">347</b> ⭐ (Cost: 100)</p>
+      <button class="btn-hex" onclick="closeShipSelect()">OK</button>
+    </div>
+
+    <!-- 3. LEVEL UP! / VICTORY MODAL (Screenshot 2 Bottom) -->
+    <div class="screen-overlay hidden" id="levelUpScreen">
+      <div class="space-panel" style="text-align:center;">
+        <h2 style="font-size: 28px; color:#38bdf8; text-transform:uppercase; letter-spacing:1px;">LEVEL UP!</h2>
+        <div class="stars-header">
+          <span style="color:#fbbf24;">★</span>
+          <span style="color:#fbbf24;">★</span>
+          <span style="color:#fbbf24;">★</span>
+        </div>
+        <div style="display:flex; justify-content:space-around; align-items:center; margin:16px 0; font-size:18px;">
+          <div>🪙 x <b id="winCoins">347</b></div>
+          <div>🪨 x <b id="winRocks">9</b></div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+          <button class="btn-hex" onclick="startGame()">NEXT</button>
+          <button class="btn-hex" onclick="startGame()">REPLAY</button>
+          <button class="btn-hex" onclick="returnToMenu()">MENU</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Audio Synthesizer
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let actx = null;
+    function getAudio() {
+      if (!actx) actx = new AudioCtx();
+      if (actx.state === 'suspended') actx.resume();
+      return actx;
+    }
+    function playLaserSound() {
+      try {
+        const a = getAudio();
+        const osc = a.createOscillator();
+        const gain = a.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(800, a.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(150, a.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.12, a.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, a.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(a.destination);
+        osc.start();
+        osc.stop(a.currentTime + 0.08);
+      } catch(e){}
+    }
+    function playExplodeSound() {
+      try {
+        const a = getAudio();
+        const osc = a.createOscillator();
+        const gain = a.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(140, a.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(40, a.currentTime + 0.18);
+        gain.gain.setValueAtTime(0.2, a.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, a.currentTime + 0.18);
+        osc.connect(gain);
+        gain.connect(a.destination);
+        osc.start();
+        osc.stop(a.currentTime + 0.18);
+      } catch(e){}
+    }
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = 420;
+    const H = 800;
+
+    // Upgrades
+    let stats = {
+      speed: 3,
+      fireRate: 3,
+      damage: 2,
+      shield: 2
+    };
+    let totalCoins = 347;
+    let currentStage = 1;
+    let score = 0;
+    let destroyedRocks = 0;
+    let stageTarget = 25; // number of destroyed blocks needed for Level Up
+
+    // Gameplay Objects
+    let gameState = 'menu'; // 'menu', 'playing', 'levelup', 'select_ship'
+    let ship = {
+      x: W / 2,
+      y: H - 120,
+      w: 64,
+      h: 70,
+      targetX: W / 2,
+      lastFire: 0
+    };
+    let lasers = [];
+    let obstacles = [];
+    let coinsList = [];
+    let particles = [];
+    let stars = [];
+
+    // Init background twinkling stars
+    for (let i = 0; i < 70; i++) {
+      stars.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        speed: 0.5 + Math.random() * 2,
+        r: 1 + Math.random() * 2,
+        alpha: 0.3 + Math.random() * 0.7
+      });
+    }
+
+    // Touch / Mouse controls
+    let isDragging = false;
+    canvas.addEventListener('pointerdown', (e) => {
+      isDragging = true;
+      updateShipPos(e);
+    });
+    window.addEventListener('pointermove', (e) => {
+      if (isDragging) updateShipPos(e);
+    });
+    window.addEventListener('pointerup', () => { isDragging = false; });
+
+    function updateShipPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = W / rect.width;
+      const clientX = (e.clientX - rect.left) * scaleX;
+      ship.targetX = Math.max(ship.w / 2, Math.min(W - ship.w / 2, clientX));
+    }
+
+    // Draw the Cartoon Wedge Spaceship (Screenshot 2 Art)
+    function drawSpaceship(cx, cy, s = 1) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(s, s);
+
+      // Booster Flame
+      const flameH = 15 + Math.random() * 12;
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.moveTo(-10, 30);
+      ctx.lineTo(0, 30 + flameH * 1.3);
+      ctx.lineTo(10, 30);
+      ctx.fill();
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.moveTo(-5, 30);
+      ctx.lineTo(0, 30 + flameH * 0.8);
+      ctx.lineTo(5, 30);
+      ctx.fill();
+
+      // Main Hull (Yellow / Honey Gold Wedge)
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.moveTo(0, -35); // Nose tip
+      ctx.bezierCurveTo(24, -10, 28, 15, 20, 30);
+      ctx.lineTo(-20, 30);
+      ctx.bezierCurveTo(-28, 15, -24, -10, 0, -35);
+      ctx.fill();
+
+      // Side Wings (Orange fins)
+      ctx.fillStyle = '#ea580c';
+      // Left Wing
+      ctx.beginPath();
+      ctx.moveTo(-22, 5);
+      ctx.lineTo(-38, 22);
+      ctx.lineTo(-20, 26);
+      ctx.fill();
+      // Right Wing
+      ctx.beginPath();
+      ctx.moveTo(22, 5);
+      ctx.lineTo(38, 22);
+      ctx.lineTo(20, 26);
+      ctx.fill();
+
+      // Cyan Nose Cap & Trim
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.moveTo(0, -35);
+      ctx.lineTo(12, -18);
+      ctx.lineTo(-12, -18);
+      ctx.fill();
+
+      // Navy Cockpit Windshield with Specular Highlight
+      ctx.fillStyle = '#1e3a8a';
+      ctx.beginPath();
+      ctx.roundRect(-12, -12, 24, 22, 6);
+      ctx.fill();
+      ctx.strokeStyle = '#60a5fa';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Specular shine
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.beginPath();
+      ctx.moveTo(-8, -9);
+      ctx.lineTo(6, -9);
+      ctx.lineTo(2, 6);
+      ctx.lineTo(-8, 6);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    // Spawn Obstacle Block with Number (Screenshot 2 Asteroid/Block)
+    let lastSpawn = 0;
+    function spawnObstacle() {
+      const colWidth = W / 4;
+      const col = Math.floor(Math.random() * 4);
+      const isAsteroid = Math.random() > 0.4;
+      const hp = Math.floor(3 + Math.random() * (currentStage * 6));
+
+      obstacles.push({
+        x: col * colWidth + colWidth / 2,
+        y: -40,
+        r: 28,
+        hp: hp,
+        maxHp: hp,
+        isAsteroid: isAsteroid,
+        color: isAsteroid ? '#64748b' : '#3b82f6',
+        speed: 2 + Math.random() * 1.5 + (stats.speed * 0.2)
+      });
+    }
+
+    function startGame() {
+      document.getElementById('menuScreen').classList.add('hidden');
+      document.getElementById('shipScreen').classList.add('hidden');
+      document.getElementById('levelUpScreen').classList.add('hidden');
+      document.getElementById('inGameHud').style.display = 'flex';
+
+      gameState = 'playing';
+      lasers = [];
+      obstacles = [];
+      coinsList = [];
+      particles = [];
+      score = 0;
+      destroyedRocks = 0;
+      ship.x = W / 2;
+      ship.targetX = W / 2;
+      document.getElementById('hudStage').innerText = currentStage;
+      document.getElementById('hudCoins').innerText = totalCoins;
+    }
+
+    function returnToMenu() {
+      document.getElementById('levelUpScreen').classList.add('hidden');
+      document.getElementById('menuScreen').classList.remove('hidden');
+      document.getElementById('inGameHud').style.display = 'none';
+      gameState = 'menu';
+    }
+
+    function triggerLevelUp() {
+      gameState = 'levelup';
+      document.getElementById('inGameHud').style.display = 'none';
+      document.getElementById('winCoins').innerText = totalCoins;
+      document.getElementById('winRocks').innerText = destroyedRocks;
+      document.getElementById('levelUpScreen').classList.remove('hidden');
+      currentStage++;
+    }
+
+    function updateGame() {
+      // Background Starfield scrolling
+      stars.forEach(s => {
+        s.y += s.speed;
+        if (s.y > H) {
+          s.y = 0;
+          s.x = Math.random() * W;
+        }
+      });
+
+      if (gameState !== 'playing') return;
+
+      // Smooth ship movement
+      ship.x += (ship.targetX - ship.x) * 0.22;
+
+      // Auto-firing lasers based on Fire Rate stat
+      const fireInterval = Math.max(90, 240 - stats.fireRate * 35);
+      const now = Date.now();
+      if (now - ship.lastFire > fireInterval) {
+        ship.lastFire = now;
+        // Dual laser plasma bullets
+        lasers.push({ x: ship.x - 14, y: ship.y - 28, damage: stats.damage });
+        lasers.push({ x: ship.x + 14, y: ship.y - 28, damage: stats.damage });
+        playLaserSound();
+      }
+
+      // Move lasers
+      lasers.forEach(l => l.y -= 14);
+      lasers = lasers.filter(l => l.y > -20);
+
+      // Spawn obstacles
+      if (now - lastSpawn > 800) {
+        lastSpawn = now;
+        spawnObstacle();
+      }
+
+      // Move obstacles & collision
+      obstacles.forEach(o => {
+        o.y += o.speed;
+
+        // Laser vs Obstacle collision
+        lasers.forEach(l => {
+          const dist = Math.hypot(l.x - o.x, l.y - o.y);
+          if (dist < o.r + 6 && o.hp > 0) {
+            o.hp -= l.damage;
+            l.y = -100; // eliminate laser
+            // Mini spark
+            particles.push({
+              x: l.x, y: l.y,
+              vx: (Math.random() - 0.5) * 6,
+              vy: (Math.random() - 0.5) * 6,
+              color: '#38bdf8',
+              life: 12
+            });
+
+            if (o.hp <= 0) {
+              // Destroy obstacle!
+              destroyedRocks++;
+              score += 10;
+              playExplodeSound();
+
+              // Spawn floating golden coins
+              const coinCount = Math.floor(2 + Math.random() * 4);
+              for (let c = 0; c < coinCount; c++) {
+                coinsList.push({
+                  x: o.x + (Math.random() - 0.5) * 20,
+                  y: o.y + (Math.random() - 0.5) * 20,
+                  vy: 2 + Math.random() * 2
+                });
+              }
+
+              // Debris explosion particles
+              for (let p = 0; p < 14; p++) {
+                particles.push({
+                  x: o.x, y: o.y,
+                  vx: (Math.random() - 0.5) * 10,
+                  vy: (Math.random() - 0.5) * 10,
+                  color: o.color,
+                  life: 20
+                });
+              }
+            }
+          }
+        });
+
+        // Obstacle vs Ship collision
+        const sDist = Math.hypot(ship.x - o.x, ship.y - o.y);
+        if (sDist < o.r + 25 && o.hp > 0) {
+          // Push away or damage
+          o.hp = 0;
+          playExplodeSound();
+        }
+      });
+      obstacles = obstacles.filter(o => o.y < H + 50 && o.hp > 0);
+
+      // Collect coins
+      coinsList.forEach(c => {
+        c.y += c.vy;
+        const cDist = Math.hypot(ship.x - c.x, ship.y - c.y);
+        if (cDist < 40) {
+          totalCoins += 5;
+          c.y = H + 100;
+        }
+      });
+      coinsList = coinsList.filter(c => c.y < H + 50);
+
+      // Update particles
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life--;
+      });
+      particles = particles.filter(p => p.life > 0);
+
+      // Update HUD
+      document.getElementById('hudCoins').innerText = totalCoins;
+      document.getElementById('hudScore').innerText = score;
+
+      // Check Level Clear condition
+      if (destroyedRocks >= stageTarget) {
+        triggerLevelUp();
+      }
+    }
+
+    function renderGame() {
+      ctx.clearRect(0, 0, W, H);
+
+      // 1. Draw Starfield
+      stars.forEach(s => {
+        ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // 2. Draw Decorative Planets (Screenshot 2 Art)
+      if (gameState === 'menu') {
+        // Green Cratered Moon (Top Left)
+        ctx.fillStyle = '#84cc16';
+        ctx.beginPath();
+        ctx.arc(100, 140, 48, 0, Math.PI * 2);
+        ctx.fill();
+        // Craters
+        ctx.fillStyle = '#65a30d';
+        [[90, 125, 10], [120, 150, 14], [85, 155, 8]].forEach(([cx, cy, cr]) => {
+          ctx.beginPath();
+          ctx.arc(cx, cy, cr, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // Dark Ringed Saturn (Top Right)
+        ctx.fillStyle = '#1e1b4b';
+        ctx.beginPath();
+        ctx.arc(320, 180, 30, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#312e81';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.ellipse(320, 180, 52, 14, -0.4, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // 3. Draw Lasers
+      lasers.forEach(l => {
+        ctx.fillStyle = '#38bdf8';
+        ctx.shadowColor = '#38bdf8';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.roundRect(l.x - 3, l.y, 6, 18, 3);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+
+      // 4. Draw Obstacles (Asteroids & Numbered Blocks)
+      obstacles.forEach(o => {
+        ctx.save();
+        ctx.translate(o.x, o.y);
+
+        if (o.isAsteroid) {
+          // Craggy Asteroid
+          ctx.fillStyle = '#475569';
+          ctx.beginPath();
+          ctx.arc(0, 0, o.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#334155';
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        } else {
+          // Rounded Beveled Block
+          ctx.fillStyle = '#0284c7';
+          ctx.beginPath();
+          ctx.roundRect(-o.r, -o.r, o.r * 2, o.r * 2, 10);
+          ctx.fill();
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+        }
+
+        // HP Number
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px "Fredoka", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(o.hp, 0, 0);
+
+        ctx.restore();
+      });
+
+      // 5. Draw Coins
+      coinsList.forEach(c => {
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, 9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fef08a';
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // 6. Draw Particles
+      particles.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // 7. Draw Player Spaceship
+      if (gameState === 'playing') {
+        drawSpaceship(ship.x, ship.y, 1);
+      }
+    }
+
+    function loop() {
+      updateGame();
+      renderGame();
+      requestAnimationFrame(loop);
+    }
+    loop();
+
+    // UPGRADES MODAL (Screenshot 2 Middle)
+    function openShipSelect() {
+      document.getElementById('menuScreen').classList.add('hidden');
+      document.getElementById('shipScreen').classList.remove('hidden');
+      renderUpgradeBars();
+      drawShipPreview();
+    }
+    function closeShipSelect() {
+      document.getElementById('shipScreen').classList.add('hidden');
+      document.getElementById('menuScreen').classList.remove('hidden');
+    }
+
+    function renderUpgradeBars() {
+      document.getElementById('shopCoins').innerText = totalCoins;
+      const barDefs = [
+        ['barSpeed', stats.speed],
+        ['barFireRate', stats.fireRate],
+        ['barDamage', stats.damage],
+        ['barShield', stats.shield]
+      ];
+      barDefs.forEach(([elemId, val]) => {
+        const el = document.getElementById(elemId);
+        el.innerHTML = '';
+        for (let i = 1; i <= 6; i++) {
+          const pip = document.createElement('div');
+          pip.className = 'stat-pip' + (i <= val ? ' filled' : '');
+          el.appendChild(pip);
+        }
+      });
+    }
+
+    function upgradeStat(statName) {
+      if (totalCoins >= 100 && stats[statName] < 6) {
+        totalCoins -= 100;
+        stats[statName]++;
+        renderUpgradeBars();
+      }
+    }
+
+    function drawShipPreview() {
+      const pCanvas = document.getElementById('shipPreviewCanvas');
+      const pCtx = pCanvas.getContext('2d');
+      pCtx.clearRect(0, 0, 160, 120);
+
+      pCtx.save();
+      pCtx.translate(80, 60);
+      // Draw horizontal facing preview ship matching screenshot 2
+      pCtx.rotate(Math.PI / 2);
+      drawSpaceship(0, 0, 1.3);
+      pCtx.restore();
+    }
+  </script>
+</body>
+</html>

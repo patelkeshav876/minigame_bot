@@ -769,93 +769,213 @@ function drawSheep(s) {
   ctx.translate(s.x, s.y);
 
   const isP1 = s.side === 'p1';
-  const woolColor = isP1 ? '#f8fafc' : '#334155';
-  const skinColor = isP1 ? '#fecdd3' : '#64748b';
-  const ribbonColor = isP1 ? '#38bdf8' : '#e11d48';
-  const hornColor = isP1 ? '#f59e0b' : '#be123c';
+  // Screenshot 3 (Sheep Saga) Inspired Palette
+  const woolMain = isP1 ? '#ffffff' : '#475569';
+  const woolShadow = isP1 ? '#e2e8f0' : '#1e293b';
+  const skinColor = isP1 ? '#fed7aa' : '#cbd5e1';
+  const blushColor = 'rgba(251, 113, 133, 0.6)';
+  const eyeIrisTop = isP1 ? '#0d9488' : '#7c3aed';
+  const eyeIrisBot = isP1 ? '#2dd4bf' : '#c084fc';
+  const hornColor = isP1 ? '#f59e0b' : '#f43f5e';
 
-  // 1. Shadow underneath
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+  // 1. Soft Shadow
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.22)';
   ctx.beginPath();
-  ctx.ellipse(0, s.radius * 0.8, s.wool * 0.9, s.wool * 0.45, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, s.radius * 0.85, s.wool * 0.95, s.wool * 0.45, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // 2. Animated Trot Legs
-  const legOffset = Math.sin(s.trot) * (s.isPushing ? 2 : 5);
-  ctx.fillStyle = '#0f172a';
-  ctx.fillRect(-s.wool * 0.5, s.radius * 0.4 + legOffset, 5, 8);
-  ctx.fillRect(s.wool * 0.4, s.radius * 0.4 - legOffset, 5, 8);
-
-  // 3. Fluffy Cloud-like Wool Body
-  ctx.fillStyle = woolColor;
-  ctx.beginPath();
-  ctx.arc(0, 0, s.wool * 0.75, 0, Math.PI * 2);
-  ctx.arc(-s.wool * 0.35, -s.wool * 0.2, s.wool * 0.4, 0, Math.PI * 2);
-  ctx.arc(s.wool * 0.35, -s.wool * 0.2, s.wool * 0.4, 0, Math.PI * 2);
-  ctx.arc(-s.wool * 0.3, s.wool * 0.2, s.wool * 0.4, 0, Math.PI * 2);
-  ctx.arc(s.wool * 0.3, s.wool * 0.2, s.wool * 0.4, 0, Math.PI * 2);
-  ctx.fill();
-
-  // 4. Head (Forward Facing)
-  const headY = isP1 ? -s.radius * 0.6 : s.radius * 0.6;
-  ctx.fillStyle = skinColor;
-  ctx.beginPath();
-  ctx.arc(0, headY, s.radius * 0.65, 0, Math.PI * 2);
-  ctx.fill();
-
-  // 5. Curved Ram Horns (Small, Medium, Giant)
-  const hornSpan = s.typeKey === 'giant' ? 18 : (s.typeKey === 'medium' ? 14 : 9);
-  ctx.strokeStyle = hornColor;
-  ctx.lineWidth = s.typeKey === 'giant' ? 6 : (s.typeKey === 'medium' ? 4.5 : 3);
-  ctx.lineCap = 'round';
-
-  // Left Horn
-  ctx.beginPath();
-  ctx.arc(-s.radius * 0.6, headY, hornSpan, 0.8, Math.PI * 1.3, false);
-  ctx.stroke();
-
-  // Right Horn
-  ctx.beginPath();
-  ctx.arc(s.radius * 0.6, headY, hornSpan, -0.3, Math.PI * 0.2, true);
-  ctx.stroke();
-
-  // 6. Determined Anime Eyes
-  const eyeY = headY + (isP1 ? -2 : 2);
-  ctx.fillStyle = isP1 ? '#0f172a' : '#fff';
-  ctx.beginPath();
-  ctx.arc(-5, eyeY, 3, 0, Math.PI * 2);
-  ctx.arc(5, eyeY, 3, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Cute highlight sparkle
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  ctx.arc(-4, eyeY - 1, 1, 0, Math.PI * 2);
-  ctx.arc(6, eyeY - 1, 1, 0, Math.PI * 2);
-  ctx.fill();
-
-  // 7. Team Ribbon
-  ctx.fillStyle = ribbonColor;
-  ctx.fillRect(-s.radius * 0.5, headY + (isP1 ? 6 : -8), s.radius, 4);
-
-  // 8. Struggle / Sweat Particle if pushing hard
-  if (s.isPushing) {
-    ctx.fillStyle = '#38bdf8';
+  // 2. Animated Cute Trot Little Hooves
+  const legOffset = Math.sin(s.trot) * (s.isPushing ? 2 : 4);
+  ctx.fillStyle = isP1 ? '#475569' : '#0f172a';
+  // 4 cute rounded little legs
+  [-s.wool * 0.45, s.wool * 0.35].forEach((lx, i) => {
+    const loff = (i === 0 ? legOffset : -legOffset);
     ctx.beginPath();
-    ctx.arc(s.radius * 0.8, headY - 4, 3, 0, Math.PI * 2);
+    ctx.roundRect(lx, s.radius * 0.4 + loff, 7, 10, [3, 3, 4, 4]);
+    ctx.fill();
+  });
+
+  // 3. Super Fluffy Marshmallow Cloud Body (Multiple Overlapping Puffs)
+  const puffCount = 8;
+  const bodyR = s.wool * 0.72;
+  // Outer wool shadow rim
+  ctx.fillStyle = woolShadow;
+  for (let i = 0; i < puffCount; i++) {
+    const ang = (i / puffCount) * Math.PI * 2;
+    const px = Math.cos(ang) * bodyR * 0.75;
+    const py = Math.sin(ang) * bodyR * 0.7 + 2;
+    ctx.beginPath();
+    ctx.arc(px, py, bodyR * 0.45, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Inner white fluffy cloud puffs
+  ctx.fillStyle = woolMain;
+  ctx.beginPath();
+  ctx.arc(0, 0, bodyR * 0.85, 0, Math.PI * 2);
+  ctx.fill();
+  for (let i = 0; i < puffCount; i++) {
+    const ang = (i / puffCount) * Math.PI * 2;
+    const px = Math.cos(ang) * bodyR * 0.75;
+    const py = Math.sin(ang) * bodyR * 0.7;
+    ctx.beginPath();
+    ctx.arc(px, py, bodyR * 0.42, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // Weight Indicator Badge
-  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  // 4. Floppy Cute Sheep Ears
+  const headY = isP1 ? -s.radius * 0.58 : s.radius * 0.58;
+  const earDropY = headY + (isP1 ? 3 : -3);
+  const earW = s.radius * 0.45;
+  const earH = s.radius * 0.28;
+
+  // Left Ear
+  ctx.save();
+  ctx.translate(-s.radius * 0.65, earDropY);
+  ctx.rotate(-0.35);
+  ctx.fillStyle = woolMain;
   ctx.beginPath();
-  ctx.arc(0, 0, 9, 0, Math.PI * 2);
+  ctx.ellipse(0, 0, earW, earH, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 10px sans-serif';
+  ctx.fillStyle = '#fda4af';
+  ctx.beginPath();
+  ctx.ellipse(-1, 0, earW * 0.65, earH * 0.55, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Right Ear
+  ctx.save();
+  ctx.translate(s.radius * 0.65, earDropY);
+  ctx.rotate(0.35);
+  ctx.fillStyle = woolMain;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, earW, earH, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fda4af';
+  ctx.beginPath();
+  ctx.ellipse(1, 0, earW * 0.65, earH * 0.55, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // 5. Curved Horns (for medium/giant)
+  if (s.typeKey === 'medium' || s.typeKey === 'giant') {
+    const hornSpan = s.typeKey === 'giant' ? 16 : 11;
+    ctx.strokeStyle = hornColor;
+    ctx.lineWidth = s.typeKey === 'giant' ? 5.5 : 3.5;
+    ctx.lineCap = 'round';
+
+    ctx.beginPath();
+    ctx.arc(-s.radius * 0.62, headY - 2, hornSpan, 0.7, Math.PI * 1.35, false);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(s.radius * 0.62, headY - 2, hornSpan, -0.35, Math.PI * 0.3, true);
+    ctx.stroke();
+  }
+
+  // 6. Adorable Chibi Face (Peach/Cream rounded)
+  ctx.fillStyle = skinColor;
+  ctx.beginPath();
+  ctx.ellipse(0, headY, s.radius * 0.62, s.radius * 0.56, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Fluffy Wool Bangs / Hair Puff on Top of Head
+  ctx.fillStyle = woolMain;
+  ctx.beginPath();
+  ctx.arc(-s.radius * 0.22, headY - s.radius * 0.42, s.radius * 0.24, 0, Math.PI * 2);
+  ctx.arc(s.radius * 0.22, headY - s.radius * 0.42, s.radius * 0.24, 0, Math.PI * 2);
+  ctx.arc(0, headY - s.radius * 0.48, s.radius * 0.26, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 7. Rosy Cheeks (Blush)
+  ctx.fillStyle = blushColor;
+  ctx.beginPath();
+  ctx.arc(-s.radius * 0.38, headY + 3, s.radius * 0.16, 0, Math.PI * 2);
+  ctx.arc(s.radius * 0.38, headY + 3, s.radius * 0.16, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 8. Giant Sparkling Anime Eyes (Sheep Saga Style!)
+  const eyeSpan = s.radius * 0.28;
+  const eyeR = s.radius * 0.22;
+  const eyeY = headY - 2;
+
+  [-eyeSpan, eyeSpan].forEach(ex => {
+    // Eye socket / dark outer line
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.arc(ex, eyeY, eyeR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Iris Gradient (Teal/Cyan or Violet)
+    const irisGrad = ctx.createLinearGradient(ex, eyeY - eyeR, ex, eyeY + eyeR);
+    irisGrad.addColorStop(0, eyeIrisTop);
+    irisGrad.addColorStop(1, eyeIrisBot);
+    ctx.fillStyle = irisGrad;
+    ctx.beginPath();
+    ctx.arc(ex, eyeY + 1, eyeR * 0.85, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Dark Pupil
+    ctx.fillStyle = '#090d16';
+    ctx.beginPath();
+    ctx.arc(ex, eyeY, eyeR * 0.55, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Big Sparkling Star / Catchlight Highlight
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(ex - eyeR * 0.32, eyeY - eyeR * 0.28, eyeR * 0.38, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Secondary cute mini-sparkle in bottom corner
+    ctx.beginPath();
+    ctx.arc(ex + eyeR * 0.3, eyeY + eyeR * 0.32, eyeR * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // 9. Sweet Smiling Mouth & Cute Little Nose
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 1.6;
+  ctx.lineCap = 'round';
+
+  // Tiny peach nose
+  ctx.fillStyle = '#f43f5e';
+  ctx.beginPath();
+  ctx.arc(0, headY + s.radius * 0.12, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Cute "w" smile
+  ctx.beginPath();
+  ctx.arc(-2.5, headY + s.radius * 0.24, 2.5, 0.1, Math.PI * 0.95);
+  ctx.arc(2.5, headY + s.radius * 0.24, 2.5, 0.1, Math.PI * 0.95);
+  ctx.stroke();
+
+  // 10. Struggle / Sweating if in intense push clash
+  if (s.isPushing) {
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.arc(s.radius * 0.75, headY - 6, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(s.radius * 0.75, headY - 9);
+    ctx.lineTo(s.radius * 0.71, headY - 6);
+    ctx.lineTo(s.radius * 0.79, headY - 6);
+    ctx.fill();
+  }
+
+  // 11. Weight Badge (Subtle, sleek golden or silver ring)
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+  ctx.beginPath();
+  ctx.arc(0, s.radius * 0.05, 9, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = isP1 ? '#38bdf8' : '#f43f5e';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 10px "Outfit", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(s.weight, 0, 0);
+  ctx.fillText(s.weight, 0, s.radius * 0.05);
 
   ctx.restore();
 }

@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Roll the Ball - Sliding Puzzle</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800;900&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+    body {
+      background: linear-gradient(135deg, #7be1cb 0%, #a4eedf 50%, #7be1cb 100%);
+      font-family: 'Fredoka', 'Outfit', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+      color: #1e293b;
+    }
+    .game-container {
+      width: 100%;
+      max-width: 410px;
+      height: 100vh;
+      max-height: 840px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 16px 20px;
+      position: relative;
+    }
+    /* White Card Wrapper */
+    .card-frame {
+      width: 100%;
+      background: #ffffff;
+      border-radius: 28px;
+      box-shadow: 0 16px 36px rgba(13, 148, 136, 0.2), 0 4px 12px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 18px 16px 20px;
+      flex: 1;
+      justify-content: space-between;
+    }
+    /* Top Bar */
+    .top-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 4px 12px;
+    }
+    .level-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #334155;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .coin-badge {
+      background: #252e39;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .coin-icon {
+      width: 22px;
+      height: 22px;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      border-radius: 50%;
+      border: 2px solid #fef08a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 12px;
+      color: #78350f;
+    }
+    .btn-ask {
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #059669;
+    }
+    /* Puzzle Board Container */
+    .board-frame {
+      width: 320px;
+      height: 320px;
+      background: #2d2627;
+      border-radius: 22px;
+      padding: 10px;
+      box-shadow: inset 0 4px 10px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.15);
+      position: relative;
+    }
+    #puzzleCanvas {
+      width: 300px;
+      height: 300px;
+      border-radius: 14px;
+      display: block;
+    }
+    /* Bottom Actions */
+    .bottom-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 4px 0;
+    }
+    .btn-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: none;
+      background: #f1f5f9;
+      color: #0d9488;
+      font-size: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #cbd5e1;
+      transition: all 0.1s;
+    }
+    .btn-circle:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #cbd5e1;
+    }
+    .btn-hint {
+      background: linear-gradient(135deg, #f43f5e, #e11d48);
+      color: white;
+      border: none;
+      border-radius: 24px;
+      padding: 0 18px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #9f1239;
+    }
+    .btn-hint:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #9f1239;
+    }
+    /* Victory Modal */
+    .modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(4px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-card {
+      width: 86%;
+      max-width: 320px;
+      background: #ffffff;
+      border-radius: 28px;
+      padding: 24px 20px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      transform: scale(0.85);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .modal-overlay.active .modal-card {
+      transform: scale(1);
+    }
+    .stars-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 12px 0 16px;
+      font-size: 34px;
+    }
+    .star-pop {
+      animation: popStar 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    @keyframes popStar {
+      0% { transform: scale(0); opacity: 0; }
+      70% { transform: scale(1.3); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .btn-next {
+      width: 100%;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      padding: 14px;
+      font-size: 18px;
+      font-weight: 700;
+      box-shadow: 0 4px 0 #047857;
+      cursor: pointer;
+      margin-top: 14px;
+    }
+    .btn-next:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #047857;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="card-frame">
+      <!-- Top Header -->
+      <div class="top-bar">
+        <div class="level-title">
+          <span id="levelLabel">Level 1</span>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <div class="coin-badge">
+            <div class="coin-icon">★</div>
+            <span id="coinCount">888</span>
+          </div>
+          <button class="btn-ask" onclick="showHint()">Hint</button>
+        </div>
+      </div>
+
+      <!-- Puzzle Board Frame -->
+      <div class="board-frame">
+        <canvas id="puzzleCanvas" width="600" height="600"></canvas>
+      </div>
+
+      <!-- Bottom Controls -->
+      <div class="bottom-bar">
+        <button class="btn-circle" onclick="resetLevel()" title="Restart">🔄</button>
+        <button class="btn-circle" onclick="undoMove()" title="Undo">↩️</button>
+        <button class="btn-circle" onclick="nextLevel()" title="Skip">⏭️</button>
+        <button class="btn-hint" onclick="showHint()">
+          <span>💡</span>
+          <span id="hintCost">30</span>
+          <span style="font-size:12px;">★</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Win Modal -->
+    <div class="modal-overlay" id="winModal">
+      <div class="modal-card">
+        <h2 style="font-size:26px; color:#0f172a;">LEVEL CLEAR!</h2>
+        <div class="stars-row" id="starsRow">
+          <span>⭐</span><span>⭐</span><span>⭐</span>
+        </div>
+        <p style="color:#64748b; font-size:15px; margin-bottom:12px;">Moves: <b id="movesCount">0</b></p>
+        <button class="btn-next" onclick="nextLevel()">NEXT LEVEL ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Audio Synthesizer
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let actx = null;
+    function getAudio() {
+      if (!actx) actx = new AudioCtx();
+      if (actx.state === 'suspended') actx.resume();
+      return actx;
+    }
+    function playSlideSound() {
+      try {
+        const a = getAudio();
+        const osc = a.createOscillator();
+        const gain = a.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(220, a.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(140, a.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.2, a.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, a.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(a.destination);
+        osc.start();
+        osc.stop(a.currentTime + 0.08);
+      } catch(e){}
+    }
+    function playWinSound() {
+      try {
+        const a = getAudio();
+        [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+          const osc = a.createOscillator();
+          const gain = a.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, a.currentTime + idx * 0.1);
+          gain.gain.setValueAtTime(0.25, a.currentTime + idx * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.01, a.currentTime + idx * 0.1 + 0.35);
+          osc.connect(gain);
+          gain.connect(a.destination);
+          osc.start(a.currentTime + idx * 0.1);
+          osc.stop(a.currentTime + idx * 0.1 + 0.35);
+        });
+      } catch(e){}
+    }
+
+    const canvas = document.getElementById('puzzleCanvas');
+    const ctx = canvas.getContext('2d');
+    const GRID_SIZE = 4;
+    const TILE_SIZE = 600 / GRID_SIZE; // 150
+
+    /*
+      Tile Types:
+      - 'EMPTY': open slide space
+      - 'START': Green start socket with ball (fixed)
+      - 'GOAL': Green goal hole (fixed)
+      - 'H': Straight horizontal track
+      - 'V': Straight vertical track
+      - 'TR': Curved bend Top to Right
+      - 'TL': Curved bend Top to Left
+      - 'BR': Curved bend Bottom to Right
+      - 'BL': Curved bend Bottom to Left
+      - 'BLOCK': Solid wooden tile with no groove (obstacle)
+    */
+
+    let currentLevel = 1;
+    let coins = 888;
+    let moves = 0;
+    let board = [];
+    let history = [];
+    let isRolling = false;
+    let ballPos = { x: 0, y: 0 };
+    let ballPath = [];
+    let ballProgress = 0;
+
+    // Levels definitions (10 curated fun puzzle levels)
+    const LEVELS = [
+      // Level 1: Gentle introduction (3 moves to connect)
+      {
+        start: { r: 3, c: 1, dir: 'up' },
+        goal: { r: 0, c: 2, dir: 'down' },
+        grid: [
+          ['BLOCK', 'H', 'GOAL', 'BLOCK'],
+          ['BLOCK', 'BR', 'TL', 'BLOCK'],
+          ['BLOCK', 'V', 'EMPTY', 'BLOCK'],
+          ['BLOCK', 'START', 'BLOCK', 'BLOCK']
+        ]
+      },
+      // Level 2: S-curve
+      {
+        start: { r: 3, c: 0, dir: 'up' },
+        goal: { r: 0, c: 3, dir: 'left' },
+        grid: [
+          ['BLOCK', 'H', 'TR', 'GOAL'],
+          ['BR', 'TL', 'EMPTY', 'V'],
+          ['V', 'BLOCK', 'BL', 'TR'],
+          ['START', 'BLOCK', 'H', 'BLOCK']
+        ]
+      },
+      // Level 3:
+      {
+        start: { r: 3, c: 1, dir: 'up' },
+        goal: { r: 0, c: 3, dir: 'left' },
+        grid: [
+          ['BR', 'H', 'H', 'GOAL'],
+          ['V', 'EMPTY', 'BR', 'TL'],
+          ['TR', 'BL', 'V', 'BLOCK'],
+          ['BLOCK', 'START', 'BLOCK', 'BLOCK']
+        ]
+      },
+      // Level 4:
+      {
+        start: { r: 3, c: 2, dir: 'up' },
+        goal: { r: 0, c: 1, dir: 'down' },
+        grid: [
+          ['BLOCK', 'GOAL', 'H', 'BL'],
+          ['BR', 'TL', 'EMPTY', 'V'],
+          ['V', 'TR', 'BL', 'V'],
+          ['BLOCK', 'BLOCK', 'START', 'BLOCK']
+        ]
+      },
+      // Level 5:
+      {
+        start: { r: 3, c: 0, dir: 'right' },
+        goal: { r: 0, c: 2, dir: 'down' },
+        grid: [
+          ['BR', 'H', 'GOAL', 'BLOCK'],
+          ['V', 'EMPTY', 'BR', 'TL'],
+          ['TR', 'H', 'TL', 'V'],
+          ['START', 'BLOCK', 'BLOCK', 'BLOCK']
+        ]
+      }
+    ];
+
+    function loadLevel(idx) {
+      const lvl = LEVELS[(idx - 1) % LEVELS.length];
+      document.getElementById('levelLabel').innerText = `Level ${idx}`;
+      moves = 0;
+      history = [];
+      isRolling = false;
+      board = [];
+
+      for (let r = 0; r < 4; r++) {
+        board[r] = [];
+        for (let c = 0; c < 4; c++) {
+          const type = lvl.grid[r][c];
+          board[r][c] = {
+            type: type,
+            fixed: (type === 'START' || type === 'GOAL' || type === 'BLOCK'),
+            r: r,
+            c: c,
+            animX: c * TILE_SIZE,
+            animY: r * TILE_SIZE
+          };
+        }
+      }
+
+      document.getElementById('winModal').classList.remove('active');
+      drawBoard();
+    }
+
+    function drawBoard() {
+      ctx.clearRect(0, 0, 600, 600);
+
+      // Draw all tiles
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          const t = board[r][c];
+          if (t.type !== 'EMPTY') {
+            drawTile(t.animX, t.animY, t.type, t.fixed);
+          }
+        }
+      }
+
+      // Draw rolling ball
+      if (isRolling && ballPath.length > 0) {
+        drawSilverBall(ballPos.x, ballPos.y);
+      } else {
+        // Draw ball stationary at START tile
+        for (let r = 0; r < 4; r++) {
+          for (let c = 0; c < 4; c++) {
+            if (board[r][c].type === 'START') {
+              drawSilverBall(c * TILE_SIZE + TILE_SIZE / 2, r * TILE_SIZE + TILE_SIZE / 2);
+            }
+          }
+        }
+      }
+    }
+
+    function drawTile(x, y, type, fixed) {
+      ctx.save();
+      const pad = 4;
+      const w = TILE_SIZE - pad * 2;
+      const h = TILE_SIZE - pad * 2;
+      const bx = x + pad;
+      const by = y + pad;
+      const rad = 16;
+
+      if (type === 'START' || type === 'GOAL') {
+        // Vibrant Green Screw-Plate Tile (Screenshot 1)
+        const gGrad = ctx.createLinearGradient(bx, by, bx, by + h);
+        gGrad.addColorStop(0, '#34d399');
+        gGrad.addColorStop(1, '#059669');
+        ctx.fillStyle = gGrad;
+        ctx.beginPath();
+        ctx.roundRect(bx, by, w, h, rad);
+        ctx.fill();
+
+        // 4 Corner Metal Screws with '+'
+        const screws = [
+          [bx + 16, by + 16],
+          [bx + w - 16, by + 16],
+          [bx + 16, by + h - 16],
+          [bx + w - 16, by + h - 16]
+        ];
+        screws.forEach(([sx, sy]) => {
+          ctx.fillStyle = '#065f46';
+          ctx.beginPath();
+          ctx.arc(sx, sy, 7, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#a7f3d0';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(sx - 4, sy - 4); ctx.lineTo(sx + 4, sy + 4);
+          ctx.moveTo(sx + 4, sy - 4); ctx.lineTo(sx - 4, sy + 4);
+          ctx.stroke();
+        });
+
+        // Center Socket Hole
+        const cx = bx + w / 2;
+        const cy = by + h / 2;
+        ctx.fillStyle = '#064e3b';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 32, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#022c22';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // Socket channel extension
+        drawGroove(bx, by, w, h, type === 'START' ? 'V_UP' : 'V_DOWN');
+      } else {
+        // Warm Wood Tile (Screenshot 1: Amber Honey Wood)
+        const wGrad = ctx.createLinearGradient(bx, by, bx + w, by + h);
+        wGrad.addColorStop(0, fixed ? '#b45309' : '#f59e0b');
+        wGrad.addColorStop(1, fixed ? '#78350f' : '#d97706');
+        ctx.fillStyle = wGrad;
+        ctx.beginPath();
+        ctx.roundRect(bx, by, w, h, rad);
+        ctx.fill();
+
+        // Bevel highlight
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.roundRect(bx + 2, by + 2, w - 4, h - 4, rad - 2);
+        ctx.stroke();
+
+        // Draw track groove
+        drawGroove(bx, by, w, h, type);
+      }
+      ctx.restore();
+    }
+
+    function drawGroove(bx, by, w, h, type) {
+      const cx = bx + w / 2;
+      const cy = by + h / 2;
+      const grooveW = 42;
+
+      ctx.save();
+      ctx.lineWidth = grooveW;
+      ctx.lineCap = 'butt';
+      ctx.strokeStyle = '#5c2d12'; // Dark Wood Depth
+
+      if (type === 'H') {
+        ctx.beginPath();
+        ctx.moveTo(bx, cy);
+        ctx.lineTo(bx + w, cy);
+        ctx.stroke();
+        // Inner depth shade
+        ctx.strokeStyle = '#291307';
+        ctx.lineWidth = grooveW * 0.6;
+        ctx.stroke();
+      } else if (type === 'V' || type === 'V_UP' || type === 'V_DOWN') {
+        ctx.beginPath();
+        ctx.moveTo(cx, by);
+        ctx.lineTo(cx, by + h);
+        ctx.stroke();
+        ctx.strokeStyle = '#291307';
+        ctx.lineWidth = grooveW * 0.6;
+        ctx.stroke();
+      } else if (type === 'TR') { // Top to Right
+        ctx.beginPath();
+        ctx.arc(bx + w, by, w / 2, Math.PI * 0.5, Math.PI, false);
+        ctx.stroke();
+        ctx.strokeStyle = '#291307';
+        ctx.lineWidth = grooveW * 0.6;
+        ctx.stroke();
+      } else if (type === 'TL') { // Top to Left
+        ctx.beginPath();
+        ctx.arc(bx, by, w / 2, 0, Math.PI * 0.5, false);
+        ctx.stroke();
+        ctx.strokeStyle = '#291307';
+        ctx.lineWidth = grooveW * 0.6;
+        ctx.stroke();
+      } else if (type === 'BR') { // Bottom to Right
+        ctx.beginPath();
+        ctx.arc(bx + w, by + h, w / 2, Math.PI, Math.PI * 1.5, false);
+        ctx.stroke();
+        ctx.strokeStyle = '#291307';
+        ctx.lineWidth = grooveW * 0.6;
+        ctx.stroke();
+      } else if (type === 'BL') { // Bottom to Left
+        ctx.beginPath();
+        ctx.arc(bx, by + h, w / 2, Math.PI * 1.5, Math.PI * 2, false);
+        ctx.stroke();
+        ctx.strokeStyle = '#291307';
+        ctx.lineWidth = grooveW * 0.6;
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawSilverBall(x, y) {
+      ctx.save();
+      const r = 24;
+
+      // Ball shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.beginPath();
+      ctx.ellipse(x + 3, y + 5, r * 0.9, r * 0.7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Shiny Silver Metallic Gradient
+      const sGrad = ctx.createRadialGradient(x - 6, y - 6, 2, x, y, r);
+      sGrad.addColorStop(0, '#ffffff');
+      sGrad.addColorStop(0.3, '#f1f5f9');
+      sGrad.addColorStop(0.7, '#94a3b8');
+      sGrad.addColorStop(1, '#475569');
+      ctx.fillStyle = sGrad;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Gleam specular
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.beginPath();
+      ctx.arc(x - 8, y - 8, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    // Interaction (Touch/Click)
+    canvas.addEventListener('pointerdown', (e) => {
+      if (isRolling) return;
+      const rect = canvas.getBoundingClientRect();
+      const scale = 600 / rect.width;
+      const x = (e.clientX - rect.left) * scale;
+      const y = (e.clientY - rect.top) * scale;
+
+      const c = Math.floor(x / TILE_SIZE);
+      const r = Math.floor(y / TILE_SIZE);
+
+      if (r >= 0 && r < 4 && c >= 0 && c < 4) {
+        attemptMove(r, c);
+      }
+    });
+
+    function attemptMove(r, c) {
+      const tile = board[r][c];
+      if (tile.fixed || tile.type === 'EMPTY') return;
+
+      // Check 4 adjacent directions for EMPTY
+      const dirs = [
+        { dr: -1, dc: 0 },
+        { dr: 1, dc: 0 },
+        { dr: 0, dc: -1 },
+        { dr: 0, dc: 1 }
+      ];
+
+      for (const d of dirs) {
+        const nr = r + d.dr;
+        const nc = c + d.dc;
+        if (nr >= 0 && nr < 4 && nc >= 0 && nc < 4) {
+          if (board[nr][nc].type === 'EMPTY') {
+            // Slide tile into empty space!
+            history.push({ fromR: r, fromC: c, toR: nr, toC: nc });
+            board[nr][nc].type = tile.type;
+            board[nr][nc].fixed = false;
+            tile.type = 'EMPTY';
+            moves++;
+            playSlideSound();
+            drawBoard();
+            checkSolved();
+            return;
+          }
+        }
+      }
+    }
+
+    function checkSolved() {
+      // Find START tile
+      let startPos = null;
+      let goalPos = null;
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          if (board[r][c].type === 'START') startPos = { r, c };
+          if (board[r][c].type === 'GOAL') goalPos = { r, c };
+        }
+      }
+      if (!startPos || !goalPos) return;
+
+      // Trace path from start to goal
+      // Tile socket connects:
+      // START exits UP (dir: 'UP')
+      let curR = startPos.r - 1;
+      let curC = startPos.c;
+      let inDir = 'BOTTOM'; // entered from bottom
+      const pathNodes = [{ x: startPos.c * TILE_SIZE + TILE_SIZE / 2, y: startPos.r * TILE_SIZE + TILE_SIZE / 2 }];
+
+      while (curR >= 0 && curR < 4 && curC >= 0 && curC < 4) {
+        const t = board[curR][curC].type;
+        const cx = curC * TILE_SIZE + TILE_SIZE / 2;
+        const cy = curR * TILE_SIZE + TILE_SIZE / 2;
+        pathNodes.push({ x: cx, y: cy });
+
+        if (t === 'GOAL') {
+          // Connected!
+          triggerBallRoll(pathNodes);
+          return;
+        }
+
+        let outDir = null;
+        if (t === 'V') {
+          if (inDir === 'BOTTOM') outDir = 'TOP';
+          else if (inDir === 'TOP') outDir = 'BOTTOM';
+        } else if (t === 'H') {
+          if (inDir === 'LEFT') outDir = 'RIGHT';
+          else if (inDir === 'RIGHT') outDir = 'LEFT';
+        } else if (t === 'TR') {
+          if (inDir === 'TOP') outDir = 'RIGHT';
+          else if (inDir === 'RIGHT') outDir = 'TOP';
+        } else if (t === 'TL') {
+          if (inDir === 'TOP') outDir = 'LEFT';
+          else if (inDir === 'LEFT') outDir = 'TOP';
+        } else if (t === 'BR') {
+          if (inDir === 'BOTTOM') outDir = 'RIGHT';
+          else if (inDir === 'RIGHT') outDir = 'BOTTOM';
+        } else if (t === 'BL') {
+          if (inDir === 'BOTTOM') outDir = 'LEFT';
+          else if (inDir === 'LEFT') outDir = 'BOTTOM';
+        }
+
+        if (!outDir) break; // Broken connection
+
+        if (outDir === 'TOP') { curR--; inDir = 'BOTTOM'; }
+        else if (outDir === 'BOTTOM') { curR++; inDir = 'TOP'; }
+        else if (outDir === 'LEFT') { curC--; inDir = 'RIGHT'; }
+        else if (outDir === 'RIGHT') { curC++; inDir = 'LEFT'; }
+      }
+    }
+
+    function triggerBallRoll(nodes) {
+      isRolling = true;
+      ballPath = nodes;
+      ballProgress = 0;
+      let segIdx = 0;
+      let segT = 0;
+
+      function animRoll() {
+        if (segIdx < ballPath.length - 1) {
+          const p1 = ballPath[segIdx];
+          const p2 = ballPath[segIdx + 1];
+          segT += 0.08;
+          if (segT >= 1) {
+            segT = 0;
+            segIdx++;
+          }
+          const curP1 = ballPath[segIdx];
+          const curP2 = ballPath[Math.min(segIdx + 1, ballPath.length - 1)];
+          ballPos.x = curP1.x + (curP2.x - curP1.x) * segT;
+          ballPos.y = curP1.y + (curP2.y - curP1.y) * segT;
+          drawBoard();
+          requestAnimationFrame(animRoll);
+        } else {
+          // Completed roll into goal!
+          playWinSound();
+          setTimeout(() => {
+            document.getElementById('movesCount').innerText = moves;
+            document.getElementById('winModal').classList.add('active');
+            coins += 50;
+            document.getElementById('coinCount').innerText = coins;
+          }, 300);
+        }
+      }
+      animRoll();
+    }
+
+    function resetLevel() {
+      loadLevel(currentLevel);
+    }
+
+    function undoMove() {
+      if (history.length === 0 || isRolling) return;
+      const last = history.pop();
+      board[last.fromR][last.fromC].type = board[last.toR][last.toC].type;
+      board[last.toR][last.toC].type = 'EMPTY';
+      moves = Math.max(0, moves - 1);
+      drawBoard();
+    }
+
+    function nextLevel() {
+      currentLevel++;
+      loadLevel(currentLevel);
+    }
+
+    function showHint() {
+      if (coins >= 30) {
+        coins -= 30;
+        document.getElementById('coinCount').innerText = coins;
+      }
+      // Auto-solve step
+      resetLevel();
+      // Solve directly for fun preview
+      checkSolved();
+    }
+
+    loadLevel(1);
+  </script>
+</body>
+</html>
