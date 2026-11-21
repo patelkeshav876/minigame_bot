@@ -567,6 +567,7 @@
         modal.classList.remove("hidden");
       }
     }
+  }
 
     document.getElementById("btnResign").classList.toggle("hidden", isSpectator || room.status !== "active");
     document.getElementById("btnRematch").classList.toggle("hidden", isSpectator || room.status !== "finished");
