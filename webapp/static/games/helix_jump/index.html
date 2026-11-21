@@ -416,7 +416,7 @@ const SECTOR_ANGLE = (Math.PI * 2) / NUM_SECTORS;
 const POLE_RADIUS = 1.25;
 const RING_OUTER_RADIUS = 3.35;
 const RING_HEIGHT = 0.52;
-const FLOOR_SPACING = 3.2;
+const FLOOR_SPACING = 2.6;
 const BALL_RADIUS = 0.38;
 const BALL_X = 0;
 const BALL_Z = (POLE_RADIUS + RING_OUTER_RADIUS) / 2; // 2.3
@@ -477,10 +477,10 @@ function initThree() {
   scene.background = new THREE.Color(0x2563eb);
   scene.fog = new THREE.Fog(0x1d4ed8, 22, 55);
 
-  // Camera
-  camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
-  camera.position.set(0, 5.0, 11.2);
-  camera.lookAt(0, 0.2, 0);
+  // Camera (Zoomed out view so lower floors are clearly visible)
+  camera = new THREE.PerspectiveCamera(48, W / H, 0.1, 100);
+  camera.position.set(0, 6.2, 14.5);
+  camera.lookAt(0, 1.2, 0);
 
   // Renderer
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
@@ -856,8 +856,8 @@ function updatePhysics() {
 
   // Continuous Collision Sweep Check
   const prevY = ballPhysics.y;
-  ballPhysics.vy -= 0.015; // Smooth slow gravity
-  if (ballPhysics.vy < -0.30) ballPhysics.vy = -0.30; // Terminal fall velocity clamp
+  ballPhysics.vy -= 0.009; // Smooth slow gravity for relaxed ball speed
+  if (ballPhysics.vy < -0.20) ballPhysics.vy = -0.20; // Calm terminal fall velocity clamp
   ballPhysics.y += ballPhysics.vy;
 
   // Squash recovery
@@ -875,13 +875,10 @@ function updatePhysics() {
 
     // Check if the ball crossed through the floor's plane downwards during this frame
     if (ballPhysics.vy < 0 && prevBallBottom >= floor.y - 0.05 && currBallBottom <= floor.y) {
-      // Calculate which sector the ball is hovering over directly in towerGroup local space
-      const ballWorldPos = new THREE.Vector3(BALL_X, ballPhysics.y, BALL_Z);
-      const ballLocalPos = towerGroup.worldToLocal(ballWorldPos.clone());
-      const angle = Math.atan2(-ballLocalPos.z, ballLocalPos.x);
-      let val = (-angle + SECTOR_ANGLE) % (Math.PI * 2);
-      if (val < 0) val += Math.PI * 2;
-      const currentSector = Math.floor(val / SECTOR_ANGLE) % NUM_SECTORS;
+      // Calculate which sector is directly under the ball (at 6 o'clock front, x=0, z=+BALL_Z)
+      let angleUnderBall = (1.5 * Math.PI - towerAngle) % (Math.PI * 2);
+      if (angleUnderBall < 0) angleUnderBall += Math.PI * 2;
+      const currentSector = Math.floor(angleUnderBall / SECTOR_ANGLE) % NUM_SECTORS;
 
       // 1. GAP CHECK (Free Fall through opening!)
       if (floor.gapSectors.includes(currentSector)) {
@@ -943,10 +940,10 @@ function updatePhysics() {
 
       // 5. SAFE BOUNCE!
       ballPhysics.y = floor.y + BALL_RADIUS;
-      ballPhysics.vy = 0.25; // Gentle bounce impulse upwards
-      ballPhysics.scaleY = 0.65; // Squash
-      ballPhysics.scaleX = 1.30;
-      ballPhysics.scaleZ = 1.30;
+      ballPhysics.vy = 0.18; // Gentle, slower bounce impulse
+      ballPhysics.scaleY = 0.72; // Subtle squash
+      ballPhysics.scaleX = 1.20;
+      ballPhysics.scaleZ = 1.20;
 
       ballPhysics.passedRingsCombo = 0;
       ballPhysics.isFireball = false;
@@ -988,10 +985,10 @@ function updatePhysics() {
     ballShadowMesh.visible = false;
   }
 
-  // Smooth Camera Tracking (Keep ball in upper-middle view and tower centered with lower floors visible)
-  const targetCamY = ballPhysics.y + 4.2;
+  // Smooth Camera Tracking (Zoomed out view keeping ball in upper section and 5-6 lower floors visible)
+  const targetCamY = ballPhysics.y + 5.2;
   camera.position.y += (targetCamY - camera.position.y) * 0.10;
-  camera.lookAt(0, camera.position.y - 3.8, 0);
+  camera.lookAt(0, camera.position.y - 4.6, 0);
 
   // Update Shatter Physics Particles
   updateShatterPhysics();
