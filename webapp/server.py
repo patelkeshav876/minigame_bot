@@ -35,6 +35,19 @@ app = FastAPI(
     title="MiniGame Bot Battle Arena",
     lifespan=None if os.getenv("TESTING") == "1" else lifespan,
 )
+
+
+@app.middleware("http")
+async def add_no_cache_headers(request, call_next):
+    response = await call_next(request)
+    p = request.url.path
+    if p == "/" or p.endswith(".html") or p.endswith("app.js") or p.endswith("style.css"):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
+
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
@@ -201,7 +214,14 @@ def _resolve_user(init_data: str, guest_id: str, guest_name: str) -> dict[str, A
 
 @app.get("/")
 async def index() -> FileResponse:
-    return FileResponse(STATIC_DIR / "index.html")
+    return FileResponse(
+        STATIC_DIR / "index.html",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
 
 
 @app.get("/favicon.ico")
