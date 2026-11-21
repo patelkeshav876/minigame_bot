@@ -1431,24 +1431,38 @@
     }
   }
 
-  function exitGameToHome() {
-    const iframe = document.getElementById("customGameIframe");
-    if (iframe) {
+  function destroyGameIframe() {
+    const oldIframe = document.getElementById("customGameIframe");
+    if (oldIframe) {
       try {
-        iframe.contentWindow?.postMessage({ action: "destroy" }, "*");
-        iframe.contentWindow?.postMessage({ action: "pause" }, "*");
+        oldIframe.contentWindow?.postMessage({ type: "PAUSE_GAME", action: "destroy" }, "*");
+        oldIframe.contentWindow?.postMessage({ type: "PAUSE_GAME", action: "pause" }, "*");
       } catch (_) {}
-      iframe.src = "about:blank";
-      try {
-        const parent = iframe.parentNode;
-        if (parent) {
-          const freshIframe = iframe.cloneNode(false);
-          freshIframe.src = "about:blank";
-          parent.replaceChild(freshIframe, iframe);
-        }
-      } catch (_) {}
+      oldIframe.src = "about:blank";
+      oldIframe.remove();
     }
+  }
+
+  function createFreshGameIframe() {
+    destroyGameIframe();
+    const container = document.getElementById("view-player");
+    if (!container) return null;
+    const iframe = document.createElement("iframe");
+    iframe.id = "customGameIframe";
+    iframe.src = "about:blank";
+    iframe.allow = "autoplay; fullscreen; gamepad";
+    iframe.allowFullscreen = true;
+    iframe.style.opacity = "0";
+    iframe.style.transition = "opacity 0.22s ease";
+    container.appendChild(iframe);
+    return iframe;
+  }
+
+  function exitGameToHome() {
+    destroyGameIframe();
     state.currentGameUrl = "";
+    document.getElementById("playerPauseOverlay")?.classList.add("hidden");
+    document.getElementById("gamePlayerLoader")?.classList.add("hidden");
     try { tg?.exitFullscreen?.(); } catch (_) {}
     try { tg?.BackButton?.hide?.(); } catch (_) {}
     showView("home");
@@ -1500,9 +1514,15 @@
     state.currentGameUrl = url;
     const titleEl = document.getElementById("gamePlayerTitle");
     if (titleEl) titleEl.textContent = `${title}`;
-    const iframe = document.getElementById("customGameIframe");
-    // Hold game while popup is active so it does not run or tick in the background
-    if (iframe) iframe.src = "about:blank";
+    const pauseTitle = document.getElementById("pauseGameName");
+    if (pauseTitle) pauseTitle.textContent = `${title}`;
+
+    // Hide any lingering pause or loader overlay
+    document.getElementById("playerPauseOverlay")?.classList.add("hidden");
+    document.getElementById("gamePlayerLoader")?.classList.add("hidden");
+
+    // Completely destroy and recreate iframe so ZERO pixels from the previous game can ever show!
+    createFreshGameIframe();
 
     // Show Pre-Game Start Modal Pop-Up
     const pso = document.getElementById("playerStartOverlay");
@@ -1544,10 +1564,71 @@
     playStartChime();
     const pso = document.getElementById("playerStartOverlay");
     if (pso) pso.classList.add("hidden");
-    const iframe = document.getElementById("customGameIframe");
-    if (iframe && state.currentGameUrl && (!iframe.src || iframe.src.endsWith("about:blank") || iframe.src === "about:blank")) {
+
+    let iframe = document.getElementById("customGameIframe");
+    if (!iframe) {
+      iframe = createFreshGameIframe();
+    }
+
+    const loader = document.getElementById("gamePlayerLoader");
+    const loaderText = document.getElementById("gplText");
+    if (loaderText) loaderText.textContent = "Launching Game...";
+    if (loader) loader.classList.remove("hidden");
+
+    if (iframe && state.currentGameUrl) {
+      iframe.onload = () => {
+        if (loader) loader.classList.add("hidden");
+        iframe.style.opacity = "1";
+      };
       iframe.src = state.currentGameUrl;
     }
+  });
+
+  // In-Game Pause System
+  const btnPauseGame = document.getElementById("btnPauseGamePlayer");
+  const pauseOverlay = document.getElementById("playerPauseOverlay");
+  const btnResumeGame = document.getElementById("btnResumeGame");
+  const btnRestartGameInPlayer = document.getElementById("btnRestartGameInPlayer");
+  const btnExitGameFromPause = document.getElementById("btnExitGameFromPause");
+
+  btnPauseGame?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    haptic("light");
+    pauseOverlay?.classList.remove("hidden");
+    const iframe = document.getElementById("customGameIframe");
+    try {
+      iframe?.contentWindow?.postMessage({ type: "PAUSE_GAME", action: "pause" }, "*");
+    } catch (_) {}
+  });
+
+  btnResumeGame?.addEventListener("click", () => {
+    haptic("light");
+    pauseOverlay?.classList.add("hidden");
+    const iframe = document.getElementById("customGameIframe");
+    try {
+      iframe?.contentWindow?.postMessage({ type: "RESUME_GAME", action: "resume" }, "*");
+    } catch (_) {}
+  });
+
+  btnRestartGameInPlayer?.addEventListener("click", () => {
+    haptic("medium");
+    pauseOverlay?.classList.add("hidden");
+    const iframe = createFreshGameIframe();
+    const loader = document.getElementById("gamePlayerLoader");
+    if (loader) loader.classList.remove("hidden");
+    if (iframe && state.currentGameUrl) {
+      iframe.onload = () => {
+        if (loader) loader.classList.add("hidden");
+        iframe.style.opacity = "1";
+      };
+      iframe.src = state.currentGameUrl;
+    }
+  });
+
+  btnExitGameFromPause?.addEventListener("click", () => {
+    pauseOverlay?.classList.add("hidden");
+    exitGameToHome();
   });
 
   // Hero Sliding Window Carousel Control

@@ -553,7 +553,7 @@
     <!-- ==================== ACTIVE MATCH VIEW ==================== -->
     <section id="view-match" class="view">
       <div class="match-header">
-        <button id="btnLeaveRoom" class="btn small">⬅️ Back</button>
+        <button id="btnLeaveRoom" class="btn small">← Close</button>
         <div class="room-badge" id="roomBadge">Room: ----</div>
         <div class="match-header-right">
           <span class="spec-pill" id="specPill">👁️ 0</span>
@@ -732,8 +732,30 @@
 
     <!-- ==================== FULLSCREEN IN-APP WEB GAME PLAYER ==================== -->
     <section id="view-player" class="view fullscreen-player">
-      <button id="btnCloseGamePlayer" class="player-floating-close" title="Exit to Home">✕</button>
-      <div id="gamePlayerTitle" class="game-player-watermark">Ghost Plays</div>
+      <!-- Floating Top Navigation Bar -->
+      <div class="player-top-nav">
+        <button id="btnCloseGamePlayer" class="player-floating-btn player-btn-close" title="Close Game">
+          <span class="btn-sym">←</span> Close
+        </button>
+        <div id="gamePlayerTitle" class="game-player-watermark">Game</div>
+        <button id="btnPauseGamePlayer" class="player-floating-btn player-btn-pause" title="Pause Game">
+          <span class="btn-sym">⏸</span> Pause
+        </button>
+      </div>
+
+      <!-- In-Game Pause Overlay Modal -->
+      <div id="playerPauseOverlay" class="player-pause-overlay hidden">
+        <div class="player-pause-box">
+          <div class="pause-icon">⏸️</div>
+          <h2 class="pause-title">Game Paused</h2>
+          <p class="pause-sub" id="pauseGameName">Take a breather</p>
+          <div class="pause-actions">
+            <button id="btnResumeGame" class="btn primary full">▶ RESUME</button>
+            <button id="btnRestartGameInPlayer" class="btn full">🔄 RESTART</button>
+            <button id="btnExitGameFromPause" class="btn danger full">✕ EXIT TO HOME</button>
+          </div>
+        </div>
+      </div>
 
       <!-- Pre-Game Start Overlay Modal -->
       <div id="playerStartOverlay" class="player-start-overlay">
@@ -745,7 +767,13 @@
         </div>
       </div>
 
-      <iframe id="customGameIframe" src="" allowfullscreen allow="autoplay; fullscreen; gamepad"></iframe>
+      <!-- Game Loading Skeleton -->
+      <div id="gamePlayerLoader" class="game-player-loader hidden">
+        <div class="gpl-spinner"></div>
+        <div class="gpl-text" id="gplText">Loading Game...</div>
+      </div>
+
+      <iframe id="customGameIframe" src="about:blank" allowfullscreen allow="autoplay; fullscreen; gamepad"></iframe>
     </section>
 
     <!-- ==================== ARENA MATCH OPTIONS POP-UP MODAL ==================== -->
