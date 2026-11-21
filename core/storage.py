@@ -505,6 +505,10 @@ class GameStorage:
         ]
         for b in removed:
             conn.execute("DELETE FROM custom_games WHERE url LIKE ?", (f"%{b}%",))
+        try:
+            conn.execute("DELETE FROM custom_games WHERE id NOT IN (SELECT MIN(id) FROM custom_games GROUP BY url)")
+        except Exception:
+            pass
 
     def _seed_default_custom_games(self, conn: sqlite3.Connection) -> None:
         now = time.time()
@@ -1075,7 +1079,16 @@ class GameStorage:
                 self._seed_default_custom_games(conn)
                 conn.commit()
                 rows = conn.execute(query).fetchall()
-            return [dict(r) for r in rows]
+            seen_urls = set()
+            unique_games = []
+            for r in rows:
+                d = dict(r)
+                u = d.get("url", "").strip().rstrip("/").lower()
+                if u and u in seen_urls:
+                    continue
+                seen_urls.add(u)
+                unique_games.append(d)
+            return unique_games
 
     def update_custom_game(
         self,

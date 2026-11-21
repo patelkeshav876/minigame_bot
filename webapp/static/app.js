@@ -1092,18 +1092,36 @@
       </button>`;
   }
 
+  function getGameKey(g) {
+    if (!g) return "";
+    const u = (g.url || "").trim().toLowerCase().replace(/\/+$/, "");
+    const t = (g.title || "").trim().toLowerCase();
+    return u || t;
+  }
+
+  function getUniqueGamesList() {
+    const seen = new Set();
+    return (state.allCustomGames || []).filter(g => {
+      const k = getGameKey(g);
+      if (!k || seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  }
+
   function renderFilteredGames() {
     const el = document.getElementById("customGamesGrid");
     if (!el) return;
     const cat = state.gameFilterCat || "all";
     const q = (state.gameSearchQuery || "").toLowerCase().trim();
 
+    const uniqueGames = getUniqueGamesList();
     const countEl = document.getElementById("totalGamesCount");
-    if (countEl) countEl.textContent = `${state.allCustomGames.length}`;
+    if (countEl) countEl.textContent = `${uniqueGames.length}`;
 
     // If searching or filtering by a specific category, display standard filtered grid
     if (q || cat !== "all") {
-      const filtered = (state.allCustomGames || []).filter((g) => {
+      const filtered = uniqueGames.filter((g) => {
         const matchCat = cat === "all" || classifyGameCategory(g) === cat;
         const matchQ = !q || g.title.toLowerCase().includes(q) || (g.description && g.description.toLowerCase().includes(q));
         return matchCat && matchQ;
@@ -1159,8 +1177,13 @@
       let html = "";
 
       sections.forEach(sec => {
-        const secGames = (state.allCustomGames || []).filter(g => sec.matcher(g));
-        secGames.forEach(g => assigned.add(g.title));
+        // Exclude games already assigned to any prior section to strictly prevent duplicates
+        const secGames = uniqueGames.filter(g => {
+          const k = getGameKey(g);
+          if (assigned.has(k)) return false;
+          return sec.matcher(g);
+        });
+        secGames.forEach(g => assigned.add(getGameKey(g)));
         if (secGames.length > 0) {
           html += `
             <div class="arcade-category-section">
@@ -1179,7 +1202,7 @@
         }
       });
 
-      const moreGames = (state.allCustomGames || []).filter(g => !assigned.has(g.title));
+      const moreGames = uniqueGames.filter(g => !assigned.has(getGameKey(g)));
       if (moreGames.length > 0) {
         html += `
           <div class="arcade-category-section">
@@ -1363,7 +1386,14 @@
       const res = await fetch("/api/custom-games", { signal: controller.signal });
       clearTimeout(timer);
       const data = await res.json();
-      state.allCustomGames = data.games && data.games.length ? data.games : FALLBACK_DEFAULT_GAMES;
+      const rawGames = data.games && data.games.length ? data.games : FALLBACK_DEFAULT_GAMES;
+      const seenF = new Set();
+      state.allCustomGames = rawGames.filter(g => {
+        const k = ((g.url || "") + "::" + (g.title || "")).trim().toLowerCase();
+        if (seenF.has(k)) return false;
+        seenF.add(k);
+        return true;
+      });
     } catch (_) {
       if (!state.allCustomGames || !state.allCustomGames.length) {
         state.allCustomGames = FALLBACK_DEFAULT_GAMES;
