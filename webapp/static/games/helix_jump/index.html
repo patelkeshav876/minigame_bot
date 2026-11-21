@@ -2,156 +2,272 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>3D Helix Jump Tower</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>3D Helix Drop</title>
+<script src="three.min.js"></script>
+<script>
+  if (typeof THREE === 'undefined') {
+    document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
+  }
+</script>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
-body {
-  background: #060913;
-  color: #fff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+html, body {
+  width: 100%;
+  height: 100%;
   overflow: hidden;
+  background: #2563eb;
+  background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 60%, #1e3a8a 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #fff;
   touch-action: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
 }
 #gameContainer {
   position: relative;
   width: 100%;
-  max-width: 400px;
-  height: 100vh;
-  max-height: 700px;
+  height: 100%;
   overflow: hidden;
-  border-radius: 18px;
-  box-shadow: 0 0 50px rgba(0,0,0,0.9);
-  background: radial-gradient(circle at 50% 30%, #1e1b4b 0%, #090d16 85%);
 }
-canvas {
+#webglCanvas {
   width: 100%;
   height: 100%;
   display: block;
-  touch-action: none;
 }
-/* HUD */
+
+/* TOP HUD */
 #hud {
   position: absolute;
-  top: 14px;
-  left: 14px;
-  right: 14px;
+  top: env(safe-area-inset-top, 16px);
+  left: 0;
+  right: 0;
+  padding: 12px 18px 0;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
   pointer-events: none;
   z-index: 10;
 }
-.hud-pill {
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(244, 63, 94, 0.4);
-  backdrop-filter: blur(8px);
-  padding: 6px 16px;
-  border-radius: 20px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+.hud-score-row {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
 }
-.hud-score {
-  font-size: 1.3rem;
-  font-weight: 900;
-  color: #f43f5e;
-  text-shadow: 0 0 10px rgba(244,63,94,0.6);
+.hud-score-box {
+  display: flex;
+  flex-direction: column;
 }
-.hud-level {
-  font-size: 0.85rem;
+.hud-score-label {
+  font-size: 0.65rem;
   font-weight: 800;
-  color: #38bdf8;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
 }
-/* Super Smash Fire Banner */
+.hud-score-val {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  line-height: 1;
+}
+
+/* Stage Progress Bar (Matching user reference) */
+.stage-progress-bar {
+  width: 100%;
+  max-width: 280px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.level-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(30, 58, 138, 0.85);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 900;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  flex-shrink: 0;
+}
+.level-badge.next {
+  background: rgba(15, 23, 42, 0.85);
+  color: rgba(255, 255, 255, 0.75);
+}
+.progress-track {
+  flex: 1;
+  height: 12px;
+  background: rgba(15, 23, 42, 0.65);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #facc15 0%, #f59e0b 100%);
+  border-radius: 10px;
+  transition: width 0.15s ease-out;
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.6);
+}
+
+/* Super Smash Banner */
 #fireBanner {
   position: absolute;
-  top: 22%;
+  top: 18%;
   left: 50%;
   transform: translate(-50%, -50%) scale(0.6);
-  color: #fbbf24;
-  font-size: 1.8rem;
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  color: #ffffff;
+  padding: 8px 24px;
+  border-radius: 30px;
+  border: 2px solid #fef08a;
+  font-size: 1.15rem;
   font-weight: 900;
-  text-shadow: 0 0 20px #f59e0b, 0 0 40px #ef4444;
+  letter-spacing: 0.05em;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  box-shadow: 0 8px 30px rgba(239, 68, 68, 0.65), 0 0 20px #f59e0b;
   pointer-events: none;
   opacity: 0;
   transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  z-index: 20;
+  z-index: 25;
 }
 #fireBanner.show {
   opacity: 1;
-  transform: translate(-50%, -50%) scale(1.1);
+  transform: translate(-50%, -50%) scale(1.05);
+  animation: pulseFire 0.4s infinite alternate;
 }
+@keyframes pulseFire {
+  from { transform: translate(-50%, -50%) scale(1.0); }
+  to { transform: translate(-50%, -50%) scale(1.1); }
+}
+
 /* Modals */
 .game-modal {
   position: absolute;
   inset: 0;
-  background: rgba(7, 11, 22, 0.92);
+  background: rgba(10, 15, 30, 0.85);
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 50;
-  padding: 20px;
+  padding: 24px;
 }
 .game-modal.hidden { display: none !important; }
 .modal-box {
-  background: linear-gradient(180deg, #1e1b4b 0%, #0c0f1d 100%);
-  border: 2px solid rgba(244, 63, 94, 0.45);
-  border-radius: 24px;
-  padding: 26px 20px;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border: 2px solid rgba(250, 204, 21, 0.4);
+  border-radius: 26px;
+  padding: 28px 22px;
   text-align: center;
-  max-width: 320px;
+  max-width: 330px;
   width: 100%;
-  box-shadow: 0 20px 45px rgba(0,0,0,0.85), 0 0 35px rgba(244,63,94,0.3);
-  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(250, 204, 21, 0.25);
+  animation: popModal 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-@keyframes popIn {
+@keyframes popModal {
   0% { transform: scale(0.7); opacity: 0; }
   100% { transform: scale(1); opacity: 1; }
 }
 .modal-title {
-  font-size: 1.6rem;
+  font-size: 1.65rem;
   font-weight: 900;
   margin-bottom: 6px;
-  color: #f43f5e;
+  color: #facc15;
   letter-spacing: 0.02em;
 }
 .modal-sub {
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   color: #cbd5e1;
-  margin-bottom: 18px;
-  line-height: 1.4;
+  margin-bottom: 20px;
+  line-height: 1.45;
+}
+.stats-grid {
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 16px;
+  padding: 12px;
+  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.stat-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+.stat-val {
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: #f8fafc;
 }
 .btn-primary {
-  background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);
-  color: #fff;
+  background: linear-gradient(135deg, #facc15 0%, #f59e0b 100%);
+  color: #0f172a;
   border: none;
-  border-radius: 16px;
-  font-size: 1.05rem;
-  font-weight: 800;
-  padding: 12px 24px;
+  border-radius: 18px;
+  font-size: 1.1rem;
+  font-weight: 900;
+  padding: 14px 24px;
   width: 100%;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(244, 63, 94, 0.4);
-  transition: transform 0.1s ease;
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
+  transition: transform 0.1s ease, filter 0.1s ease;
 }
-.btn-primary:active { transform: scale(0.96); }
+.btn-primary:active {
+  transform: scale(0.96);
+  filter: brightness(0.9);
+}
+.btn-primary.btn-red {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.45);
+}
 </style>
 </head>
 <body>
 
 <div id="gameContainer">
-  <canvas id="cvs"></canvas>
+  <canvas id="webglCanvas"></canvas>
 
+  <!-- HUD -->
   <div id="hud">
-    <div class="hud-pill">
-      <span class="hud-score" id="hudScore">0</span>
+    <div class="hud-score-row">
+      <div class="hud-score-box">
+        <span class="hud-score-label">Score</span>
+        <span class="hud-score-val" id="hudScore">0</span>
+      </div>
+      <div class="hud-score-box" style="align-items: flex-end;">
+        <span class="hud-score-label">Best</span>
+        <span class="hud-score-val" id="hudBest">0</span>
+      </div>
     </div>
-    <div class="hud-pill">
-      <span class="hud-level" id="hudLevel">STAGE 1</span>
+
+    <!-- Stage Progress Bar -->
+    <div class="stage-progress-bar">
+      <div class="level-badge" id="badgeCurrent">1</div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="level-badge next" id="badgeNext">2</div>
     </div>
   </div>
 
@@ -160,44 +276,65 @@ canvas {
   <!-- Start Modal -->
   <div id="modalStart" class="game-modal">
     <div class="modal-box">
-      <div style="font-size: 3.2rem; margin-bottom: 6px;">🌀</div>
-      <h1 class="modal-title">3D HELIX JUMP</h1>
-      <p class="modal-sub">Drag left/right to rotate the 3D spiral tower! Drop through gaps, avoid deadly red sectors, and smash down floors!</p>
-      <button class="btn-primary" id="btnStartGame">▶ START JUMPING</button>
+      <div style="font-size: 3.5rem; margin-bottom: 8px;">🌀</div>
+      <h1 class="modal-title">3D HELIX DROP</h1>
+      <p class="modal-sub">Drag left/right to rotate the 3D spiral tower! Drop through openings, avoid deadly red sectors, and bounce to victory!</p>
+      <button class="btn-primary" id="btnStartGame">▶ START GAME</button>
     </div>
   </div>
 
   <!-- Game Over Modal -->
   <div id="modalGameOver" class="game-modal hidden">
     <div class="modal-box">
-      <div style="font-size: 3rem; margin-bottom: 6px;">💥</div>
+      <div style="font-size: 3.2rem; margin-bottom: 6px;">💥</div>
       <h1 class="modal-title" style="color: #ef4444;">SPLATTER!</h1>
-      <p class="modal-sub">Ball clashed into a deadly red danger zone!</p>
-      
-      <div style="background: rgba(0,0,0,0.5); border-radius: 14px; padding: 12px; margin-bottom: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+      <p class="modal-sub">You hit a deadly red danger zone!</p>
+      <div class="stats-grid">
         <div>
-          <div style="font-size: 0.68rem; color: #94a3b8; text-transform: uppercase;">Floors Smashed</div>
-          <div style="font-size: 1.4rem; font-weight: 900; color: #38bdf8;" id="finalFloors">0</div>
+          <div class="stat-label">Floors Dropped</div>
+          <div class="stat-val" style="color: #38bdf8;" id="finalFloors">0</div>
         </div>
         <div>
-          <div style="font-size: 0.68rem; color: #94a3b8; text-transform: uppercase;">High Score</div>
-          <div style="font-size: 1.4rem; font-weight: 900; color: #f43f5e;" id="finalScore">0</div>
+          <div class="stat-label">Total Score</div>
+          <div class="stat-val" style="color: #facc15;" id="finalScore">0</div>
         </div>
       </div>
-      
-      <button class="btn-primary" id="btnRestartGame">🔄 TRY AGAIN</button>
+      <button class="btn-primary btn-red" id="btnRestartGame">🔄 PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <!-- Level Complete Modal -->
+  <div id="modalStageClear" class="game-modal hidden">
+    <div class="modal-box" style="border-color: rgba(52, 211, 153, 0.5);">
+      <div style="font-size: 3.2rem; margin-bottom: 6px;">🏆</div>
+      <h1 class="modal-title" style="color: #34d399;">STAGE CLEAR!</h1>
+      <p class="modal-sub">Awesome descent! Ready for the next tower challenge?</p>
+      <div class="stats-grid">
+        <div>
+          <div class="stat-label">Next Stage</div>
+          <div class="stat-val" style="color: #34d399;" id="clearNextStage">2</div>
+        </div>
+        <div>
+          <div class="stat-label">Current Score</div>
+          <div class="stat-val" style="color: #facc15;" id="clearScore">0</div>
+        </div>
+      </div>
+      <button class="btn-primary" id="btnNextStage" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff;">NEXT LEVEL ➔</button>
     </div>
   </div>
 </div>
 
 <script>
-// Web Audio Synth
-const Sound = {
+// --- Web Audio Synthesizer ---
+const AudioEngine = {
   ctx: null,
   init() {
     if (!this.ctx) {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (AC) this.ctx = new AC();
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
     }
   },
   play(type) {
@@ -209,8 +346,8 @@ const Sound = {
         const g = this.ctx.createGain();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(320, t);
-        osc.frequency.exponentialRampToValueAtTime(140, t + 0.1);
-        g.gain.setValueAtTime(0.22, t);
+        osc.frequency.exponentialRampToValueAtTime(120, t + 0.1);
+        g.gain.setValueAtTime(0.2, t);
         g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
         osc.connect(g); g.connect(this.ctx.destination);
         osc.start(t); osc.stop(t + 0.11);
@@ -218,8 +355,8 @@ const Sound = {
         const osc = this.ctx.createOscillator();
         const g = this.ctx.createGain();
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(440, t);
-        osc.frequency.exponentialRampToValueAtTime(880, t + 0.14);
+        osc.frequency.setValueAtTime(380, t);
+        osc.frequency.exponentialRampToValueAtTime(760, t + 0.14);
         g.gain.setValueAtTime(0.25, t);
         g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
         osc.connect(g); g.connect(this.ctx.destination);
@@ -228,485 +365,809 @@ const Sound = {
         const osc = this.ctx.createOscillator();
         const g = this.ctx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(260, t);
-        osc.frequency.exponentialRampToValueAtTime(80, t + 0.22);
-        g.gain.setValueAtTime(0.35, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.24);
+        osc.frequency.setValueAtTime(280, t);
+        osc.frequency.exponentialRampToValueAtTime(60, t + 0.25);
+        g.gain.setValueAtTime(0.4, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
         osc.connect(g); g.connect(this.ctx.destination);
-        osc.start(t); osc.stop(t + 0.25);
+        osc.start(t); osc.stop(t + 0.29);
       } else if (type === 'shatter') {
         const osc = this.ctx.createOscillator();
         const g = this.ctx.createGain();
         osc.type = 'square';
-        osc.frequency.setValueAtTime(150, t);
-        osc.frequency.exponentialRampToValueAtTime(40, t + 0.35);
-        g.gain.setValueAtTime(0.4, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+        osc.frequency.setValueAtTime(140, t);
+        osc.frequency.exponentialRampToValueAtTime(30, t + 0.4);
+        g.gain.setValueAtTime(0.45, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.42);
         osc.connect(g); g.connect(this.ctx.destination);
-        osc.start(t); osc.stop(t + 0.36);
+        osc.start(t); osc.stop(t + 0.43);
+      } else if (type === 'win') {
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, t + idx * 0.09);
+          g.gain.setValueAtTime(0.25, t + idx * 0.09);
+          g.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.09 + 0.28);
+          osc.connect(g); g.connect(this.ctx.destination);
+          osc.start(t + idx * 0.09); osc.stop(t + idx * 0.09 + 0.3);
+        });
       }
     } catch (_) {}
   }
 };
 
-const cvs = document.getElementById('cvs');
-const ctx = cvs.getContext('2d');
-let W = 360, H = 600;
-
-function resize() {
-  const container = document.getElementById('gameContainer');
-  W = cvs.width = container.clientWidth;
-  H = cvs.height = container.clientHeight;
+function haptic(type) {
+  try {
+    const tg = window.Telegram?.WebApp?.HapticFeedback;
+    if (tg) {
+      if (type === 'light') tg.impactOccurred('light');
+      else if (type === 'medium') tg.impactOccurred('medium');
+      else if (type === 'heavy') tg.impactOccurred('heavy');
+      else if (type === 'error') tg.notificationOccurred('error');
+      else if (type === 'success') tg.notificationOccurred('success');
+    }
+  } catch (_) {}
 }
-window.addEventListener('resize', resize);
-resize();
+
+// --- 3D Scene Constants ---
+const NUM_SECTORS = 12;
+const SECTOR_ANGLE = (Math.PI * 2) / NUM_SECTORS;
+const POLE_RADIUS = 1.25;
+const RING_OUTER_RADIUS = 3.35;
+const RING_HEIGHT = 0.52;
+const FLOOR_SPACING = 3.2;
+const BALL_RADIUS = 0.38;
+const BALL_X = 0;
+const BALL_Z = (POLE_RADIUS + RING_OUTER_RADIUS) / 2; // 2.3
+
+// Stage Theme Colors (Stage 1 matching user reference image: bright lemon yellow!)
+const STAGE_THEMES = [
+  { name: 'Yellow Sun', normalColor: 0xffe600, dangerColor: 0x881337, skyTop: '#3b82f6', skyBottom: '#1e3a8a' },
+  { name: 'Emerald Drop', normalColor: 0x10b981, dangerColor: 0xd97706, skyTop: '#0ea5e9', skyBottom: '#0369a1' },
+  { name: 'Coral Flame', normalColor: 0xf97316, dangerColor: 0x4c1d95, skyTop: '#6366f1', skyBottom: '#312e81' },
+  { name: 'Neon Purple', normalColor: 0xa855f7, dangerColor: 0x059669, skyTop: '#ec4899', skyBottom: '#831843' },
+  { name: 'Cyber Cyan', normalColor: 0x06b6d4, dangerColor: 0xe11d48, skyTop: '#3b82f6', skyBottom: '#1e1b4b' },
+];
 
 // Game State
-let gameState = 'ready'; // ready, playing, gameover
+let gameState = 'ready'; // ready, playing, gameover, stageclear, paused
 let score = 0;
-let floorsSmashed = 0;
+let highScore = parseInt(localStorage.getItem('helix_drop_highscore') || '0', 10);
 let currentStage = 1;
+let floorsInCurrentStage = 18;
+let floorsClearedInStage = 0;
+let totalFloorsCleared = 0;
 
-// 3D Tower Geometry
-const POLE_RADIUS = 32;
-const RING_RADIUS = 120;
-const RING_TILT = 0.32; // 3D Perspective Elliptical Squish
-const RING_HEIGHT = 16;  // 3D Extrusion thickness
-const FLOOR_SPACING = 100;
+// Three.js variables
+let scene, camera, renderer;
+let towerGroup, poleMesh;
+let ballMesh, ballLightTrail, ballShadowMesh;
+let baseSectorGeo, dangerSectorGeo, victorySectorGeo;
+let normalMaterial, dangerMaterial, victoryMaterial, poleMaterial;
+let stageFloors = []; // Floor objects
+let shatterPieces = []; // 3D physics shatter fragments
+let paintDecals = []; // Splatters
 
-// Tower Rotation
+// Physics Variables
 let towerAngle = 0;
 let towerVelocity = 0;
 let isDragging = false;
 let lastPointerX = 0;
 
-// Ball Physics
-const BALL_FIXED_Y = 220; // Fixed camera focal point
-let ball = {
+let ballPhysics = {
+  y: 0,
   vy: 0,
-  r: 10,
   scaleX: 1,
   scaleY: 1,
+  scaleZ: 1,
   passedRingsCombo: 0,
   isFireball: false,
 };
 
-// Camera World Height
-let cameraWorldY = 0;
-let targetCameraWorldY = 0;
+// --- Three.js Initialization ---
+function initThree() {
+  const canvas = document.getElementById('webglCanvas');
+  const container = document.getElementById('gameContainer');
+  const W = container.clientWidth;
+  const H = container.clientHeight;
 
-// Platforms
-let platforms = [];
-let paintSplats = [];
-let shatterParticles = [];
+  // Scene
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x2563eb);
+  scene.fog = new THREE.Fog(0x1d4ed8, 22, 55);
 
-function createPlatform(worldY, level) {
-  // Generate sector slices around 360 deg
-  const gapSize = Math.max(0.9, 1.3 - level * 0.03); // radians gap
-  const gapAngle = Math.random() * Math.PI * 2;
-  const hasDanger = level > 1;
-  const dangerSize = hasDanger ? Math.min(1.2, 0.4 + level * 0.06) : 0;
-  const dangerAngle = (gapAngle + Math.PI + Math.random() * 0.5) % (Math.PI * 2);
+  // Camera
+  camera = new THREE.PerspectiveCamera(48, W / H, 0.1, 100);
+  camera.position.set(0, 4.2, 8.8);
+  camera.lookAt(0, 0.5, 0);
 
-  // Platform Color Palette
-  const themes = [
-    { top: '#38bdf8', rim: '#0284c7' }, // Cyan
-    { top: '#10b981', rim: '#047857' }, // Emerald
-    { top: '#a855f7', rim: '#7e22ce' }, // Purple
-    { top: '#f59e0b', rim: '#b45309' }, // Amber
-  ];
-  const theme = themes[level % themes.length];
+  // Renderer
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-  return {
-    worldY,
-    gapAngle,
-    gapSize,
-    dangerAngle,
-    dangerSize,
-    theme,
-    isShattered: false,
-    splatters: [],
-  };
+  // Lighting
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+  scene.add(ambientLight);
+
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
+  dirLight.position.set(5, 14, 8);
+  dirLight.castShadow = true;
+  dirLight.shadow.mapSize.width = 1024;
+  dirLight.shadow.mapSize.height = 1024;
+  dirLight.shadow.camera.near = 0.5;
+  dirLight.shadow.camera.far = 30;
+  dirLight.shadow.camera.left = -5;
+  dirLight.shadow.camera.right = 5;
+  dirLight.shadow.camera.top = 10;
+  dirLight.shadow.camera.bottom = -10;
+  scene.add(dirLight);
+
+  const hemiLight = new THREE.HemisphereLight(0xbfdbfe, 0x1e3a8a, 0.35);
+  scene.add(hemiLight);
+
+  // Tower Group (all rotating platforms and column belong here)
+  towerGroup = new THREE.Group();
+  scene.add(towerGroup);
+
+  // Materials & Geometries
+  initGeometriesAndMaterials();
+
+  // Central Pole (Dark smooth column)
+  const poleGeo = new THREE.CylinderGeometry(POLE_RADIUS, POLE_RADIUS, 120, 32);
+  poleMesh = new THREE.Mesh(poleGeo, poleMaterial);
+  poleMesh.receiveShadow = true;
+  towerGroup.add(poleMesh);
+
+  // Bouncing Ball
+  const ballGeo = new THREE.SphereGeometry(BALL_RADIUS, 32, 32);
+  const ballMat = new THREE.MeshStandardMaterial({
+    color: 0xef4444,
+    roughness: 0.18,
+    metalness: 0.15,
+  });
+  ballMesh = new THREE.Mesh(ballGeo, ballMat);
+  ballMesh.castShadow = true;
+  ballMesh.position.set(BALL_X, 0, BALL_Z);
+  scene.add(ballMesh);
+
+  // Upward Light Beam / Glow Trail (like in screenshot)
+  createBallLightTrail();
+
+  // Floor Shadow under ball
+  const shadowGeo = new THREE.RingGeometry(0.01, BALL_RADIUS * 1.1, 24);
+  shadowGeo.rotateX(-Math.PI / 2);
+  const shadowMat = new THREE.MeshBasicMaterial({
+    color: 0x000000,
+    transparent: true,
+    opacity: 0.35,
+    depthWrite: false,
+  });
+  ballShadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
+  scene.add(ballShadowMesh);
+
+  // Resize Handler
+  window.addEventListener('resize', onWindowResize);
 }
 
-function initGame() {
-  score = 0;
-  floorsSmashed = 0;
-  currentStage = 1;
-  towerAngle = 0;
-  towerVelocity = 0;
-  cameraWorldY = 0;
-  targetCameraWorldY = 0;
-  paintSplats = [];
-  shatterParticles = [];
+// Create Beveled Sector Shape
+function initGeometriesAndMaterials() {
+  const shape = new THREE.Shape();
+  const segs = 10;
+  const a0 = 0;
+  const a1 = SECTOR_ANGLE;
 
-  ball.vy = 0;
-  ball.scaleX = 1;
-  ball.scaleY = 1;
-  ball.passedRingsCombo = 0;
-  ball.isFireball = false;
+  // Outer Arc
+  shape.moveTo(Math.cos(a0) * RING_OUTER_RADIUS, Math.sin(a0) * RING_OUTER_RADIUS);
+  for (let i = 1; i <= segs; i++) {
+    const a = a0 + (a1 - a0) * (i / segs);
+    shape.lineTo(Math.cos(a) * RING_OUTER_RADIUS, Math.sin(a) * RING_OUTER_RADIUS);
+  }
+  // Line to Inner Arc
+  shape.lineTo(Math.cos(a1) * POLE_RADIUS, Math.sin(a1) * POLE_RADIUS);
+  // Inner Arc Backwards
+  for (let i = segs - 1; i >= 0; i--) {
+    const a = a0 + (a1 - a0) * (i / segs);
+    shape.lineTo(Math.cos(a) * POLE_RADIUS, Math.sin(a) * POLE_RADIUS);
+  }
+  shape.closePath();
 
-  platforms = [];
-  for (let i = 0; i < 10; i++) {
-    platforms.push(createPlatform((i + 1) * FLOOR_SPACING, i + 1));
+  const extrudeSettings = {
+    depth: RING_HEIGHT,
+    bevelEnabled: true,
+    bevelThickness: 0.04,
+    bevelSize: 0.03,
+    bevelSegments: 2,
+  };
+
+  baseSectorGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+  baseSectorGeo.rotateX(Math.PI / 2); // Top is at Y=0, thickness extends down
+
+  // Materials
+  normalMaterial = new THREE.MeshStandardMaterial({
+    color: 0xffe600,
+    roughness: 0.28,
+    metalness: 0.08,
+  });
+
+  dangerMaterial = new THREE.MeshStandardMaterial({
+    color: 0x881337,
+    roughness: 0.5,
+    metalness: 0.1,
+  });
+
+  victoryMaterial = new THREE.MeshStandardMaterial({
+    color: 0x10b981,
+    roughness: 0.2,
+    metalness: 0.15,
+  });
+
+  poleMaterial = new THREE.MeshStandardMaterial({
+    color: 0x1e1e2d,
+    roughness: 0.45,
+    metalness: 0.25,
+  });
+}
+
+// Upward Glowing Light Trail (Red laser beam above ball in reference image)
+function createBallLightTrail() {
+  const trailHeight = 2.4;
+  const trailGeo = new THREE.CylinderGeometry(0.12, 0.42, trailHeight, 16, 1, true);
+  trailGeo.translate(0, trailHeight / 2, 0);
+
+  // Gradient Texture for light cone
+  const canvas = document.createElement('canvas');
+  canvas.width = 32;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createLinearGradient(0, 128, 0, 0);
+  grad.addColorStop(0, 'rgba(239, 68, 68, 0.85)');
+  grad.addColorStop(0.35, 'rgba(245, 158, 11, 0.5)');
+  grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 32, 128);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  const trailMat = new THREE.MeshBasicMaterial({
+    map: tex,
+    transparent: true,
+    opacity: 0.75,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+
+  ballLightTrail = new THREE.Mesh(trailGeo, trailMat);
+  ballLightTrail.position.set(BALL_X, 0, BALL_Z);
+  scene.add(ballLightTrail);
+}
+
+function onWindowResize() {
+  const container = document.getElementById('gameContainer');
+  const W = container.clientWidth;
+  const H = container.clientHeight;
+  camera.aspect = W / H;
+  camera.updateProjectionMatrix();
+  renderer.setSize(W, H);
+}
+
+// --- Tower & Floor Generation ---
+function buildStage(stageNum) {
+  // Clear old floor meshes
+  stageFloors.forEach(f => {
+    towerGroup.remove(f.group);
+    f.group.traverse(obj => {
+      if (obj.geometry && obj.geometry !== baseSectorGeo) obj.geometry.dispose();
+    });
+  });
+  stageFloors = [];
+
+  // Theme for current stage
+  const theme = STAGE_THEMES[(stageNum - 1) % STAGE_THEMES.length];
+  normalMaterial.color.setHex(theme.normalColor);
+  dangerMaterial.color.setHex(theme.dangerColor);
+
+  // Update background gradient in CSS & Three.js fog
+  document.body.style.background = `linear-gradient(180deg, ${theme.skyTop} 0%, ${theme.skyBottom} 100%)`;
+  scene.background.set(theme.skyTop);
+  scene.fog.color.set(theme.skyBottom);
+
+  floorsInCurrentStage = 15 + Math.min(stageNum * 2, 12);
+  floorsClearedInStage = 0;
+
+  // Procedural spiral gap angle
+  let currentGapCenter = 0;
+  const gapSpread = Math.PI * 0.45; // spiral shift per floor
+
+  for (let i = 0; i < floorsInCurrentStage; i++) {
+    const floorY = -i * FLOOR_SPACING;
+    const isTopFloor = (i === 0);
+    const isVictoryFloor = (i === floorsInCurrentStage - 1);
+
+    const floorGroup = new THREE.Group();
+    floorGroup.position.y = floorY;
+
+    // Ball is at +Z (angle Math.PI / 2).
+    // On the top floor (i = 0), ensure the sector directly under the ball is solid (not a gap)
+    // so the ball bounces safely until the player rotates the tower!
+    let gapStartSector = -1;
+    let gapSectorCount = 0;
+
+    if (!isVictoryFloor) {
+      if (isTopFloor) {
+        // Safe start: gap is at angle 0 (sector 0 & 1), while ball lands at sector 3!
+        gapStartSector = 0;
+        gapSectorCount = 2; // 60 deg opening
+      } else {
+        // Spiral gap descending downwards
+        currentGapCenter = (currentGapCenter + (Math.random() < 0.5 ? 0.35 : -0.35) * Math.PI) % (Math.PI * 2);
+        if (currentGapCenter < 0) currentGapCenter += Math.PI * 2;
+        gapStartSector = Math.floor(currentGapCenter / SECTOR_ANGLE) % NUM_SECTORS;
+        gapSectorCount = stageNum > 3 ? (Math.random() < 0.4 ? 1 : 2) : 2;
+      }
+    }
+
+    const gapSectors = [];
+    for (let g = 0; g < gapSectorCount; g++) {
+      gapSectors.push((gapStartSector + g) % NUM_SECTORS);
+    }
+
+    // Danger Sectors
+    const dangerSectors = [];
+    if (!isTopFloor && !isVictoryFloor && stageNum >= 1) {
+      const dangerCount = Math.min(3, Math.floor(1 + Math.random() * (1 + stageNum * 0.4)));
+      for (let d = 0; d < dangerCount; d++) {
+        const offset = Math.floor(2 + Math.random() * (NUM_SECTORS - 4));
+        const dSec = (gapStartSector + offset) % NUM_SECTORS;
+        if (!gapSectors.includes(dSec) && !dangerSectors.includes(dSec)) {
+          dangerSectors.push(dSec);
+        }
+      }
+    }
+
+    // Build the 12 sectors of this floor
+    const sectorMeshes = [];
+    for (let s = 0; s < NUM_SECTORS; s++) {
+      if (gapSectors.includes(s)) {
+        continue; // Open Gap: no mesh!
+      }
+
+      let mat = normalMaterial;
+      let isDanger = false;
+
+      if (isVictoryFloor) {
+        mat = victoryMaterial;
+      } else if (dangerSectors.includes(s)) {
+        mat = dangerMaterial;
+        isDanger = true;
+      }
+
+      const mesh = new THREE.Mesh(baseSectorGeo, mat);
+      mesh.rotation.y = s * SECTOR_ANGLE;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.userData = { sectorIndex: s, isDanger, isVictory: isVictoryFloor };
+      floorGroup.add(mesh);
+      sectorMeshes.push(mesh);
+    }
+
+    towerGroup.add(floorGroup);
+
+    stageFloors.push({
+      index: i,
+      y: floorY,
+      group: floorGroup,
+      gapSectors,
+      dangerSectors,
+      sectorMeshes,
+      isVictory: isVictoryFloor,
+      isCleared: false,
+    });
   }
 
-  updateHud();
+  // Adjust pole length & position
+  const totalHeight = floorsInCurrentStage * FLOOR_SPACING + 15;
+  poleMesh.scale.set(1, totalHeight / 120, 1);
+  poleMesh.position.y = -(floorsInCurrentStage * FLOOR_SPACING) / 2;
+
+  updateHUD();
 }
 
-function updateHud() {
+// Reset Game State for New Game
+function resetGame(stage = 1) {
+  currentStage = stage;
+  if (stage === 1) {
+    score = 0;
+    totalFloorsCleared = 0;
+  }
+  floorsClearedInStage = 0;
+
+  towerAngle = 0;
+  towerVelocity = 0;
+  towerGroup.rotation.y = 0;
+
+  ballPhysics.y = 0.5; // Start just above floor 0
+  ballPhysics.vy = 0;
+  ballPhysics.scaleX = 1;
+  ballPhysics.scaleY = 1;
+  ballPhysics.scaleZ = 1;
+  ballPhysics.passedRingsCombo = 0;
+  ballPhysics.isFireball = false;
+
+  document.getElementById('fireBanner').classList.remove('show');
+
+  buildStage(currentStage);
+  updateHUD();
+}
+
+function updateHUD() {
   document.getElementById('hudScore').textContent = score;
-  document.getElementById('hudLevel').textContent = `STAGE ${currentStage}`;
+  document.getElementById('hudBest').textContent = Math.max(score, highScore);
+  document.getElementById('badgeCurrent').textContent = currentStage;
+  document.getElementById('badgeNext').textContent = currentStage + 1;
+
+  const pct = Math.min(100, (floorsClearedInStage / (floorsInCurrentStage - 1)) * 100);
+  document.getElementById('progressFill').style.width = `${pct}%`;
 }
 
-// Touch / Mouse Rotation Controller
-cvs.addEventListener('pointerdown', (e) => {
+// --- Player Controls (Touch & Mouse Drag with Pointer Events) ---
+const canvasEl = document.getElementById('webglCanvas');
+
+canvasEl.addEventListener('pointerdown', (e) => {
   if (gameState !== 'playing') return;
   isDragging = true;
   lastPointerX = e.clientX;
-  Sound.init();
+  try {
+    canvasEl.setPointerCapture(e.pointerId);
+  } catch (_) {}
+  AudioEngine.init();
 });
 
 window.addEventListener('pointermove', (e) => {
   if (!isDragging || gameState !== 'playing') return;
   const dx = e.clientX - lastPointerX;
   lastPointerX = e.clientX;
-  towerVelocity = dx * 0.012;
+
+  // Smooth rotation velocity
+  towerVelocity = dx * 0.0078;
   towerAngle += towerVelocity;
 });
 
-window.addEventListener('pointerup', () => { isDragging = false; });
+window.addEventListener('pointerup', (e) => {
+  isDragging = false;
+  try {
+    canvasEl.releasePointerCapture(e.pointerId);
+  } catch (_) {}
+});
+
 window.addEventListener('pointercancel', () => { isDragging = false; });
 
-function checkCollisions() {
-  ball.vy += 0.38; // Gravity
-  cameraWorldY += ball.vy;
-
-  // Ball squash recovery
-  ball.scaleX += (1 - ball.scaleX) * 0.15;
-  ball.scaleY += (1 - ball.scaleY) * 0.15;
-
-  platforms.forEach(p => {
-    if (p.isShattered) return;
-
-    // Platform relative Y to ball focal point
-    const platformScreenY = BALL_FIXED_Y + (p.worldY - cameraWorldY);
-
-    // Collision threshold at top rim
-    if (ball.vy > 0 && Math.abs(platformScreenY - BALL_FIXED_Y) < 14) {
-      // Calculate where ball hits relative to platform rotation
-      let hitA = (-towerAngle) % (Math.PI * 2);
-      if (hitA < 0) hitA += Math.PI * 2;
-
-      // 1. Check if hit is in Gap
-      let diffGap = Math.abs(hitA - p.gapAngle);
-      if (diffGap > Math.PI) diffGap = Math.PI * 2 - diffGap;
-
-      if (diffGap < p.gapSize / 2) {
-        // Passed through gap!
-        ball.passedRingsCombo++;
-        score += 10 * ball.passedRingsCombo;
-        floorsSmashed++;
-        currentStage = Math.floor(floorsSmashed / 5) + 1;
-        updateHud();
-
-        if (ball.passedRingsCombo >= 3 && !ball.isFireball) {
-          ball.isFireball = true;
-          document.getElementById('fireBanner').classList.add('show');
-        }
-
-        Sound.play('pass');
-        return;
-      }
-
-      // 2. Fireball Super Smash through platform
-      if (ball.isFireball) {
-        p.isShattered = true;
-        score += 50;
-        floorsSmashed++;
-        updateHud();
-        Sound.play('smash');
-        triggerPlatformShatter(p);
-        ball.passedRingsCombo = 0;
-        ball.isFireball = false;
-        document.getElementById('fireBanner').classList.remove('show');
-        return;
-      }
-
-      // 3. Check if hit is in Danger zone
-      if (p.dangerSize > 0) {
-        let diffDanger = Math.abs(hitA - p.dangerAngle);
-        if (diffDanger > Math.PI) diffDanger = Math.PI * 2 - diffDanger;
-
-        if (diffDanger < p.dangerSize / 2) {
-          // Dead! Splatter on danger zone
-          gameOver();
-          return;
-        }
-      }
-
-      // 4. Safe Bounce on top face!
-      cameraWorldY = p.worldY; // Snap to platform
-      ball.vy = -8.2;          // Spring bounce
-      ball.scaleX = 1.35;      // Squash
-      ball.scaleY = 0.65;
-      ball.passedRingsCombo = 0;
-      ball.isFireball = false;
-      document.getElementById('fireBanner').classList.remove('show');
-      Sound.play('bounce');
-
-      // Leave paint splatter decal on rotating platform
-      p.splatters.push({
-        angle: hitA,
-        radius: 12 + Math.random() * 8,
-        color: '#f43f5e',
-      });
-    }
-  });
-
-  // Recycle platforms that passed above camera
-  if (platforms.length && BALL_FIXED_Y + (platforms[0].worldY - cameraWorldY) < -120) {
-    const topP = platforms[platforms.length - 1];
-    platforms.shift();
-    platforms.push(createPlatform(topP.worldY + FLOOR_SPACING, currentStage + 1));
-  }
-}
-
-function triggerPlatformShatter(p) {
-  const py = BALL_FIXED_Y + (p.worldY - cameraWorldY);
-  for (let i = 0; i < 28; i++) {
-    const a = Math.random() * Math.PI * 2;
-    shatterParticles.push({
-      x: W / 2 + Math.cos(a) * (RING_RADIUS * 0.7),
-      y: py + Math.sin(a) * (RING_RADIUS * RING_TILT),
-      vx: Math.cos(a) * (4 + Math.random() * 6),
-      vy: (Math.random() - 0.7) * 8,
-      size: 4 + Math.random() * 6,
-      color: Math.random() < 0.3 ? '#ef4444' : p.theme.top,
-      life: 25,
-      maxLife: 25,
-    });
-  }
-}
-
-function gameOver() {
-  gameState = 'gameover';
-  Sound.play('shatter');
-
-  // Spawn ball death shatter
-  for (let i = 0; i < 30; i++) {
-    const a = Math.random() * Math.PI * 2;
-    shatterParticles.push({
-      x: W / 2,
-      y: BALL_FIXED_Y,
-      vx: Math.cos(a) * (4 + Math.random() * 7),
-      vy: Math.sin(a) * (4 + Math.random() * 7),
-      size: 5,
-      color: '#f43f5e',
-      life: 30,
-      maxLife: 30,
-    });
-  }
-
-  document.getElementById('finalFloors').textContent = floorsSmashed;
-  document.getElementById('finalScore').textContent = score;
-  document.getElementById('modalGameOver').classList.remove('hidden');
-}
-
-// Draw 3D Cylindrical Ring Platform
-function draw3DPlatform(p, screenY) {
-  const cx = W / 2;
-  const rx = RING_RADIUS;
-  const ry = RING_RADIUS * RING_TILT;
-  const h = RING_HEIGHT;
-
-  ctx.save();
-
-  // 1. Draw 3D Extruded Front Rim (Bottom thickness)
-  ctx.fillStyle = p.theme.rim;
-  ctx.beginPath();
-  ctx.ellipse(cx, screenY + h, rx, ry, 0, 0, Math.PI); // Front half bottom
-  ctx.lineTo(cx - rx, screenY);
-  ctx.ellipse(cx, screenY, rx, ry, 0, Math.PI, 0, true); // Front half top
-  ctx.closePath();
-  ctx.fill();
-
-  // 2. Draw Top Elliptical Platform Face
-  ctx.fillStyle = p.theme.top;
-  ctx.beginPath();
-  ctx.ellipse(cx, screenY, rx, ry, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // 3. Draw Cutout Gap (Eraser to create transparent opening)
-  ctx.globalCompositeOperation = 'destination-out';
-  const gapStart = towerAngle + p.gapAngle - p.gapSize / 2;
-  const gapEnd = towerAngle + p.gapAngle + p.gapSize / 2;
-  ctx.beginPath();
-  ctx.moveTo(cx, screenY);
-  ctx.arc(cx, screenY, rx + 10, gapStart, gapEnd);
-  ctx.closePath();
-  ctx.fill();
-  ctx.globalCompositeOperation = 'source-over';
-
-  // 4. Draw Danger Lava Sectors (Red Spikes / Slices)
-  if (p.dangerSize > 0) {
-    const dangerStart = towerAngle + p.dangerAngle - p.dangerSize / 2;
-    const dangerEnd = towerAngle + p.dangerAngle + p.dangerSize / 2;
-    
-    // Danger top face
-    ctx.fillStyle = '#ef4444';
-    ctx.beginPath();
-    ctx.moveTo(cx, screenY);
-    ctx.arc(cx, screenY, rx, dangerStart, dangerEnd);
-    ctx.closePath();
-    ctx.fill();
-
-    // Danger glowing border
-    ctx.strokeStyle = '#fee2e2';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-  }
-
-  // 5. Draw Paint Splatters on platform
-  p.splatters.forEach(s => {
-    const a = towerAngle + s.angle;
-    const sx = cx + Math.cos(a) * (rx * 0.75);
-    const sy = screenY + Math.sin(a) * (ry * 0.75);
-    ctx.fillStyle = s.color;
-    ctx.beginPath();
-    ctx.ellipse(sx, sy, s.radius, s.radius * RING_TILT, 0, 0, Math.PI * 2);
-    ctx.fill();
-  });
-
-  ctx.restore();
-}
-
-// Draw Central 3D Column Pole
-function drawCentralPole() {
-  const cx = W / 2;
-  const r = POLE_RADIUS;
-
-  const grad = ctx.createLinearGradient(cx - r, 0, cx + r, 0);
-  grad.addColorStop(0, '#0f172a');
-  grad.addColorStop(0.3, '#334155');
-  grad.addColorStop(0.7, '#64748b');
-  grad.addColorStop(1, '#0f172a');
-
-  ctx.fillStyle = grad;
-  ctx.fillRect(cx - r, 0, r * 2, H);
-
-  // Subtle highlight beam
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
-  ctx.fillRect(cx - r * 0.2, 0, r * 0.4, H);
-}
-
-// Draw Bouncing Sphere Ball
-function drawBall() {
-  if (gameState === 'gameover') return;
-
-  const cx = W / 2;
-  const cy = BALL_FIXED_Y;
-  const r = ball.r;
-
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.scale(ball.scaleX, ball.scaleY);
-
-  if (ball.isFireball) {
-    // Blazing Fireball Effect
-    ctx.shadowColor = '#f59e0b';
-    ctx.shadowBlur = 24;
-    const fGrad = ctx.createRadialGradient(-3, -3, 1, 0, 0, r);
-    fGrad.addColorStop(0, '#fef08a');
-    fGrad.addColorStop(0.5, '#f97316');
-    fGrad.addColorStop(1, '#dc2626');
-    ctx.fillStyle = fGrad;
-  } else {
-    // Shiny 3D Neon Sphere
-    ctx.shadowColor = '#f43f5e';
-    ctx.shadowBlur = 14;
-    const sGrad = ctx.createRadialGradient(-3, -3, 2, 0, 0, r);
-    sGrad.addColorStop(0, '#ffffff');
-    sGrad.addColorStop(0.35, '#f43f5e');
-    sGrad.addColorStop(1, '#881337');
-    ctx.fillStyle = sGrad;
-  }
-
-  ctx.beginPath();
-  ctx.arc(0, 0, r, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.restore();
-}
-
-function drawGame() {
-  ctx.clearRect(0, 0, W, H);
-
-  // Tower rotation inertia damping
+// --- Physics & Collision Engine ---
+function updatePhysics() {
+  // Tower Rotation Inertia Damping
   if (!isDragging) {
     towerVelocity *= 0.92;
     towerAngle += towerVelocity;
   }
+  towerGroup.rotation.y = towerAngle;
 
-  // 1. Draw 3D Central Pillar
-  drawCentralPole();
+  // Continuous Collision Sweep Check
+  const prevY = ballPhysics.y;
+  ballPhysics.vy -= 0.024; // Gravity
+  ballPhysics.y += ballPhysics.vy;
 
-  // 2. Draw 3D Helix Platforms
-  platforms.forEach(p => {
-    if (p.isShattered) return;
-    const py = BALL_FIXED_Y + (p.worldY - cameraWorldY);
-    if (py > -100 && py < H + 100) {
-      draw3DPlatform(p, py);
+  // Squash recovery
+  ballPhysics.scaleX += (1 - ballPhysics.scaleX) * 0.16;
+  ballPhysics.scaleY += (1 - ballPhysics.scaleY) * 0.16;
+  ballPhysics.scaleZ += (1 - ballPhysics.scaleZ) * 0.16;
+
+  const prevBallBottom = prevY - BALL_RADIUS;
+  const currBallBottom = ballPhysics.y - BALL_RADIUS;
+
+  // Check collision against each floor plane
+  for (let i = 0; i < stageFloors.length; i++) {
+    const floor = stageFloors[i];
+    if (floor.isCleared) continue;
+
+    // Check if the ball crossed through the floor's plane downwards during this frame
+    if (ballPhysics.vy < 0 && prevBallBottom >= floor.y - 0.05 && currBallBottom <= floor.y) {
+      // Calculate which sector the ball is hovering over
+      // Ball is fixed at x=0, z=+BALL_Z (angle Math.PI / 2 in X-Z polar coords)
+      let ballAngleInTower = (Math.PI / 2 - towerGroup.rotation.y) % (Math.PI * 2);
+      if (ballAngleInTower < 0) ballAngleInTower += Math.PI * 2;
+      const currentSector = Math.floor(ballAngleInTower / SECTOR_ANGLE) % NUM_SECTORS;
+
+      // 1. GAP CHECK (Free Fall through opening!)
+      if (floor.gapSectors.includes(currentSector)) {
+        floor.isCleared = true;
+        floorsClearedInStage++;
+        totalFloorsCleared++;
+        ballPhysics.passedRingsCombo++;
+
+        score += 10 * ballPhysics.passedRingsCombo;
+        if (score > highScore) {
+          highScore = score;
+          localStorage.setItem('helix_drop_highscore', highScore);
+        }
+        updateHUD();
+
+        AudioEngine.play('pass');
+        haptic('light');
+
+        // Check if combo triggers FIREBALL / SUPER SMASH
+        if (ballPhysics.passedRingsCombo >= 3 && !ballPhysics.isFireball) {
+          ballPhysics.isFireball = true;
+          document.getElementById('fireBanner').classList.add('show');
+          haptic('heavy');
+        }
+        continue;
+      }
+
+      // 2. FIREBALL SMASH THROUGH PLATFORM!
+      if (ballPhysics.isFireball) {
+        floor.isCleared = true;
+        floorsClearedInStage++;
+        totalFloorsCleared++;
+
+        score += 50;
+        updateHUD();
+
+        AudioEngine.play('smash');
+        haptic('heavy');
+
+        shatterFloor(floor);
+
+        ballPhysics.passedRingsCombo = 0;
+        ballPhysics.isFireball = false;
+        document.getElementById('fireBanner').classList.remove('show');
+        continue;
+      }
+
+      // 3. DANGER SECTOR HIT -> DEAD!
+      if (floor.dangerSectors.includes(currentSector)) {
+        onGameOver();
+        return;
+      }
+
+      // 4. VICTORY STAGE CLEAR!
+      if (floor.isVictory) {
+        onStageClear();
+        return;
+      }
+
+      // 5. SAFE BOUNCE!
+      ballPhysics.y = floor.y + BALL_RADIUS;
+      ballPhysics.vy = 0.36; // Spring impulse upwards
+      ballPhysics.scaleY = 0.62; // Squash
+      ballPhysics.scaleX = 1.35;
+      ballPhysics.scaleZ = 1.35;
+
+      ballPhysics.passedRingsCombo = 0;
+      ballPhysics.isFireball = false;
+      document.getElementById('fireBanner').classList.remove('show');
+
+      AudioEngine.play('bounce');
+      haptic('medium');
+
+      // Leave Paint Decal on Floor
+      addPaintSplatter(floor);
+      break;
     }
-  });
-
-  // 3. Draw Bouncing 3D Ball
-  drawBall();
-
-  // 4. Draw Particles
-  shatterParticles.forEach(pt => {
-    ctx.fillStyle = pt.color;
-    ctx.globalAlpha = pt.life / pt.maxLife;
-    ctx.beginPath();
-    ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
-    ctx.fill();
-    pt.x += pt.vx;
-    pt.y += pt.vy;
-    pt.vy += 0.4;
-    pt.life--;
-  });
-  ctx.globalAlpha = 1.0;
-  shatterParticles = shatterParticles.filter(pt => pt.life > 0);
-}
-
-function loop() {
-  if (gameState === 'playing') {
-    checkCollisions();
   }
-  drawGame();
-  requestAnimationFrame(loop);
-}
-loop();
 
+  // Update Ball Visual Mesh
+  ballMesh.position.y = ballPhysics.y;
+  ballMesh.scale.set(ballPhysics.scaleX, ballPhysics.scaleY, ballPhysics.scaleZ);
+
+  // Update Light Trail
+  ballLightTrail.position.y = ballPhysics.y + BALL_RADIUS * 0.8;
+  const trailStretch = Math.max(1, Math.min(2.2, 1 - ballPhysics.vy * 2.5));
+  ballLightTrail.scale.set(1, trailStretch, 1);
+
+  // Update Shadow on top of nearest floor below
+  let nearestFloorY = -999;
+  for (let f of stageFloors) {
+    if (!f.isCleared && f.y <= ballPhysics.y) {
+      nearestFloorY = f.y;
+      break;
+    }
+  }
+  if (nearestFloorY !== -999) {
+    ballShadowMesh.position.set(BALL_X, nearestFloorY + 0.02, BALL_Z);
+    const dist = ballPhysics.y - nearestFloorY;
+    const shadowScale = Math.max(0.3, 1 - dist * 0.2);
+    ballShadowMesh.scale.set(shadowScale, shadowScale, shadowScale);
+    ballShadowMesh.visible = dist < 4.0;
+  } else {
+    ballShadowMesh.visible = false;
+  }
+
+  // Smooth Camera Tracking (Lerp Y)
+  const targetCamY = ballPhysics.y + 3.2;
+  camera.position.y += (targetCamY - camera.position.y) * 0.12;
+  camera.lookAt(0, camera.position.y - 2.8, 0);
+
+  // Update Shatter Physics Particles
+  updateShatterPhysics();
+}
+
+// Paint Decal Splatter on Rotating Platform
+function addPaintSplatter(floor) {
+  const splatGeo = new THREE.CircleGeometry(0.25 + Math.random() * 0.12, 12);
+  splatGeo.rotateX(-Math.PI / 2);
+  const splatMat = new THREE.MeshBasicMaterial({
+    color: 0xdc2626,
+    depthWrite: false,
+  });
+  const splat = new THREE.Mesh(splatGeo, splatMat);
+  splat.position.set(BALL_X + (Math.random() - 0.5) * 0.1, 0.015, BALL_Z + (Math.random() - 0.5) * 0.1);
+
+  // Convert to floor's local coordinate so it permanently rotates with the tower!
+  floor.group.worldToLocal(splat.position);
+  floor.group.add(splat);
+  paintDecals.push(splat);
+
+  // Add 4-6 small paint droplet specks around the main splatter
+  for (let s = 0; s < 5; s++) {
+    const speckGeo = new THREE.CircleGeometry(0.04 + Math.random() * 0.04, 6);
+    speckGeo.rotateX(-Math.PI / 2);
+    const speck = new THREE.Mesh(speckGeo, splatMat);
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 0.25 + Math.random() * 0.22;
+    speck.position.set(BALL_X + Math.cos(angle) * dist, 0.015, BALL_Z + Math.sin(angle) * dist);
+    floor.group.worldToLocal(speck.position);
+    floor.group.add(speck);
+  }
+}
+
+// Shatter Floor into 3D Physics Fragments (Super Smash)
+function shatterFloor(floor) {
+  floor.sectorMeshes.forEach(mesh => {
+    mesh.visible = false; // Hide from floor
+    // Clone as physics fragment
+    const piece = new THREE.Mesh(baseSectorGeo, mesh.material);
+    piece.position.copy(mesh.position);
+    piece.position.y = floor.y;
+    piece.rotation.copy(mesh.rotation);
+    piece.rotation.y += towerGroup.rotation.y;
+
+    const angle = piece.rotation.y + SECTOR_ANGLE / 2;
+    const speed = 0.12 + Math.random() * 0.18;
+    piece.userData = {
+      vx: Math.cos(angle) * speed,
+      vy: 0.15 + Math.random() * 0.2,
+      vz: Math.sin(angle) * speed,
+      rotX: (Math.random() - 0.5) * 0.2,
+      rotY: (Math.random() - 0.5) * 0.2,
+      life: 45,
+    };
+    scene.add(piece);
+    shatterPieces.push(piece);
+  });
+}
+
+function updateShatterPhysics() {
+  for (let i = shatterPieces.length - 1; i >= 0; i--) {
+    const p = shatterPieces[i];
+    p.position.x += p.userData.vx;
+    p.position.y += p.userData.vy;
+    p.position.z += p.userData.vz;
+    p.userData.vy -= 0.015; // Gravity
+    p.rotation.x += p.userData.rotX;
+    p.rotation.y += p.userData.rotY;
+    p.userData.life--;
+
+    if (p.userData.life <= 0) {
+      scene.remove(p);
+      if (p.geometry !== baseSectorGeo) p.geometry.dispose();
+      shatterPieces.splice(i, 1);
+    }
+  }
+}
+
+// Game Over
+function onGameOver() {
+  gameState = 'gameover';
+  AudioEngine.play('shatter');
+  haptic('error');
+
+  // Shatter ball into red fragments
+  ballMesh.visible = false;
+  ballLightTrail.visible = false;
+  ballShadowMesh.visible = false;
+
+  for (let i = 0; i < 24; i++) {
+    const geo = new THREE.SphereGeometry(0.08 + Math.random() * 0.08, 8, 8);
+    const mat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.3 });
+    const bit = new THREE.Mesh(geo, mat);
+    bit.position.copy(ballMesh.position);
+    const a = Math.random() * Math.PI * 2;
+    const el = (Math.random() - 0.5) * Math.PI;
+    const spd = 0.15 + Math.random() * 0.2;
+    bit.userData = {
+      vx: Math.cos(a) * Math.cos(el) * spd,
+      vy: Math.sin(el) * spd + 0.1,
+      vz: Math.sin(a) * Math.cos(el) * spd,
+      rotX: Math.random() * 0.2,
+      rotY: Math.random() * 0.2,
+      life: 50,
+    };
+    scene.add(bit);
+    shatterPieces.push(bit);
+  }
+
+  document.getElementById('finalFloors').textContent = totalFloorsCleared;
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('modalGameOver').classList.remove('hidden');
+}
+
+// Stage Clear
+function onStageClear() {
+  gameState = 'stageclear';
+  AudioEngine.play('win');
+  haptic('success');
+
+  document.getElementById('clearNextStage').textContent = currentStage + 1;
+  document.getElementById('clearScore').textContent = score;
+  document.getElementById('modalStageClear').classList.remove('hidden');
+}
+
+// --- Main Animation Loop ---
+function animate() {
+  requestAnimationFrame(animate);
+
+  if (gameState === 'playing') {
+    updatePhysics();
+  }
+
+  renderer.render(scene, camera);
+}
+
+// --- UI Buttons ---
 document.getElementById('btnStartGame').addEventListener('click', () => {
+  AudioEngine.init();
   document.getElementById('modalStart').classList.add('hidden');
-  initGame();
+  resetGame(1);
+  ballMesh.visible = true;
+  ballLightTrail.visible = true;
   gameState = 'playing';
 });
 
 document.getElementById('btnRestartGame').addEventListener('click', () => {
+  AudioEngine.init();
   document.getElementById('modalGameOver').classList.add('hidden');
-  initGame();
+  resetGame(1);
+  ballMesh.visible = true;
+  ballLightTrail.visible = true;
   gameState = 'playing';
 });
 
-// Pause / Resume messages from parent
+document.getElementById('btnNextStage').addEventListener('click', () => {
+  AudioEngine.init();
+  document.getElementById('modalStageClear').classList.add('hidden');
+  resetGame(currentStage + 1);
+  ballMesh.visible = true;
+  ballLightTrail.visible = true;
+  gameState = 'playing';
+});
+
+// Pause / Resume Messages from Mini App container
 window.addEventListener('message', (e) => {
   if (e.data?.type === 'PAUSE_GAME' && gameState === 'playing') {
     gameState = 'paused';
   } else if (e.data?.type === 'RESUME_GAME' && gameState === 'paused') {
     gameState = 'playing';
   }
+});
+
+// Initialize on page load
+window.addEventListener('DOMContentLoaded', () => {
+  initThree();
+  resetGame(1);
+  animate();
 });
 </script>
 </body>
