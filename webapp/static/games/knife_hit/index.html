@@ -920,7 +920,10 @@ function gameOver(reason) {
   gameState = 'gameover';
   clearInterval(timerInterval);
 
-  AudioEngine.play('gameover');
+  // Play gameover sound only if not already played clash sound
+  if (reason !== 'clash') {
+    AudioEngine.play('gameover');
+  }
   triggerHaptic('error');
 
   const titleEl = document.getElementById('goTitle');

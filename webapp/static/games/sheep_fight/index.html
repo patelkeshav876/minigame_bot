@@ -194,16 +194,15 @@ canvas {
   <!-- TOP HUD -->
   <div id="hudTop">
     <div class="hud-card">
-      <span style="font-size:0.75rem; color:#94a3b8; font-weight:800;">YOU</span>
-      <span class="hud-score-p1" id="scoreP1">0</span>
+      <span style="font-size:0.72rem; color:#38bdf8; font-weight:800;">YOU HP</span>
+      <span class="hud-score-p1" id="scoreP1">15</span>
+    </div>
+    <div class="hud-card" style="font-weight:900; font-size:0.85rem; color:#fde047; letter-spacing:0.04em;">
+      ⚔️ VS ⚔️
     </div>
     <div class="hud-card">
-      <span style="font-size:0.75rem; color:#fde047;">⏱️</span>
-      <span class="hud-timer" id="timerVal">01:30</span>
-    </div>
-    <div class="hud-card">
-      <span class="hud-score-p2" id="scoreP2">0</span>
-      <span style="font-size:0.75rem; color:#94a3b8; font-weight:800;" id="oppNameLabel">BLACK RAM</span>
+      <span class="hud-score-p2" id="scoreP2">15</span>
+      <span style="font-size:0.72rem; color:#ef4444; font-weight:800;" id="oppNameLabel">BLACK RAM</span>
     </div>
   </div>
 
@@ -294,15 +293,16 @@ const Sound = {
         osc.connect(g); g.connect(this.ctx.destination);
         osc.start(t); osc.stop(t + 0.11);
       } else if (type === 'clash') {
+        // Soft spongy cartoon pop / gentle boing tap
         const osc = this.ctx.createOscillator();
         const g = this.ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(180, t);
-        osc.frequency.exponentialRampToValueAtTime(70, t + 0.14);
-        g.gain.setValueAtTime(0.06, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(260, t);
+        osc.frequency.exponentialRampToValueAtTime(130, t + 0.08);
+        g.gain.setValueAtTime(0.05, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
         osc.connect(g); g.connect(this.ctx.destination);
-        osc.start(t); osc.stop(t + 0.16);
+        osc.start(t); osc.stop(t + 0.085);
       } else if (type === 'goal') {
         [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
           const osc = this.ctx.createOscillator();
@@ -336,22 +336,22 @@ const NUM_LANES = 5;
 function getLaneWidth() { return W / NUM_LANES; }
 function getLaneCenterX(lane) { return lane * getLaneWidth() + getLaneWidth() / 2; }
 
-// Sheep Archetypes
+// Sheep Archetypes (Gentle, matched walking speeds for both players)
 const SHEEP_TYPES = {
-  small:  { name: 'Small Lamb', weight: 1, speed: 2.8, cost: 10, radius: 14, wool: 18 },
-  medium: { name: 'Battle Ram', weight: 2, speed: 2.1, cost: 20, radius: 18, wool: 24 },
-  giant:  { name: 'Giant Horn', weight: 3, speed: 1.5, cost: 30, radius: 24, wool: 30 },
+  small:  { name: 'Small Lamb', weight: 1, speed: 1.8, cost: 10, radius: 14, wool: 18 },
+  medium: { name: 'Battle Ram', weight: 2, speed: 1.4, cost: 20, radius: 18, wool: 24 },
+  giant:  { name: 'Giant Horn', weight: 3, speed: 1.0, cost: 30, radius: 24, wool: 30 },
 };
 
-// Game State
+// Game State (HP based tug-of-war, no timer)
+const STARTING_HP = 15;
 let gameState = 'ready'; // ready, playing, gameover
 let selectedType = 'small';
 let energy = 40;
 let aiEnergy = 40;
-let scoreP1 = 0;
-let scoreP2 = 0;
-let timeLeft = 90; // 90 seconds duel
-let timerInterval = null;
+let scoreP1 = STARTING_HP; // Player HP remaining
+let scoreP2 = STARTING_HP; // Opponent HP remaining
+let lastClashSoundTime = 0;
 
 // Sheep Arrays per lane
 // Each sheep: { id, lane, side: 'p1'|'p2', typeKey, x, y, vy, weight, radius, wool, speed, trot: 0, isPushing: false }
@@ -369,32 +369,16 @@ if (urlParams.get('mode') === 'arena') {
 }
 
 function initGame() {
-  scoreP1 = 0;
-  scoreP2 = 0;
+  scoreP1 = STARTING_HP;
+  scoreP2 = STARTING_HP;
   energy = 40;
   aiEnergy = 40;
-  timeLeft = 90;
   sheepList = [];
   particles = [];
   selectedType = 'small';
+  lastClashSoundTime = 0;
   updateCardsUi();
   updateScoresUi();
-
-  clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    if (gameState !== 'playing') return;
-    timeLeft--;
-    updateTimerUi();
-    if (timeLeft <= 0) {
-      finishGame();
-    }
-  }, 1000);
-}
-
-function updateTimerUi() {
-  const m = Math.floor(timeLeft / 60);
-  const s = timeLeft % 60;
-  document.getElementById('timerVal').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
 function updateScoresUi() {
@@ -480,12 +464,12 @@ cvs.addEventListener('pointerdown', (e) => {
   }
 });
 
-// AI Behavior Loop
+// AI Behavior Loop (Gentle, one by one pacing matching player)
 let aiDecisionTimer = 0;
 function updateAi() {
-  aiEnergy = Math.min(100, aiEnergy + 0.22); // Recharges
+  aiEnergy = Math.min(100, aiEnergy + 0.16); // Recharges gently
   aiDecisionTimer++;
-  if (aiDecisionTimer < 35) return;
+  if (aiDecisionTimer < 160) return; // Spawn once every ~2.8s - 3.2s
   aiDecisionTimer = 0;
 
   // Inspect lanes: Find lane that has high threat or is open
@@ -528,7 +512,7 @@ function updateAi() {
 // Lane Pushing Physics & Clash Engine
 function updatePhysics() {
   // Energy regeneration for player
-  energy = Math.min(100, energy + 0.24);
+  energy = Math.min(100, energy + 0.22);
   const fill = document.getElementById('energyFill');
   if (fill) fill.style.width = `${energy}%`;
   const val = document.getElementById('energyVal');
@@ -544,7 +528,7 @@ function updatePhysics() {
     const p2Sheep = sheepList.filter(s => s.lane === lane && s.side === 'p2').sort((a,b) => a.y - b.y);
 
     // Trot legs animation
-    sheepList.filter(s => s.lane === lane).forEach(s => { s.trot += 0.25; });
+    sheepList.filter(s => s.lane === lane).forEach(s => { s.trot += 0.20; });
 
     // Head-to-head contact detection
     if (p1Sheep.length > 0 && p2Sheep.length > 0) {
@@ -577,15 +561,15 @@ function updatePhysics() {
           }
         }
 
-        // Push resolution
+        // Push resolution (smooth and steady)
         let pushSpeed = 0;
         if (wP1 > wP2) {
-          pushSpeed = -0.7 - (wP1 - wP2) * 0.45; // Moves up towards P2 barn
+          pushSpeed = -0.4 - (wP1 - wP2) * 0.25; // Moves up towards P2 barn
         } else if (wP2 > wP1) {
-          pushSpeed = 0.7 + (wP2 - wP1) * 0.45;  // Moves down towards P1 barn
+          pushSpeed = 0.4 + (wP2 - wP1) * 0.25;  // Moves down towards P1 barn
         } else {
           // Deadlock jitter
-          pushSpeed = (Math.random() - 0.5) * 0.6;
+          pushSpeed = (Math.random() - 0.5) * 0.3;
         }
 
         leadP1.y += pushSpeed;
@@ -599,19 +583,23 @@ function updatePhysics() {
           if (p2Sheep[i].isPushing) p2Sheep[i].y = p2Sheep[i+1].y - (p2Sheep[i+1].radius + p2Sheep[i].radius);
         }
 
-        // Spawn clash spark stars
-        if (Math.random() < 0.3) {
+        // Soft spongy cartoon pop sound & gentle sparks
+        const now = performance.now();
+        if (now - lastClashSoundTime > 300) {
+          lastClashSoundTime = now;
           Sound.play('clash');
+        }
+        if (Math.random() < 0.25) {
           const midX = getLaneCenterX(lane);
           const midY = (leadP1.y + leadP2.y) / 2;
-          for (let p = 0; p < 4; p++) {
+          for (let p = 0; p < 3; p++) {
             particles.push({
               x: midX + (Math.random() - 0.5) * 16,
               y: midY + (Math.random() - 0.5) * 16,
-              vx: (Math.random() - 0.5) * 4,
-              vy: (Math.random() - 0.5) * 4,
+              vx: (Math.random() - 0.5) * 3,
+              vy: (Math.random() - 0.5) * 3,
               color: Math.random() < 0.5 ? '#fde047' : '#fff',
-              size: 4, life: 14, maxLife: 14, isStar: true
+              size: 4, life: 12, maxLife: 12, isStar: true
             });
           }
         }
@@ -627,23 +615,23 @@ function updatePhysics() {
     }
   }
 
-  // Check Barn Goal entries
+  // Check Barn Goal entries (Reduces enemy HP)
   const goalTopY = 65;
   const goalBottomY = H - 90;
 
   sheepList = sheepList.filter(s => {
-    // P1 sheep enters P2 barn
+    // P1 sheep enters P2 barn: reduce rival HP
     if (s.side === 'p1' && s.y <= goalTopY) {
-      scoreP1 += s.weight;
+      scoreP2 = Math.max(0, scoreP2 - s.weight);
       updateScoresUi();
       triggerWallBreakVibration();
       triggerGoalCelebration(s.x, goalTopY, '#38bdf8');
       broadcastScore();
       return false;
     }
-    // P2 sheep enters P1 barn
+    // P2 sheep enters P1 barn: reduce player HP
     if (s.side === 'p2' && s.y >= goalBottomY) {
-      scoreP2 += s.weight;
+      scoreP1 = Math.max(0, scoreP1 - s.weight);
       updateScoresUi();
       triggerWallBreakVibration();
       triggerGoalCelebration(s.x, goalBottomY, '#ef4444');
@@ -653,8 +641,8 @@ function updatePhysics() {
     return true;
   });
 
-  // Target limit: First to 15 points wins instantly!
-  if (scoreP1 >= 15 || scoreP2 >= 15) {
+  // Duel ends when either player's HP reaches 0!
+  if (scoreP1 <= 0 || scoreP2 <= 0) {
     finishGame();
   }
 }
@@ -700,12 +688,11 @@ function broadcastScore(isFinal = false) {
 
 function finishGame() {
   gameState = 'gameover';
-  clearInterval(timerInterval);
 
   broadcastScore(true);
 
-  const isWin = scoreP1 > scoreP2;
-  const isDraw = scoreP1 === scoreP2;
+  const isWin = scoreP2 <= 0 && scoreP1 > 0;
+  const isDraw = scoreP1 <= 0 && scoreP2 <= 0;
 
   document.getElementById('finalScoreP1').textContent = scoreP1;
   document.getElementById('finalScoreP2').textContent = scoreP2;

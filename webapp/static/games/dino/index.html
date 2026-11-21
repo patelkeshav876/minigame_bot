@@ -332,7 +332,7 @@ let gameState = 'ready'; // ready, playing, gameover, paused
 let score = 0;
 let coins = 0;
 let highScore = parseInt(localStorage.getItem('cyber_dino_high') || '0', 10);
-let speed = 6.2;
+let speed = 3.6;
 let groundY = 0;
 
 // Parallax Layers
@@ -361,7 +361,7 @@ let pickups = [];
 function initGame() {
   score = 0;
   coins = 0;
-  speed = 6.0;
+  speed = 3.6;
   groundY = H * 0.76;
 
   dino.y = groundY - dino.h;
@@ -400,7 +400,7 @@ function updateHUD() {
 function doJump() {
   if (gameState !== 'playing') return;
   if (dino.grounded) {
-    dino.vy = -12.5;
+    dino.vy = -9.8;
     dino.grounded = false;
     Sound.play('jump');
     haptic('medium');
@@ -466,12 +466,12 @@ function update() {
   if (gameState !== 'playing') return;
 
   score++;
-  speed = 6.0 + Math.min(6.5, score / 450); // Progressively accelerates
+  speed = 3.6 + Math.min(3.2, score / 900); // Gentle, comfortable ramp-up
   groundY = H * 0.76;
 
   // Dino Physics
   dino.animTick += speed * 0.08;
-  dino.vy += 0.68; // Gravity
+  dino.vy += 0.48; // Gravity
   dino.y += dino.vy;
 
   if (dino.y >= groundY - dino.h) {
@@ -494,7 +494,7 @@ function update() {
 
   // Obstacle Spawning
   const lastObs = obstacles[obstacles.length - 1];
-  const minSpacing = 220 + Math.random() * 140;
+  const minSpacing = 240 + Math.random() * 160;
 
   if (!lastObs || W - lastObs.x > minSpacing) {
     const isPterodactyl = score > 180 && Math.random() < 0.35;

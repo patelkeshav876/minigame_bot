@@ -660,19 +660,19 @@ function spawnExplosion(pos, colorHex, count = 20) {
 function update() {
   if (gameState !== 'playing') return;
 
-  // Starfield Speed Motion
+  // Starfield Speed Motion (Gentle, elegant cosmic drift)
   const starPos = starsParticles.geometry.attributes.position.array;
   for (let i = 1; i < starPos.length; i += 3) {
-    starPos[i] -= 0.25;
+    starPos[i] -= 0.08;
     if (starPos[i] < -30) starPos[i] = 30;
   }
   starsParticles.geometry.attributes.position.needsUpdate = true;
 
   // Smooth Ship Movement & Banking Tilt
   const dx = targetShipX - currentShipX;
-  currentShipX += dx * 0.16;
+  currentShipX += dx * 0.14;
   shipGroup.position.x = currentShipX;
-  shipGroup.rotation.z = -dx * 0.14; // Banking roll!
+  shipGroup.rotation.z = -dx * 0.12; // Banking roll!
 
   // Thruster flame flicker
   const flk = 0.8 + Math.random() * 0.4;
@@ -681,7 +681,7 @@ function update() {
 
   // Auto-Fire Lasers
   shootTimer++;
-  if (shootTimer >= 14) {
+  if (shootTimer >= 16) {
     shootTimer = 0;
     shootPlayerLaser();
   }
@@ -728,21 +728,21 @@ function update() {
   }
 
   // Update Enemies & Waves
-  const time = Date.now() * 0.002;
+  const time = Date.now() * 0.001;
   enemies.forEach(e => {
     // Entrance lerp
     if (e.mesh.position.y > e.targetY) {
-      e.mesh.position.y += (e.targetY - e.mesh.position.y) * 0.06;
+      e.mesh.position.y += (e.targetY - e.mesh.position.y) * 0.05;
     } else {
-      // Swaying formation motion
-      e.animTick += 0.04;
-      e.mesh.position.x = e.baseX + Math.sin(time + e.baseY) * 1.5;
+      // Gentle swaying formation motion
+      e.animTick += 0.03;
+      e.mesh.position.x = e.baseX + Math.sin(time + e.baseY) * 1.1;
     }
 
     // Alien firing
     e.fireCooldown--;
     if (e.fireCooldown <= 0) {
-      e.fireCooldown = 90 + Math.random() * 120;
+      e.fireCooldown = 150 + Math.random() * 150;
       spawnEnemyBullet(e.mesh.position);
     }
   });
@@ -777,8 +777,8 @@ function update() {
   // Update Powerups
   for (let i = powerups.length - 1; i >= 0; i--) {
     const p = powerups[i];
-    p.mesh.position.y -= 0.08;
-    p.mesh.rotation.y += 0.05;
+    p.mesh.position.y -= 0.05;
+    p.mesh.rotation.y += 0.03;
 
     // Picked up!
     if (p.mesh.position.distanceTo(shipGroup.position) < 1.5) {
@@ -820,7 +820,7 @@ function spawnEnemyBullet(pos) {
   const m = new THREE.Mesh(geo, mat);
   m.position.copy(pos);
   scene.add(m);
-  enemyBullets.push({ mesh: m, vy: 0.18 + Math.min(0.12, wave * 0.02) });
+  enemyBullets.push({ mesh: m, vy: 0.08 + Math.min(0.04, wave * 0.01) });
 }
 
 function spawnPowerup(pos) {
