@@ -257,18 +257,26 @@ async def upload_game_logo(req: LogoUploadRequest) -> dict[str, str]:
         raise HTTPException(status_code=400, detail="Invalid base64 image data")
 
     clean_ext = ".png"
+    mime_type = "image/png"
     if req.filename.lower().endswith(".jpg") or req.filename.lower().endswith(".jpeg"):
         clean_ext = ".jpg"
+        mime_type = "image/jpeg"
     elif req.filename.lower().endswith(".webp"):
         clean_ext = ".webp"
+        mime_type = "image/webp"
 
-    safe_name = f"custom_logo_{uuid4().hex[:8]}{clean_ext}"
-    dest_path = STATIC_DIR / "thumbnails" / safe_name
-    dest_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(dest_path, "wb") as f:
-        f.write(raw_bytes)
+    try:
+        safe_name = f"custom_logo_{uuid4().hex[:8]}{clean_ext}"
+        dest_path = STATIC_DIR / "thumbnails" / safe_name
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(dest_path, "wb") as f:
+            f.write(raw_bytes)
+    except Exception:
+        pass
 
-    return {"image_url": f"/static/thumbnails/{safe_name}"}
+    # Return persistent base64 Data URI so logos are saved in PostgreSQL/Supabase and survive Render redeploys
+    persistent_data_url = f"data:{mime_type};base64,{data}"
+    return {"image_url": persistent_data_url}
 
 
 @app.put("/api/admin/games/{game_id}")

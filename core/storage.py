@@ -484,7 +484,7 @@ class GameStorage:
             img = entry[4] if len(entry) > 4 else ""
             row = conn.execute("SELECT id, image_url FROM custom_games WHERE title = ? OR url = ?", (title, url)).fetchone()
             if row:
-                current_img = img if (img and "aviator_thumb" in img) else (row["image_url"] if (row["image_url"] and row["image_url"].strip()) else img)
+                current_img = row["image_url"] if (row["image_url"] and row["image_url"].strip()) else img
                 conn.execute(
                     "UPDATE custom_games SET url = ?, icon = ?, description = ?, image_url = ? WHERE id = ?",
                     (url, icon, desc, current_img, row["id"]),
