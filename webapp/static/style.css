@@ -2683,16 +2683,21 @@ body {
   padding-top: max(env(safe-area-inset-top, 0px), 36px);
   padding-left: 14px;
   padding-right: 14px;
-  padding-bottom: 10px;
+  padding-bottom: 8px;
   background: #090e1a;
   border-bottom: 2px solid rgba(56, 189, 248, 0.25);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.65);
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   z-index: 100000;
   flex-shrink: 0;
-  gap: 10px;
+  min-height: 48px;
+}
+
+/* Hide upper duplicate close and pause buttons as requested, keeping top spacing intact */
+.player-top-nav .player-floating-btn {
+  display: none !important;
 }
 
 .player-floating-btn {
@@ -4547,4 +4552,99 @@ body.theme-light .admin-banner-card {
   border-color: #e2e8f0;
   color: #0f172a;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+}
+
+/* ==================== EXPANDING THEME BUBBLE RIPPLE TRANSITION ==================== */
+.theme-bubble-wave {
+  position: fixed;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999999;
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 0.98;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.4);
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.35s ease;
+}
+.theme-bubble-wave.active {
+  transform: translate(-50%, -50%) scale(350);
+}
+.theme-bubble-wave.fade-out {
+  opacity: 0;
+}
+
+/* ==================== CARD ENTRANCE & LOGO ZOOM EFFECTS ==================== */
+/* Left-to-right & staggered entrance animation for cards */
+@keyframes cardSlideInLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-24px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes cardSlideInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(24px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Staggered card entrance on load/view */
+.custom-game-card {
+  animation: cardSlideInLeft 0.35s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+.custom-game-card:nth-child(even) {
+  animation-name: cardSlideInRight;
+}
+.custom-game-card:nth-child(1) { animation-delay: 0.03s; }
+.custom-game-card:nth-child(2) { animation-delay: 0.06s; }
+.custom-game-card:nth-child(3) { animation-delay: 0.09s; }
+.custom-game-card:nth-child(4) { animation-delay: 0.12s; }
+.custom-game-card:nth-child(5) { animation-delay: 0.15s; }
+.custom-game-card:nth-child(6) { animation-delay: 0.18s; }
+.custom-game-card:nth-child(7) { animation-delay: 0.21s; }
+.custom-game-card:nth-child(8) { animation-delay: 0.24s; }
+.custom-game-card:nth-child(n+9) { animation-delay: 0.28s; }
+
+/* Interactive zoom-in / zoom-out breathing effect on logos & card images */
+@keyframes logoBreathingZoom {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+.cgc-icon {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+}
+.custom-game-card:hover .cgc-icon,
+.custom-game-card:active .cgc-icon {
+  transform: scale(1.12) rotate(-2deg);
+}
+
+.cgc-box-img {
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.custom-game-card:hover .cgc-box-img,
+.custom-game-card:active .cgc-box-img {
+  transform: scale(1.14);
+}
+
+/* Dynamic breathing zoom on hero banner promotional logos & avatar */
+.user-avatar-wrap img {
+  animation: logoBreathingZoom 4s infinite ease-in-out;
+}
+.hero-art-box {
+  animation: logoBreathingZoom 3.6s infinite ease-in-out;
 }

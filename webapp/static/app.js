@@ -54,25 +54,49 @@
   // --- DAY / NIGHT THEME SWITCH (SCREENSHOT 1) ---
   const themeToggleBtn = document.getElementById("themeToggleBtn");
   function applyTheme(theme) {
-    if (theme === "light") {
-      document.body.classList.add("theme-light");
-      document.documentElement.classList.add("theme-light");
-      document.documentElement.setAttribute("data-theme", "light");
-    } else {
-      document.body.classList.remove("theme-light");
-      document.documentElement.classList.remove("theme-light");
-      document.documentElement.setAttribute("data-theme", "dark");
-    }
+    const isLight = (theme === "light");
+    document.body.classList.toggle("theme-light", isLight);
+    document.documentElement.classList.toggle("theme-light", isLight);
+    document.documentElement.setAttribute("data-theme", isLight ? "light" : "dark");
+    try { localStorage.setItem("app_theme", isLight ? "light" : "dark"); } catch (_) {}
   }
 
   // Initial apply
   applyTheme(localStorage.getItem("app_theme") || "dark");
 
-  themeToggleBtn?.addEventListener("click", () => {
+  function triggerThemeBubbleTransition(x, y, newTheme) {
+    const bubble = document.createElement("div");
+    bubble.className = "theme-bubble-wave";
+    bubble.style.left = `${x}px`;
+    bubble.style.top = `${y}px`;
+    if (newTheme === "light") {
+      bubble.style.background = "radial-gradient(circle, #ffffff 0%, #e2e8f0 100%)";
+    } else {
+      bubble.style.background = "radial-gradient(circle, #0b1120 0%, #060911 100%)";
+    }
+    document.body.appendChild(bubble);
+
+    // Force reflow
+    void bubble.offsetWidth;
+    bubble.classList.add("active");
+
+    setTimeout(() => {
+      applyTheme(newTheme);
+    }, 180);
+
+    setTimeout(() => {
+      bubble.classList.add("fade-out");
+      setTimeout(() => bubble.remove(), 400);
+    }, 450);
+  }
+
+  themeToggleBtn?.addEventListener("click", (e) => {
+    const rect = themeToggleBtn.getBoundingClientRect();
+    const x = e.clientX || (rect.left + rect.width / 2);
+    const y = e.clientY || (rect.top + rect.height / 2);
     const isCurrentlyLight = document.body.classList.contains("theme-light");
     const newTheme = isCurrentlyLight ? "dark" : "light";
-    applyTheme(newTheme);
-    localStorage.setItem("app_theme", newTheme);
+    triggerThemeBubbleTransition(x, y, newTheme);
     try {
       if (window.Telegram?.WebApp?.HapticFeedback) {
         window.Telegram.WebApp.HapticFeedback.impactOccurred("light");
@@ -1113,23 +1137,6 @@
   document.getElementById("btnRefreshLive")?.addEventListener("click", refreshLiveRooms);
   document.getElementById("btnRefreshProfile")?.addEventListener("click", refreshProfileAndHistory);
 
-  // Theme toggle (3D Clay Pastel <-> Dark Esports)
-  function applyTheme(theme) {
-    state.theme = theme;
-    document.documentElement.setAttribute("data-theme", theme);
-    try { localStorage.setItem("clay_theme", theme); } catch (_) {}
-    const btn = document.getElementById("btnThemeToggle");
-    if (btn) btn.textContent = theme === "clay" ? "🌙" : "✨";
-  }
-  const savedTheme = (() => {
-    try { return localStorage.getItem("clay_theme") || "clay"; } catch (_) { return "clay"; }
-  })();
-  applyTheme(savedTheme);
-
-  document.getElementById("btnThemeToggle")?.addEventListener("click", () => {
-    haptic("light");
-    applyTheme(state.theme === "clay" ? "dark" : "clay");
-  });
 
   // Category & search filtering for 50+ HTML5 games
   function classifyGameCategory(g) {
@@ -1719,15 +1726,19 @@
   const btnRestartGameInPlayer = document.getElementById("btnRestartGameInPlayer");
   const btnExitGameFromPause = document.getElementById("btnExitGameFromPause");
 
-  btnPauseGame?.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  function openPlayerPauseOverlay() {
     haptic("light");
     pauseOverlay?.classList.remove("hidden");
     const iframe = document.getElementById("customGameIframe");
     try {
       iframe?.contentWindow?.postMessage({ type: "PAUSE_GAME", action: "pause" }, "*");
     } catch (_) {}
+  }
+
+  btnPauseGame?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openPlayerPauseOverlay();
   });
 
   btnResumeGame?.addEventListener("click", () => {
@@ -2310,6 +2321,28 @@
   window.addEventListener("message", (event) => {
     const data = event.data;
     if (!data) return;
+
+    // Close & Pause forwarded from in-game buttons
+    if (
+      data.type === "closeGame" ||
+      data.type === "close" ||
+      data.type === "exitGame" ||
+      data.type === "back" ||
+      data.action === "close" ||
+      data.action === "exit"
+    ) {
+      exitGameToHome();
+      return;
+    }
+
+    if (
+      data.type === "pauseGame" ||
+      data.type === "pause" ||
+      data.action === "pause"
+    ) {
+      openPlayerPauseOverlay();
+      return;
+    }
 
     if (data.type === "OPEN_STARS_SHOP") {
       openStarsShop();

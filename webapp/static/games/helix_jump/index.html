@@ -250,6 +250,16 @@ html, body {
 
   <!-- HUD -->
   <div id="hud">
+    <!-- In-Game Close & Pause Buttons -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; pointer-events:auto;">
+      <button id="btnHelixClose" style="background:rgba(30,41,59,0.85); border:1px solid rgba(255,255,255,0.22); color:#fff; padding:6px 14px; border-radius:12px; font-weight:800; font-size:0.82rem; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 4px 12px rgba(0,0,0,0.4); backdrop-filter:blur(8px);">
+        ← Close
+      </button>
+      <button id="btnHelixPause" style="background:rgba(30,41,59,0.85); border:1px solid rgba(56,189,248,0.3); color:#38bdf8; padding:6px 14px; border-radius:12px; font-weight:800; font-size:0.82rem; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 4px 12px rgba(0,0,0,0.4); backdrop-filter:blur(8px);">
+        ⏸ Pause
+      </button>
+    </div>
+
     <div class="hud-score-row">
       <div class="hud-score-box">
         <span class="hud-score-label">Score</span>
@@ -421,13 +431,23 @@ const BALL_RADIUS = 0.38;
 const BALL_X = 0;
 const BALL_Z = (POLE_RADIUS + RING_OUTER_RADIUS) / 2; // 2.3
 
-// Stage Theme Colors (Stage 1 matching user reference image: bright lemon yellow!)
+// 15 Vibrant Stage Themes (Ketchapp & Voodoo Helix Jump Reference Palettes)
 const STAGE_THEMES = [
   { name: 'Yellow Sun', normalColor: 0xffe600, dangerColor: 0x881337, skyTop: '#3b82f6', skyBottom: '#1e3a8a' },
-  { name: 'Emerald Drop', normalColor: 0x10b981, dangerColor: 0xd97706, skyTop: '#0ea5e9', skyBottom: '#0369a1' },
-  { name: 'Coral Flame', normalColor: 0xf97316, dangerColor: 0x4c1d95, skyTop: '#6366f1', skyBottom: '#312e81' },
-  { name: 'Neon Purple', normalColor: 0xa855f7, dangerColor: 0x059669, skyTop: '#ec4899', skyBottom: '#831843' },
-  { name: 'Cyber Cyan', normalColor: 0x06b6d4, dangerColor: 0xe11d48, skyTop: '#3b82f6', skyBottom: '#1e1b4b' },
+  { name: 'Cyber Mint', normalColor: 0x10b981, dangerColor: 0xd97706, skyTop: '#0ea5e9', skyBottom: '#0369a1' },
+  { name: 'Hot Coral', normalColor: 0xf97316, dangerColor: 0x4c1d95, skyTop: '#6366f1', skyBottom: '#312e81' },
+  { name: 'Neon Violet', normalColor: 0xa855f7, dangerColor: 0x059669, skyTop: '#ec4899', skyBottom: '#831843' },
+  { name: 'Electric Cyan', normalColor: 0x06b6d4, dangerColor: 0xe11d48, skyTop: '#2563eb', skyBottom: '#0f172a' },
+  { name: 'Ruby Candy', normalColor: 0xef4444, dangerColor: 0x0284c7, skyTop: '#f97316', skyBottom: '#7c2d12' },
+  { name: 'Toxic Lime', normalColor: 0x84cc16, dangerColor: 0x701a75, skyTop: '#059669', skyBottom: '#064e3b' },
+  { name: 'Bubblegum Pink', normalColor: 0xf43f5e, dangerColor: 0x0284c7, skyTop: '#8b5cf6', skyBottom: '#4c1d95' },
+  { name: 'Imperial Gold', normalColor: 0xf59e0b, dangerColor: 0xbe123c, skyTop: '#1d4ed8', skyBottom: '#172554' },
+  { name: 'Deep Aqua', normalColor: 0x14b8a6, dangerColor: 0xe11d48, skyTop: '#3b82f6', skyBottom: '#1e3a8a' },
+  { name: 'Solar Flame', normalColor: 0xfb923c, dangerColor: 0x1e40af, skyTop: '#dc2626', skyBottom: '#7f1d1d' },
+  { name: 'Lavender Haze', normalColor: 0xc084fc, dangerColor: 0xca8a04, skyTop: '#4f46e5', skyBottom: '#1e1b4b' },
+  { name: 'Digital Matrix', normalColor: 0x22c55e, dangerColor: 0xd946ef, skyTop: '#0f766e', skyBottom: '#134e4a' },
+  { name: 'Sunset Fuchsia', normalColor: 0xd946ef, dangerColor: 0xf59e0b, skyTop: '#c026d3', skyBottom: '#581c87' },
+  { name: 'Arctic Ice', normalColor: 0x38bdf8, dangerColor: 0xb91c1c, skyTop: '#1e293b', skyBottom: '#090d16' },
 ];
 
 // Game State
@@ -1203,6 +1223,31 @@ window.addEventListener('DOMContentLoaded', () => {
   initThree();
   resetGame(1);
   animate();
+
+  document.getElementById('btnHelixClose')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    try { window.parent.postMessage({ type: 'closeGame' }, '*'); } catch (_) {}
+    if (window.history.length > 1) window.history.back();
+    else window.location.href = '/';
+  });
+
+  document.getElementById('btnHelixPause')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (gameState === 'playing') {
+      gameState = 'paused';
+      try { window.parent.postMessage({ type: 'pauseGame' }, '*'); } catch (_) {}
+    } else if (gameState === 'paused') {
+      gameState = 'playing';
+    }
+  });
+
+  // Single start popup: if embedded in webapp iframe, bypass duplicate start modal
+  if (window.self !== window.top) {
+    document.getElementById('modalStart')?.classList.add('hidden');
+    gameState = 'playing';
+    ballMesh.visible = true;
+    ballLightTrail.visible = true;
+  }
 });
 </script>
 </body>

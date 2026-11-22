@@ -1215,6 +1215,12 @@ function loop() {
 }
 loop();
 
+if (window.self !== window.top) {
+  document.getElementById('modalStart')?.classList.add('hidden');
+  initGame();
+  gameState = 'playing';
+}
+
 document.getElementById('btnStartGame').addEventListener('click', () => {
   document.getElementById('modalStart').classList.add('hidden');
   initGame();

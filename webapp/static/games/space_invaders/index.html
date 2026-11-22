@@ -897,6 +897,12 @@ window.addEventListener('message', (e) => {
 window.addEventListener('DOMContentLoaded', () => {
   initThree();
   animate();
+
+  if (window.self !== window.top) {
+    document.getElementById('modalStart')?.classList.add('hidden');
+    initGame();
+    gameState = 'playing';
+  }
 });
 </script>
 </body>

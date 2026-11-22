@@ -959,6 +959,13 @@ function loop() {
 }
 loop();
 
+// If embedded in parent app iframe, start immediately with single popup
+if (window.self !== window.top) {
+  document.getElementById('modalStart')?.classList.add('hidden');
+  initGame();
+  gameState = 'playing';
+}
+
 // Button Handlers
 document.getElementById('btnStartGame').addEventListener('click', () => {
   Sound.init();

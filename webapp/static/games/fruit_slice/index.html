@@ -195,12 +195,15 @@ canvas {
 
   <!-- Top HUD -->
   <div id="hud">
+    <button id="btnFruitClose" style="pointer-events:auto; background:rgba(30,41,59,0.88); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:6px 14px; border-radius:12px; font-weight:800; font-size:0.82rem; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+      ← Close
+    </button>
     <div class="hud-pill">
       <span class="hud-score" id="scoreVal">0</span>
       <span class="hud-level" id="levelVal">LVL 1</span>
     </div>
-    <div class="hud-pill">
-      <span class="hud-timer" id="timerVal">03:00</span>
+    <div class="hud-pill" style="display:none;">
+      <span class="hud-timer" id="timerVal">∞</span>
     </div>
     <div class="hud-pill">
       <div class="hud-lives" id="livesWrap">
@@ -226,12 +229,11 @@ canvas {
     <div class="modal-card">
       <div style="font-size: 3rem; margin-bottom: 8px;">🍉</div>
       <h1 class="modal-title">MPL FRUIT SLICE</h1>
-      <p class="modal-sub">Fast-paced 3-minute tournament cutting action!</p>
+      <p class="modal-sub">Endless blade survival action!</p>
       <ul class="rules-list">
-        <li><span>⏱️</span> <strong>3:00 Minutes limit:</strong> Score as much as possible!</li>
         <li><span>🍉</span> <strong>Slice Fruits & Combos:</strong> Level up through 15+ stages!</li>
         <li><span>💣</span> <strong>AVOID BOMBS:</strong> 1 slice = Instant Game Over!</li>
-        <li><span>❤️</span> <strong>3 Lives:</strong> Don't let 3 un-sliced fruits drop!</li>
+        <li><span>❤️</span> <strong>3 Lives:</strong> Survive as long as you can without losing 3 lives!</li>
       </ul>
       <button class="btn-start" id="btnStartGame">▶ START GAME</button>
     </div>
@@ -242,7 +244,7 @@ canvas {
     <div class="modal-card">
       <div style="font-size: 2.8rem; margin-bottom: 6px;" id="goIcon">💥</div>
       <h1 class="modal-title" id="goTitle" style="color: #ef4444;">GAME OVER</h1>
-      <p class="modal-sub" id="goReason">You hit a dangerous bomb!</p>
+      <p class="modal-sub" id="goReason">You lost all 3 lives!</p>
       
       <div style="background: rgba(0,0,0,0.5); border-radius: 16px; padding: 14px; margin-bottom: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; text-align: center;">
         <div>
@@ -264,6 +266,7 @@ canvas {
       </div>
 
       <button class="btn-start" id="btnRestart">🔄 PLAY AGAIN</button>
+      <button class="btn-start" id="btnExitToLobby" style="background:rgba(30,41,59,0.85); border:1px solid rgba(255,255,255,0.15); margin-top:8px;">← EXIT TO HUB</button>
     </div>
   </div>
 </div>
@@ -654,18 +657,9 @@ function checkLevelUp() {
   }
 }
 
-// Timer countdown (3:00 minutes)
+// Timer removed as requested - game is endless survival based on 3 lives!
 function startTimer() {
   clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    if (gameState !== 'playing') return;
-    timeLeft--;
-    updateTimerDisplay();
-
-    if (timeLeft <= 0) {
-      gameOver('timeout');
-    }
-  }, 1000);
 }
 
 function updateTimerDisplay() {
@@ -1090,6 +1084,24 @@ window.addEventListener('message', e => {
 
 window.addEventListener('pagehide', stopEntireGame);
 window.addEventListener('unload', stopEntireGame);
+
+document.getElementById('btnFruitClose')?.addEventListener('click', () => {
+  try { window.parent.postMessage({ type: 'closeGame' }, '*'); } catch (e) {}
+  if (window.history.length > 1) window.history.back();
+  else window.location.href = '/';
+});
+document.getElementById('btnExitToLobby')?.addEventListener('click', () => {
+  try { window.parent.postMessage({ type: 'closeGame' }, '*'); } catch (e) {}
+  if (window.history.length > 1) window.history.back();
+  else window.location.href = '/';
+});
+
+// Single start popup: if embedded in webapp iframe, bypass duplicate start modal
+if (window.self !== window.top) {
+  document.getElementById('modalStart')?.classList.add('hidden');
+  resetGame();
+  gameState = 'playing';
+}
 window.addEventListener('beforeunload', stopEntireGame);
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && AudioEngine.ctx && AudioEngine.ctx.state === 'running') {

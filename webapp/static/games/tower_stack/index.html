@@ -722,6 +722,12 @@ function loop() {
 }
 loop();
 
+if (window.self !== window.top) {
+  document.getElementById('modalStart')?.classList.add('hidden');
+  initGame();
+  gameState = 'playing';
+}
+
 // Tap to drop
 cvs.addEventListener('pointerdown', dropFloor);
 

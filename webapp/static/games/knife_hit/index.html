@@ -195,12 +195,19 @@ canvas {
 
   <!-- HUD -->
   <div id="hud">
+    <button id="btnKnifeClose" style="pointer-events:auto; background:rgba(30,41,59,0.88); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:6px 14px; border-radius:12px; font-weight:800; font-size:0.82rem; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+      ← Close
+    </button>
     <div class="hud-pill">
       <span class="hud-score" id="scoreVal">0</span>
       <span class="hud-stage" id="stageVal">STAGE 1</span>
     </div>
     <div class="hud-pill">
-      <span class="hud-timer" id="timerVal">03:00</span>
+      <div id="knifeLivesWrap" style="display:flex; gap:3px; font-size:1.05rem;">
+        <span id="khHeart1">❤️</span>
+        <span id="khHeart2">❤️</span>
+        <span id="khHeart3">❤️</span>
+      </div>
     </div>
     <div class="hud-pill">
       <span class="hud-apples" id="applesVal">🍎 0</span>
@@ -262,6 +269,7 @@ canvas {
       </div>
 
       <button class="btn-start" id="btnRestart">🔄 PLAY AGAIN</button>
+      <button class="btn-start" id="btnExitToLobby" style="background:rgba(30,41,59,0.85); border:1px solid rgba(255,255,255,0.15); margin-top:8px;">← EXIT TO HUB</button>
     </div>
   </div>
 </div>
@@ -416,11 +424,27 @@ resizeCanvas();
 // Game State
 let gameState = 'ready'; // ready, playing, gameover
 let score = 0;
+let lives = 3;
 let currentStageIndex = 0;
 let applesSliced = 0;
 let totalKnivesThrown = 0;
 let timeLeft = 180; // 3 minutes = 180s
 let timerInterval = null;
+
+function updateLivesHud() {
+  for (let i = 1; i <= 3; i++) {
+    const h = document.getElementById(`khHeart${i}`);
+    if (h) {
+      if (i <= lives) {
+        h.style.opacity = '1';
+        h.style.filter = 'none';
+      } else {
+        h.style.opacity = '0.22';
+        h.style.filter = 'grayscale(1)';
+      }
+    }
+  }
+}
 
 // Target state
 let targetAngle = 0;
@@ -615,6 +639,9 @@ function handleKnifeClash(x, y) {
   AudioEngine.play('clash');
   triggerHaptic('error');
 
+  lives--;
+  updateLivesHud();
+
   // Spawn ricochet knife
   ricochetKnife = {
     x,
@@ -640,9 +667,16 @@ function handleKnifeClash(x, y) {
     });
   }
 
-  setTimeout(() => {
-    gameOver('clash');
-  }, 350);
+  if (lives <= 0) {
+    setTimeout(() => {
+      gameOver('clash');
+    }, 350);
+  } else {
+    // Has remaining lives: ready next throw!
+    setTimeout(() => {
+      flyingKnife = null;
+    }, 280);
+  }
 }
 
 function triggerStageClear(tx, ty, tr) {
@@ -900,6 +934,7 @@ function startGame() {
 
   gameState = 'playing';
   score = 0;
+  lives = 3;
   applesSliced = 0;
   totalKnivesThrown = 0;
   timeLeft = 180;
@@ -915,6 +950,7 @@ function startGame() {
 
   loadStage(0);
   updateHud();
+  updateLivesHud();
   updateTimerDisplay();
   startTimer();
 }
@@ -1040,6 +1076,22 @@ document.addEventListener('visibilitychange', () => {
     try { AudioEngine.ctx.suspend(); } catch(_) {}
   }
 });
+
+document.getElementById('btnKnifeClose')?.addEventListener('click', () => {
+  try { window.parent.postMessage({ type: 'closeGame' }, '*'); } catch (e) {}
+  if (window.history.length > 1) window.history.back();
+  else window.location.href = '/';
+});
+document.getElementById('btnExitToLobby')?.addEventListener('click', () => {
+  try { window.parent.postMessage({ type: 'closeGame' }, '*'); } catch (e) {}
+  if (window.history.length > 1) window.history.back();
+  else window.location.href = '/';
+});
+
+// Single start popup: if embedded in webapp iframe, bypass duplicate start modal
+if (window.self !== window.top) {
+  startGame();
+}
 </script>
 </body>
 </html>
