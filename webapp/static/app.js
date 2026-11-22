@@ -1669,9 +1669,9 @@
       if (psoTitle) psoTitle.textContent = title;
       if (psoSub) {
         if (title.toLowerCase().includes("fruit")) {
-          psoSub.textContent = "⏱️ 3:00 Mins • Slice Fruits & Combos • 3 Lives • AVOID BOMBS!";
+          psoSub.textContent = "🍉 Endless Survival • Slice Fruits & Combos • 3 Lives • AVOID BOMBS!";
         } else if (title.toLowerCase().includes("knife")) {
-          psoSub.textContent = "⏱️ 3:00 Mins • Hit rotating target • Don't clash blades • 15+ Levels!";
+          psoSub.textContent = "🗡️ 3 Lives • Hit rotating target • Don't clash blades • 15+ Levels!";
         } else {
           psoSub.textContent = "Compete for tournament high scores, earn coins & climb global ranks!";
         }

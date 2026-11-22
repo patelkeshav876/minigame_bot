@@ -663,16 +663,8 @@ function startTimer() {
 }
 
 function updateTimerDisplay() {
-  const m = Math.floor(timeLeft / 60);
-  const s = timeLeft % 60;
-  const str = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
   const el = document.getElementById('timerVal');
-  if (el) el.textContent = str;
-  if (timeLeft <= 30) {
-    el.style.color = '#ef4444';
-  } else {
-    el.style.color = '#f59e0b';
-  }
+  if (el) el.textContent = 'SURVIVAL';
 }
 
 function updateHud() {
@@ -949,6 +941,7 @@ function startGame() {
   timeLeft = 180;
   slicedCount = 0;
   maxCombo = 1;
+  spawnCooldown = 20;
 
   fruits = [];
   slicedHalves = [];
@@ -1096,11 +1089,11 @@ document.getElementById('btnExitToLobby')?.addEventListener('click', () => {
   else window.location.href = '/';
 });
 
-// Single start popup: if embedded in webapp iframe, bypass duplicate start modal
+// Single start popup: if embedded in webapp iframe, start game immediately and use webapp player back button
 if (window.self !== window.top) {
-  document.getElementById('modalStart')?.classList.add('hidden');
-  resetGame();
-  gameState = 'playing';
+  const closeBtn = document.getElementById('btnFruitClose');
+  if (closeBtn) closeBtn.style.display = 'none';
+  startGame();
 }
 window.addEventListener('beforeunload', stopEntireGame);
 document.addEventListener('visibilitychange', () => {

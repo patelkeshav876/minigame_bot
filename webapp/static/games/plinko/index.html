@@ -3,12 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>3D Plinko Fortune</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<title>Plinko Fortune</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
 body {
-  background: #090d16;
+  background: #0f172a;
   color: #fff;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   overflow: hidden;
@@ -23,11 +22,11 @@ body {
   width: 100vw;
   max-width: 480px;
   height: 100vh;
-  background: radial-gradient(circle at 50% 25%, #1d3557 0%, #0f172a 60%, #050811 100%);
+  background: radial-gradient(circle at 50% 20%, #2563eb 0%, #1e3a8a 45%, #0f172a 90%);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 0 35px rgba(0,0,0,0.9);
+  box-shadow: 0 0 30px rgba(0,0,0,0.8);
 }
 canvas {
   width: 100%;
@@ -46,15 +45,15 @@ canvas {
   justify-content: space-between;
   align-items: center;
   z-index: 20;
-  background: linear-gradient(180deg, rgba(9,13,22,0.92) 0%, rgba(9,13,22,0) 100%);
+  background: linear-gradient(180deg, rgba(15,23,42,0.85) 0%, rgba(15,23,42,0) 100%);
   pointer-events: none;
 }
 .header-btn {
   pointer-events: auto;
-  background: rgba(30, 41, 59, 0.88);
-  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(255,255,255,0.15);
   color: #fff;
-  padding: 7px 14px;
+  padding: 7px 12px;
   border-radius: 12px;
   font-size: 0.82rem;
   font-weight: 800;
@@ -62,27 +61,26 @@ canvas {
   align-items: center;
   gap: 5px;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-  backdrop-filter: blur(10px);
-  transition: transform 0.1s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  backdrop-filter: blur(8px);
 }
-.header-btn:active { transform: scale(0.94); }
+.header-btn:active { transform: scale(0.95); }
 .header-stats {
   pointer-events: auto;
   display: flex;
   gap: 8px;
 }
 .stat-pill {
-  background: rgba(15, 23, 42, 0.88);
-  border: 1px solid rgba(255,255,255,0.18);
-  padding: 5px 12px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 5px 10px;
   border-radius: 20px;
   font-size: 0.82rem;
   font-weight: 800;
   display: flex;
   align-items: center;
   gap: 5px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
 /* BOTTOM CONTROLS */
@@ -97,7 +95,7 @@ canvas {
   align-items: center;
   gap: 10px;
   z-index: 20;
-  background: linear-gradient(0deg, rgba(9,13,22,0.98) 0%, rgba(9,13,22,0.7) 70%, transparent 100%);
+  background: linear-gradient(0deg, rgba(15,23,42,0.95) 0%, rgba(15,23,42,0.7) 70%, transparent 100%);
   pointer-events: none;
 }
 .drop-btn {
@@ -106,12 +104,12 @@ canvas {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   color: #fff;
   border: none;
-  padding: 13px;
+  padding: 12px;
   border-radius: 14px;
   font-size: 1rem;
   font-weight: 900;
   letter-spacing: 0.03em;
-  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.45), inset 0 1px 2px rgba(255,255,255,0.4);
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.4), inset 0 1px 2px rgba(255,255,255,0.4);
   cursor: pointer;
   display: flex;
   justify-content: center;
@@ -122,171 +120,111 @@ canvas {
 .drop-btn:active { transform: scale(0.96); }
 .drop-btn.multi {
   flex: 0 0 auto;
-  padding: 13px 18px;
+  padding: 12px 16px;
   background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
-  box-shadow: 0 6px 18px rgba(139, 92, 246, 0.45);
+  box-shadow: 0 6px 18px rgba(139, 92, 246, 0.4);
 }
 
 /* DROP INSTRUCTION BANNER */
 .drop-hint {
   position: absolute;
-  top: 52px;
+  top: 55px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   font-weight: 900;
   color: #f8fafc;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+  text-shadow: 0 2px 10px rgba(0,0,0,0.6);
   pointer-events: none;
   z-index: 10;
   letter-spacing: 0.02em;
-  animation: pulseHint 2.4s infinite ease-in-out;
+  animation: pulseHint 2s infinite ease-in-out;
   white-space: nowrap;
 }
 @keyframes pulseHint {
-  0%, 100% { opacity: 0.95; transform: translateX(-50%) scale(1); }
-  50% { opacity: 0.4; transform: translateX(-50%) scale(0.97); }
+  0%, 100% { opacity: 0.9; transform: translateX(-50%) scale(1); }
+  50% { opacity: 0.45; transform: translateX(-50%) scale(0.96); }
 }
 
 /* OVERLAYS & MODALS */
 .overlay {
   position: absolute;
   inset: 0;
-  background: rgba(6, 11, 20, 0.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(15,23,42,0.85);
+  backdrop-filter: blur(8px);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 40;
+  z-index: 50;
   padding: 24px;
+  opacity: 1;
+  transition: opacity 0.2s;
 }
-.overlay.hidden { display: none !important; }
+.overlay.hidden { display: none; opacity: 0; }
 .card {
-  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-  border: 1.5px solid rgba(56, 189, 248, 0.35);
+  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid rgba(255,255,255,0.15);
   border-radius: 24px;
-  padding: 28px 24px;
+  padding: 24px;
   width: 100%;
-  max-width: 330px;
+  max-width: 340px;
   text-align: center;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.85);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.7);
 }
-.card h2 {
-  font-size: 1.5rem;
-  font-weight: 900;
-  margin-bottom: 8px;
-  color: #38bdf8;
-}
-.card p {
-  color: #94a3b8;
-  font-size: 0.85rem;
-  margin-bottom: 20px;
-  line-height: 1.45;
-}
+.card h2 { font-size: 1.6rem; font-weight: 900; margin-bottom: 8px; }
+.card p { font-size: 0.9rem; color: #94a3b8; margin-bottom: 20px; line-height: 1.4; }
 .modal-btn {
   width: 100%;
-  padding: 12px;
-  border-radius: 12px;
-  font-weight: 900;
-  font-size: 0.95rem;
+  padding: 13px;
+  border-radius: 14px;
   border: none;
+  font-size: 1rem;
+  font-weight: 900;
   cursor: pointer;
-  margin-top: 8px;
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
 }
 .modal-btn.primary {
-  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
   color: #fff;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.5);
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.4);
 }
 .modal-btn.secondary {
-  background: rgba(30, 41, 59, 0.8);
-  color: #cbd5e1;
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.1);
+  color: #e2e8f0;
 }
-
-/* Floating multiplier tags overlay */
-.multiplier-overlay {
-  position: absolute;
-  bottom: 68px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: space-around;
-  padding: 0 14px;
-  pointer-events: none;
-  z-index: 15;
+.jackpot-anim {
+  font-size: 3rem;
+  animation: bounce 0.6s infinite alternate;
 }
-.mult-tag {
-  flex: 1;
-  margin: 0 2px;
-  padding: 6px 2px;
-  border-radius: 8px;
-  font-size: 0.75rem;
-  font-weight: 900;
-  text-align: center;
-  color: #ffffff;
-  background: rgba(15, 23, 42, 0.88);
-  border: 1px solid rgba(255,255,255,0.2);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-  backdrop-filter: blur(6px);
-  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-}
-.mult-tag.jackpot {
-  background: linear-gradient(180deg, #d97706 0%, #b45309 100%);
-  border: 1.5px solid #fde047;
-  color: #fff;
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
-  transform: scale(1.08);
+@keyframes bounce {
+  from { transform: translateY(0); }
+  to { transform: translateY(-12px); }
 }
 </style>
 </head>
 <body>
 
 <div id="gameContainer">
-  <!-- TOP HEADER -->
+  <canvas id="cvs"></canvas>
+
   <div class="top-header">
-    <button class="header-btn" id="btnClose" title="Close to Hub">
-      <span>←</span> <span>Close</span>
+    <button class="header-btn" id="btnCloseGame">
+      <span>←</span> Close
     </button>
     <div class="header-stats">
-      <div class="stat-pill">
-        <span style="color:#f59e0b;">🪙</span>
-        <span id="coinDisplay">1,000</span>
-      </div>
-      <div class="stat-pill">
-        <span style="color:#38bdf8;">🏆</span>
-        <span id="scoreDisplay">0</span>
-      </div>
+      <div class="stat-pill"><span style="color:#facc15;">🪙</span> <span id="coinDisplay">500</span></div>
+      <div class="stat-pill"><span style="color:#38bdf8;">🏆</span> <span id="scoreDisplay">0</span></div>
     </div>
-    <div style="display:flex; gap:6px;">
-      <button class="header-btn" id="btnSound" title="Toggle Sound" style="padding:7px 9px;">🔊</button>
-      <button class="header-btn" id="btnPause" title="Pause Game" style="padding:7px 11px;">⏸️</button>
-    </div>
+    <button class="header-btn" id="btnPauseGame">⏸️</button>
   </div>
 
-  <div class="drop-hint">
-    <span>★ Tap Top to Drop 3D Coin ★</span>
-  </div>
+  <div class="drop-hint">Tap anywhere at the top to drop!</div>
 
-  <!-- 3D WebGL Canvas -->
-  <canvas id="webglCanvas"></canvas>
-
-  <!-- MULTIPLIERS OVERLAY ROW -->
-  <div class="multiplier-overlay" id="multiplierRow">
-    <div class="mult-tag">0.2x</div>
-    <div class="mult-tag">0.5x</div>
-    <div class="mult-tag">1.2x</div>
-    <div class="mult-tag">3x</div>
-    <div class="mult-tag jackpot">50x 🎁</div>
-    <div class="mult-tag">3x</div>
-    <div class="mult-tag">1.2x</div>
-    <div class="mult-tag">0.5x</div>
-    <div class="mult-tag">0.2x</div>
-  </div>
-
-  <!-- BOTTOM CONTROLS -->
   <div class="bottom-bar">
     <button class="drop-btn" id="btnDropOne">
       <span>🪙</span> DROP (10)
@@ -309,7 +247,7 @@ canvas {
   <!-- JACKPOT REWARD CELEBRATION -->
   <div class="overlay hidden" id="jackpotOverlay">
     <div class="card">
-      <div style="font-size:3rem; margin-bottom:6px;">🎁✨</div>
+      <div class="jackpot-anim">🎁✨</div>
       <h2 style="color:#fde047;">50x MEGA JACKPOT!</h2>
       <p id="jackpotDesc">Incredible lucky drop right into the center gift box! +500 Coins awarded!</p>
       <button class="modal-btn primary" id="btnClaimJackpot">🎉 CLAIM REWARD</button>
@@ -319,459 +257,525 @@ canvas {
 
 <script>
 (() => {
-  'use strict';
+  const cvs = document.getElementById('cvs');
+  const ctx = cvs.getContext('2d');
+  let W = 0, H = 0;
 
-  // --- AUDIO SYNTHESIS ---
-  let audioCtx = null;
-  let soundEnabled = true;
-  function initAudio() {
-    if (!audioCtx) {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (AC) audioCtx = new AC();
-    }
-    if (audioCtx && audioCtx.state === 'suspended') {
-      audioCtx.resume().catch(() => {});
-    }
-  }
-
-  function playSound(type) {
-    if (!soundEnabled || !audioCtx) return;
-    try {
-      const t = audioCtx.currentTime;
-      if (type === 'peg') {
-        const osc = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(520 + Math.random() * 280, t);
-        osc.frequency.exponentialRampToValueAtTime(140, t + 0.06);
-        g.gain.setValueAtTime(0.12, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
-        osc.connect(g);
-        g.connect(audioCtx.destination);
-        osc.start(t);
-        osc.stop(t + 0.06);
-      } else if (type === 'drop') {
-        const osc = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(420, t);
-        osc.frequency.linearRampToValueAtTime(840, t + 0.08);
-        g.gain.setValueAtTime(0.14, t);
-        g.gain.linearRampToValueAtTime(0.001, t + 0.08);
-        osc.connect(g);
-        g.connect(audioCtx.destination);
-        osc.start(t);
-        osc.stop(t + 0.08);
-      } else if (type === 'jackpot') {
-        [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
-          const osc = audioCtx.createOscillator();
-          const g = audioCtx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, t + idx * 0.09);
-          g.gain.setValueAtTime(0.2, t + idx * 0.09);
-          g.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.09 + 0.3);
-          osc.connect(g);
-          g.connect(audioCtx.destination);
-          osc.start(t + idx * 0.09);
-          osc.stop(t + idx * 0.09 + 0.3);
-        });
+  // Sound Engine
+  const Sound = {
+    ctx: null,
+    init() {
+      if (!this.ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) this.ctx = new AC();
       }
-    } catch (_) {}
-  }
-
-  function haptic(type) {
-    if (navigator.vibrate) {
-      if (type === 'heavy') navigator.vibrate([30, 20, 30]);
-      else navigator.vibrate(12);
+      if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+    },
+    peg() {
+      if (!this.ctx) return;
+      try {
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.connect(g); g.connect(this.ctx.destination);
+        const freq = 600 + Math.random() * 400;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        g.gain.setValueAtTime(0.08, this.ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
+        osc.start(); osc.stop(this.ctx.currentTime + 0.08);
+      } catch (_) {}
+    },
+    bucket(isCenter) {
+      if (!this.ctx) return;
+      try {
+        const notes = isCenter ? [523.25, 659.25, 783.99, 1046.50] : [440, 554.37];
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.connect(g); g.connect(this.ctx.destination);
+          osc.type = isCenter ? 'triangle' : 'sine';
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.07);
+          g.gain.setValueAtTime(0.12, this.ctx.currentTime + idx * 0.07);
+          g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.07 + 0.25);
+          osc.start(this.ctx.currentTime + idx * 0.07);
+          osc.stop(this.ctx.currentTime + idx * 0.07 + 0.25);
+        });
+      } catch (_) {}
     }
+  };
+
+  function haptic(type = 'light') {
+    try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred(type); } catch (_) {}
   }
 
-  // --- GAME STATE ---
-  const COIN_COST = 10;
-  let coins = parseInt(localStorage.getItem('plinko_coins') || '1000', 10);
+  // Game Parameters
+  let coins = parseInt(localStorage.getItem('plinko_coins') || '500', 10);
   let score = 0;
   let isPaused = false;
   let isStopped = false;
 
-  const BUCKETS = [
-    { mult: 0.2, label: '0.2x', xMin: -6.0, xMax: -4.67, isCenter: false },
-    { mult: 0.5, label: '0.5x', xMin: -4.67, xMax: -3.33, isCenter: false },
-    { mult: 1.2, label: '1.2x', xMin: -3.33, xMax: -2.0, isCenter: false },
-    { mult: 3.0, label: '3x',   xMin: -2.0, xMax: -0.67, isCenter: false },
-    { mult: 50.0, label: '50x 🎁', xMin: -0.67, xMax: 0.67, isCenter: true },
-    { mult: 3.0, label: '3x',   xMin: 0.67, xMax: 2.0, isCenter: false },
-    { mult: 1.2, label: '1.2x', xMin: 2.0, xMax: 3.33, isCenter: false },
-    { mult: 0.5, label: '0.5x', xMin: 3.33, xMax: 4.67, isCenter: false },
-    { mult: 0.2, label: '0.2x', xMin: 4.67, xMax: 6.0, isCenter: false },
+  const COIN_COST = 10;
+  let activeBalls = [];
+  let pegs = [];
+  let buckets = [];
+  let particles = [];
+  let floatTexts = [];
+  let centerDeflectors = [];
+
+  // Bucket Layout (9 buckets at bottom)
+  // [ 0.2x | 0.5x | 1.2x | 3x | 50x 🎁 | 3x | 1.2x | 0.5x | 0.2x ]
+  const BUCKET_CONFIGS = [
+    { mult: 0.2, label: '0.2x', color: '#64748b', isCenter: false },
+    { mult: 0.5, label: '0.5x', color: '#38bdf8', isCenter: false },
+    { mult: 1.2, label: '1.2x', color: '#818cf8', isCenter: false },
+    { mult: 3.0, label: '3x', color: '#ec4899', isCenter: false },
+    { mult: 50.0, label: '50x 🎁', color: '#eab308', isCenter: true },
+    { mult: 3.0, label: '3x', color: '#ec4899', isCenter: false },
+    { mult: 1.2, label: '1.2x', color: '#818cf8', isCenter: false },
+    { mult: 0.5, label: '0.5x', color: '#38bdf8', isCenter: false },
+    { mult: 0.2, label: '0.2x', color: '#64748b', isCenter: false },
   ];
 
-  // --- THREE.JS 3D ENGINE ---
-  const canvas = document.getElementById('webglCanvas');
-  const container = document.getElementById('gameContainer');
-  let scene, camera, renderer;
-  let pegMeshes = [];
-  let pegData = [];
-  let ballObjects = [];
-  let particleMeshes = [];
+  function resize() {
+    W = cvs.width = cvs.parentElement.clientWidth;
+    H = cvs.height = cvs.parentElement.clientHeight;
+    initBoard();
+  }
+  window.addEventListener('resize', resize);
 
-  // Materials
-  let pegMaterial, pegFlashMaterial, ballMaterial, boardMaterial, sideRailMaterial;
+  // Initialize Pegs & Deflectors
+  function initBoard() {
+    pegs = [];
+    buckets = [];
+    centerDeflectors = [];
 
-  function initThree() {
-    const W = container.clientWidth;
-    const H = container.clientHeight;
-
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0a101d);
-
-    // Perspective Camera tilted slightly downward for genuine 3D perspective
-    camera = new THREE.PerspectiveCamera(46, W / H, 0.1, 100);
-    camera.position.set(0, -0.6, 17.5);
-    camera.lookAt(0, -0.4, 0);
-
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
-    renderer.setSize(W, H);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-    // Lighting
-    const ambient = new THREE.AmbientLight(0xffffff, 0.65);
-    scene.add(ambient);
-
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
-    dirLight.position.set(6, 14, 12);
-    dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 1024;
-    dirLight.shadow.mapSize.height = 1024;
-    scene.add(dirLight);
-
-    const goldPoint = new THREE.PointLight(0xf59e0b, 1.2, 16);
-    goldPoint.position.set(0, -6.5, 4);
-    scene.add(goldPoint);
-
-    // 3D Cabinet Board Backing
-    const boardGeo = new THREE.BoxGeometry(13.6, 17.2, 0.6);
-    boardMaterial = new THREE.MeshStandardMaterial({
-      color: 0x111c30,
-      metalness: 0.3,
-      roughness: 0.6
-    });
-    const board = new THREE.Mesh(boardGeo, boardMaterial);
-    board.position.set(0, 0, -0.4);
-    board.receiveShadow = true;
-    scene.add(board);
-
-    // 3D Side Rails (Gold/Metallic Trim)
-    const railGeo = new THREE.BoxGeometry(0.5, 17.2, 1.2);
-    sideRailMaterial = new THREE.MeshStandardMaterial({
-      color: 0x2563eb,
-      metalness: 0.85,
-      roughness: 0.2
-    });
-    const leftRail = new THREE.Mesh(railGeo, sideRailMaterial);
-    leftRail.position.set(-6.55, 0, 0.1);
-    scene.add(leftRail);
-
-    const rightRail = new THREE.Mesh(railGeo, sideRailMaterial);
-    rightRail.position.set(6.55, 0, 0.1);
-    scene.add(rightRail);
-
-    // 3D Peg Materials
-    pegMaterial = new THREE.MeshStandardMaterial({
-      color: 0xe2e8f0,
-      metalness: 0.9,
-      roughness: 0.15
-    });
-    pegFlashMaterial = new THREE.MeshStandardMaterial({
-      color: 0xfef08a,
-      emissive: 0xfacc15,
-      emissiveIntensity: 1.5,
-      metalness: 0.6,
-      roughness: 0.2
-    });
-
-    ballMaterial = new THREE.MeshStandardMaterial({
-      color: 0xfbbf24,
-      metalness: 0.95,
-      roughness: 0.1,
-      emissive: 0x92400e,
-      emissiveIntensity: 0.3
-    });
-
-    // Build 3D Peg Pyramid (8 Rows, 3 to 10 pegs)
+    const topY = 110;
+    const bottomY = H - 145;
     const numRows = 8;
-    const topY = 5.2;
-    const bottomY = -4.2;
-    const rowHeight = (topY - bottomY) / (numRows - 1);
+    const rowHeight = (bottomY - topY) / (numRows - 0.5);
 
-    const pegGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.8, 16);
-    pegGeo.rotateX(Math.PI / 2);
-
+    // Staggered Peg Grid (Pyramid / Diamond shape)
     for (let r = 0; r < numRows; r++) {
       const pinsInRow = 3 + r; // 3, 4, 5, 6, 7, 8, 9, 10
-      const spacing = 11.2 / (pinsInRow + 1);
+      const spacing = Math.min(38, (W - 36) / (pinsInRow + 1));
       const rowWidth = (pinsInRow - 1) * spacing;
-      const startX = -rowWidth / 2;
-      const py = topY - r * rowHeight;
+      const startX = (W - rowWidth) / 2;
+      const py = topY + r * rowHeight;
 
       for (let c = 0; c < pinsInRow; c++) {
         const px = startX + c * spacing;
-        const mesh = new THREE.Mesh(pegGeo, pegMaterial);
-        mesh.position.set(px, py, 0.1);
-        mesh.castShadow = true;
-        scene.add(mesh);
-
-        pegMeshes.push(mesh);
-        pegData.push({
+        pegs.push({
           x: px,
           y: py,
-          radius: 0.18,
-          flashTimer: 0,
-          mesh: mesh
+          r: 3.5,
+          hitAnim: 0
         });
       }
     }
 
-    // Special Lucky Draw Center Deflector above 50x Slot
-    const wedgeGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.9, 16);
-    wedgeGeo.rotateX(Math.PI / 2);
-    const wedgeMesh = new THREE.Mesh(wedgeGeo, pegFlashMaterial);
-    wedgeMesh.position.set(0, -3.2, 0.1);
-    scene.add(wedgeMesh);
-    pegData.push({
-      x: 0,
-      y: -3.2,
-      radius: 0.28,
-      flashTimer: 0,
-      mesh: wedgeMesh,
-      isJackpotPin: true
+    // Special Lucky Draw Deflector Wedge above the Center Gift
+    // Makes the center gift rare and exciting like a true jackpot prize!
+    const midX = W / 2;
+    const wedgeY = bottomY - rowHeight * 1.5;
+    centerDeflectors.push({
+      x: midX,
+      y: wedgeY,
+      r: 7,
+      isJackpotPin: true,
+      hitAnim: 0
     });
 
-    // 3D Bottom Slot Slat Dividers
-    const dividerGeo = new THREE.BoxGeometry(0.12, 2.2, 1.0);
-    const dividerMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, metalness: 0.7, roughness: 0.3 });
-    for (let i = 0; i <= 9; i++) {
-      const divX = -6.0 + i * (12.0 / 9);
-      const divMesh = new THREE.Mesh(dividerGeo, dividerMat);
-      divMesh.position.set(divX, -6.6, 0.2);
-      scene.add(divMesh);
-    }
-  }
+    // Buckets at the bottom
+    const numBuckets = BUCKET_CONFIGS.length;
+    const bWidth = (W - 20) / numBuckets;
+    const bStartX = 10;
+    const bHeight = 55;
 
-  // --- RESIZE ---
-  function onResize() {
-    if (!renderer || !camera) return;
-    const W = container.clientWidth;
-    const H = container.clientHeight;
-    camera.aspect = W / H;
-    camera.updateProjectionMatrix();
-    renderer.setSize(W, H);
-  }
-  window.addEventListener('resize', onResize);
-
-  // --- DROP BALL ---
-  const ballGeo = new THREE.SphereGeometry(0.32, 24, 24);
-
-  function dropBall(dropXNorm) {
-    if (coins < COIN_COST) {
-      alert("Not enough coins! Need 10 coins to drop.");
-      return;
-    }
-    initAudio();
-    coins -= COIN_COST;
-    updateUI();
-    playSound('drop');
-    haptic('light');
-
-    // Horizontal drop coordinate in 3D world [-5.0 to 5.0]
-    const worldX = (dropXNorm !== undefined) ? dropXNorm : ((Math.random() - 0.5) * 4.0);
-
-    const mesh = new THREE.Mesh(ballGeo, ballMaterial);
-    mesh.position.set(worldX, 6.8, 0.2);
-    mesh.castShadow = true;
-    scene.add(mesh);
-
-    ballObjects.push({
-      mesh: mesh,
-      x: worldX,
-      y: 6.8,
-      vx: (Math.random() - 0.5) * 0.04,
-      vy: -0.02,
-      radius: 0.32
-    });
-  }
-
-  // --- UPDATE PHYSICS ---
-  const gravity = -0.0075;
-  const bounceFriction = 0.62;
-
-  function updatePhysics() {
-    for (let bIdx = ballObjects.length - 1; bIdx >= 0; bIdx--) {
-      const b = ballObjects[bIdx];
-
-      b.vy += gravity;
-      b.vx *= 0.99; // Air resistance
-      b.x += b.vx;
-      b.y += b.vy;
-
-      // Side wall bounce
-      if (b.x - b.radius < -5.9) {
-        b.x = -5.9 + b.radius;
-        b.vx = Math.abs(b.vx) * bounceFriction;
-      } else if (b.x + b.radius > 5.9) {
-        b.x = 5.9 - b.radius;
-        b.vx = -Math.abs(b.vx) * bounceFriction;
-      }
-
-      // Collide with 3D Pegs
-      for (let p of pegData) {
-        const dx = b.x - p.x;
-        const dy = b.y - p.y;
-        const dist = Math.hypot(dx, dy);
-        const minDist = b.radius + p.radius;
-
-        if (dist < minDist) {
-          const angle = Math.atan2(dy, dx);
-          b.x = p.x + Math.cos(angle) * minDist;
-          b.y = p.y + Math.sin(angle) * minDist;
-
-          const speed = Math.hypot(b.vx, b.vy);
-          const bounceAngle = angle + (Math.random() - 0.5) * 0.35;
-          b.vx = Math.cos(bounceAngle) * speed * bounceFriction;
-          b.vy = Math.sin(bounceAngle) * speed * bounceFriction;
-
-          // Flash peg
-          p.flashTimer = 8;
-          p.mesh.material = pegFlashMaterial;
-          playSound('peg');
-          haptic('light');
-
-          // Spawn 3D sparks
-          spawn3DSparks(p.x, p.y);
-          break;
-        }
-      }
-
-      // Anti-stuck gentle downward assist
-      if (b.y < -3.5 && Math.abs(b.vy) < 0.03) {
-        b.vy = Math.min(b.vy, -0.05);
-        b.vx += (Math.random() - 0.5) * 0.04;
-      }
-
-      // Check slot entry at bottom (Y <= -6.2)
-      if (b.y <= -6.2) {
-        // Find which bucket
-        let landedBucket = BUCKETS[4]; // Default center
-        for (let bucket of BUCKETS) {
-          if (b.x >= bucket.xMin && b.x <= bucket.xMax) {
-            landedBucket = bucket;
-            break;
-          }
-        }
-
-        const winAmount = Math.round(COIN_COST * landedBucket.mult);
-        coins += winAmount;
-        score += winAmount;
-        updateUI();
-
-        if (landedBucket.isCenter) {
-          playSound('jackpot');
-          haptic('heavy');
-          document.getElementById('jackpotOverlay').classList.remove('hidden');
-        } else {
-          playSound('drop');
-          haptic('medium');
-        }
-
-        // Remove ball mesh from 3D scene
-        scene.remove(b.mesh);
-        if (b.mesh.geometry) b.mesh.geometry.dispose();
-        ballObjects.splice(bIdx, 1);
-        continue;
-      }
-
-      // Update mesh position
-      b.mesh.position.x = b.x;
-      b.mesh.position.y = b.y;
-      b.mesh.rotation.z -= b.vx * 1.5;
-    }
-
-    // Decay Peg Flash
-    for (let p of pegData) {
-      if (p.flashTimer > 0) {
-        p.flashTimer--;
-        if (p.flashTimer <= 0) {
-          p.mesh.material = p.isJackpotPin ? pegFlashMaterial : pegMaterial;
-        }
-      }
-    }
-
-    // Update 3D Sparks
-    for (let i = particleMeshes.length - 1; i >= 0; i--) {
-      const pt = particleMeshes[i];
-      pt.mesh.position.x += pt.vx;
-      pt.mesh.position.y += pt.vy;
-      pt.life--;
-      pt.mesh.scale.multiplyScalar(0.92);
-      if (pt.life <= 0) {
-        scene.remove(pt.mesh);
-        if (pt.mesh.geometry) pt.mesh.geometry.dispose();
-        particleMeshes.splice(i, 1);
-      }
-    }
-  }
-
-  // --- 3D SPARKS ---
-  const sparkGeo = new THREE.SphereGeometry(0.06, 8, 8);
-  const sparkMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
-
-  function spawn3DSparks(x, y) {
-    if (particleMeshes.length > 30) return;
-    for (let i = 0; i < 4; i++) {
-      const mesh = new THREE.Mesh(sparkGeo, sparkMat);
-      mesh.position.set(x, y, 0.4);
-      scene.add(mesh);
-      particleMeshes.push({
-        mesh: mesh,
-        vx: (Math.random() - 0.5) * 0.08,
-        vy: (Math.random() - 0.5) * 0.08,
-        life: 14
+    for (let b = 0; b < numBuckets; b++) {
+      const cfg = BUCKET_CONFIGS[b];
+      buckets.push({
+        x: bStartX + b * bWidth,
+        y: bottomY,
+        w: bWidth,
+        h: bHeight,
+        mult: cfg.mult,
+        label: cfg.label,
+        color: cfg.color,
+        isCenter: cfg.isCenter,
+        bounceAnim: 0,
+        sparkAnim: 0
       });
     }
   }
 
-  // --- UI UPDATE ---
-  function updateUI() {
-    document.getElementById('coinDisplay').textContent = coins.toLocaleString();
-    document.getElementById('scoreDisplay').textContent = score.toLocaleString();
-    try { localStorage.setItem('plinko_coins', coins); } catch (_) {}
+  // Spawn Ball from Drop Position
+  function dropBall(dropX) {
+    if (coins < COIN_COST) {
+      alert("Not enough coins! Need 10 coins to drop.");
+      return;
+    }
+    Sound.init();
+    coins -= COIN_COST;
+    updateStatsUI();
+
+    const clampedX = Math.max(30, Math.min(W - 30, dropX || (W / 2 + (Math.random() - 0.5) * 60)));
+
+    activeBalls.push({
+      x: clampedX,
+      y: 75,
+      vx: (Math.random() - 0.5) * 1.5,
+      vy: 1.0,
+      r: 5.5,
+      color: '#facc15',
+      glow: '#eab308',
+      trail: [],
+    });
+
+    haptic('light');
   }
 
-  // --- ANIMATION LOOP ---
-  function animate() {
+  function updateStatsUI() {
+    document.getElementById('coinDisplay').textContent = coins;
+    document.getElementById('scoreDisplay').textContent = score;
+    localStorage.setItem('plinko_coins', coins);
+  }
+
+  // Main Loop
+  let animId = null;
+  function gameLoop() {
     if (isStopped) return;
-    requestAnimationFrame(animate);
     if (!isPaused) {
       updatePhysics();
     }
-    renderer.render(scene, camera);
+    draw();
+    animId = requestAnimationFrame(gameLoop);
   }
 
-  // --- INPUT & TOUCH CONTROLS ---
-  function handlePointerDrop(e) {
-    if (e.target.closest('button') || e.target.closest('.bottom-bar')) return;
-    initAudio();
-    const rect = canvas.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    // Only drop if tapped in upper half
-    if (clientY - rect.top < rect.height * 0.38) {
-      const normX = ((clientX - rect.left) / rect.width - 0.5) * 10.0;
-      dropBall(Math.max(-4.8, Math.min(4.8, normX)));
+  function updatePhysics() {
+    const gravity = 0.22;
+    const bounceFriction = 0.65;
+
+    // Update Balls
+    for (let bIdx = activeBalls.length - 1; bIdx >= 0; bIdx--) {
+      const ball = activeBalls[bIdx];
+
+      ball.vy += gravity;
+      ball.vx *= 0.99; // air resistance
+      ball.x += ball.vx;
+      ball.y += ball.vy;
+
+      // Anti-stuck gentle nudge near lower rows
+      if (ball.y > H - 180 && Math.abs(ball.vy) < 0.8) {
+        ball.vy = Math.max(ball.vy + 0.5, 1.5);
+        ball.vx += (Math.random() - 0.5) * 1.0;
+      }
+
+      // Wall bounce
+      if (ball.x - ball.r < 8) {
+        ball.x = 8 + ball.r;
+        ball.vx = Math.abs(ball.vx) * bounceFriction;
+      } else if (ball.x + ball.r > W - 8) {
+        ball.x = W - 8 - ball.r;
+        ball.vx = -Math.abs(ball.vx) * bounceFriction;
+      }
+
+      // Ball trail
+      ball.trail.push({ x: ball.x, y: ball.y, life: 8 });
+      if (ball.trail.length > 8) ball.trail.shift();
+
+      // Collide with Pegs
+      for (const peg of pegs) {
+        const dx = ball.x - peg.x;
+        const dy = ball.y - peg.y;
+        const dist = Math.hypot(dx, dy);
+        const minDist = ball.r + peg.r;
+
+        if (dist < minDist) {
+          // Push ball outside peg
+          const angle = Math.atan2(dy, dx);
+          ball.x = peg.x + Math.cos(angle) * minDist;
+          ball.y = peg.y + Math.sin(angle) * minDist;
+
+          // Normal reflection with small randomness
+          const speed = Math.hypot(ball.vx, ball.vy);
+          const bounceAngle = angle + (Math.random() - 0.5) * 0.4;
+          ball.vx = Math.cos(bounceAngle) * speed * bounceFriction;
+          ball.vy = Math.sin(bounceAngle) * speed * bounceFriction;
+
+          // Peg hit flash
+          peg.hitAnim = 1.0;
+          Sound.peg();
+          haptic('light');
+
+          // Small spark
+          if (particles.length < 100) {
+            particles.push({
+              x: peg.x, y: peg.y,
+              vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3,
+              color: '#fef08a', size: 3, life: 10, maxLife: 10
+            });
+          }
+        }
+      }
+
+      // Collide with Jackpot Center Deflectors
+      for (const def of centerDeflectors) {
+        const dx = ball.x - def.x;
+        const dy = ball.y - def.y;
+        const dist = Math.hypot(dx, dy);
+        const minDist = ball.r + def.r;
+
+        if (dist < minDist) {
+          const angle = Math.atan2(dy, dx);
+          ball.x = def.x + Math.cos(angle) * minDist;
+          ball.y = def.y + Math.sin(angle) * minDist;
+          const speed = Math.hypot(ball.vx, ball.vy);
+          ball.vx = Math.cos(angle) * speed * 0.8;
+          ball.vy = Math.sin(angle) * speed * 0.8;
+          def.hitAnim = 1.0;
+          Sound.peg();
+        }
+      }
+
+      // Check Bucket entry
+      for (const bucket of buckets) {
+        if (ball.y + ball.r >= bucket.y && ball.x >= bucket.x && ball.x <= bucket.x + bucket.w) {
+          // Landed in bucket!
+          const winAmount = COIN_COST * bucket.mult;
+          coins += winAmount;
+          score += winAmount;
+          updateStatsUI();
+
+          bucket.bounceAnim = 1.0;
+          bucket.sparkAnim = 1.0;
+          Sound.bucket(bucket.isCenter);
+          haptic(bucket.isCenter ? 'heavy' : 'medium');
+
+          floatTexts.push({
+            x: bucket.x + bucket.w / 2,
+            y: bucket.y - 10,
+            text: `+${winAmount}`,
+            color: bucket.isCenter ? '#fde047' : '#fff',
+            life: 40,
+            size: bucket.isCenter ? 22 : 16
+          });
+
+          // Confetti for high wins or center jackpot
+          if (bucket.isCenter) {
+            triggerJackpotModal(winAmount);
+          }
+
+          for (let p = 0; p < (bucket.isCenter ? 35 : 12); p++) {
+            particles.push({
+              x: bucket.x + bucket.w / 2,
+              y: bucket.y + 10,
+              vx: (Math.random() - 0.5) * (bucket.isCenter ? 8 : 4),
+              vy: -Math.random() * (bucket.isCenter ? 8 : 4) - 2,
+              color: bucket.color,
+              size: 4,
+              life: 25,
+              maxLife: 25
+            });
+          }
+
+          // Remove ball
+          activeBalls.splice(bIdx, 1);
+          break;
+        }
+      }
+
+      // Fall off screen bottom cleanup
+      if (ball.y > H + 50) {
+        activeBalls.splice(bIdx, 1);
+      }
+    }
+
+    // Decay Peg Anims
+    pegs.forEach(p => { if (p.hitAnim > 0) p.hitAnim -= 0.08; });
+    centerDeflectors.forEach(d => { if (d.hitAnim > 0) d.hitAnim -= 0.08; });
+    buckets.forEach(b => {
+      if (b.bounceAnim > 0) b.bounceAnim -= 0.05;
+      if (b.sparkAnim > 0) b.sparkAnim -= 0.04;
+    });
+
+    // Update Particles
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.15;
+      p.life--;
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+
+    // Update Floating Text
+    for (let i = floatTexts.length - 1; i >= 0; i--) {
+      const ft = floatTexts[i];
+      ft.y -= 1.2;
+      ft.life--;
+      if (ft.life <= 0) floatTexts.splice(i, 1);
     }
   }
-  window.addEventListener('pointerdown', handlePointerDrop);
+
+  function triggerJackpotModal(amount) {
+    const overlay = document.getElementById('jackpotOverlay');
+    const desc = document.getElementById('jackpotDesc');
+    if (desc) desc.textContent = `Incredible lucky drop right into the center gift box! +${amount} Coins awarded!`;
+    if (overlay) overlay.classList.remove('hidden');
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // Subtle background grid
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+    ctx.lineWidth = 1;
+    const gridStep = 40;
+    for (let x = 0; x < W; x += gridStep) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let y = 0; y < H; y += gridStep) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+
+    // Top Drop Zone Indicator
+    ctx.strokeStyle = 'rgba(250, 204, 21, 0.35)';
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(20, 80); ctx.lineTo(W - 20, 80); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Draw Pegs
+    for (const peg of pegs) {
+      ctx.save();
+      const glow = peg.hitAnim > 0;
+      if (glow) {
+        ctx.shadowColor = '#fde047';
+        ctx.shadowBlur = 12 * peg.hitAnim;
+      }
+      ctx.fillStyle = glow ? '#ffffff' : 'rgba(255, 255, 255, 0.88)';
+      ctx.beginPath();
+      ctx.arc(peg.x, peg.y, peg.r + (glow ? 2 : 0), 0, Math.PI * 2);
+      ctx.fill();
+
+      // Outer ring
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Draw Lucky Jackpot Deflector Pin
+    for (const def of centerDeflectors) {
+      ctx.save();
+      ctx.fillStyle = '#f59e0b';
+      ctx.shadowColor = '#f59e0b';
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.arc(def.x, def.y, def.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = '900 9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('★', def.x, def.y);
+      ctx.restore();
+    }
+
+    // Draw Buckets / Gift Boxes at bottom
+    for (const b of buckets) {
+      ctx.save();
+      const bounceY = b.bounceAnim > 0 ? Math.sin(b.bounceAnim * Math.PI) * -8 : 0;
+      const by = b.y + bounceY;
+
+      // Bucket container box
+      ctx.fillStyle = b.isCenter ? 'rgba(234, 179, 8, 0.25)' : 'rgba(30, 41, 59, 0.75)';
+      ctx.strokeStyle = b.isCenter ? '#fde047' : b.color;
+      ctx.lineWidth = b.isCenter ? 2.5 : 1.5;
+
+      ctx.beginPath();
+      ctx.roundRect(b.x + 2, by, b.w - 4, b.h, [8, 8, 4, 4]);
+      ctx.fill();
+      ctx.stroke();
+
+      // Divider pins
+      ctx.fillStyle = '#94a3b8';
+      ctx.beginPath();
+      ctx.roundRect(b.x + b.w - 2.5, b.y - 12, 5, 20, 2);
+      ctx.fill();
+
+      // Label / Multiplier
+      ctx.fillStyle = b.isCenter ? '#fde047' : '#fff';
+      ctx.font = b.isCenter ? '900 13px sans-serif' : '800 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(b.label, b.x + b.w / 2, by + 22);
+
+      // Gift Box icon
+      ctx.font = '14px sans-serif';
+      ctx.fillText(b.isCenter ? '🎁' : '📦', b.x + b.w / 2, by + 42);
+
+      ctx.restore();
+    }
+
+    // Draw Active Balls
+    for (const ball of activeBalls) {
+      // Trail
+      for (const t of ball.trail) {
+        ctx.fillStyle = 'rgba(250, 204, 21, 0.15)';
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, ball.r * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.save();
+      ctx.shadowColor = ball.glow;
+      ctx.shadowBlur = 10;
+      // Gold Coin Body
+      ctx.fillStyle = ball.color;
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Coin Star Crest
+      ctx.fillStyle = '#78350f';
+      ctx.font = '900 9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('★', ball.x, ball.y);
+      ctx.restore();
+    }
+
+    // Draw Particles
+    for (const p of particles) {
+      ctx.save();
+      ctx.globalAlpha = p.life / p.maxLife;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Draw Floating Numbers
+    for (const ft of floatTexts) {
+      ctx.save();
+      ctx.font = `900 ${ft.size}px sans-serif`;
+      ctx.fillStyle = ft.color;
+      ctx.textAlign = 'center';
+      ctx.shadowColor = 'rgba(0,0,0,0.8)';
+      ctx.shadowBlur = 6;
+      ctx.fillText(ft.text, ft.x, ft.y);
+      ctx.restore();
+    }
+  }
+
+  // --- Input Handlers ---
+  cvs.addEventListener('pointerdown', (e) => {
+    const rect = cvs.getBoundingClientRect();
+    const touchX = e.clientX - rect.left;
+    const touchY = e.clientY - rect.top;
+    if (touchY < 140) {
+      dropBall(touchX);
+    }
+  });
 
   document.getElementById('btnDropOne').addEventListener('click', () => {
     dropBall();
@@ -780,62 +784,96 @@ canvas {
   document.getElementById('btnDropFive').addEventListener('click', () => {
     for (let i = 0; i < 5; i++) {
       setTimeout(() => {
-        dropBall((Math.random() - 0.5) * 3.5);
-      }, i * 160);
+        dropBall(W / 2 + (Math.random() - 0.5) * 120);
+      }, i * 220);
     }
   });
+
+  // Pause & Exit Handlers
+  const pauseOverlay = document.getElementById('pauseOverlay');
+  document.getElementById('btnPauseGame').addEventListener('click', () => {
+    isPaused = true;
+    pauseOverlay.classList.remove('hidden');
+    if (Sound.ctx && Sound.ctx.state === 'running') {
+      try { Sound.ctx.suspend(); } catch (_) {}
+    }
+  });
+
+  document.getElementById('btnResume').addEventListener('click', () => {
+    isPaused = false;
+    pauseOverlay.classList.add('hidden');
+    if (Sound.ctx && Sound.ctx.state === 'suspended') {
+      try { Sound.ctx.resume(); } catch (_) {}
+    }
+  });
+
+  function exitGame() {
+    stopEntireGame();
+    try {
+      window.parent?.postMessage({ action: 'close', type: 'closeGame' }, '*');
+    } catch (_) {}
+    if (window.history.length > 1) window.history.back();
+    else window.location.href = '/';
+  }
+
+  document.getElementById('btnCloseGame').addEventListener('click', exitGame);
+  document.getElementById('btnExitFromPause').addEventListener('click', exitGame);
 
   document.getElementById('btnClaimJackpot').addEventListener('click', () => {
     document.getElementById('jackpotOverlay').classList.add('hidden');
   });
 
-  // Sound toggle
-  const btnSound = document.getElementById('btnSound');
-  btnSound.addEventListener('click', () => {
-    soundEnabled = !soundEnabled;
-    btnSound.textContent = soundEnabled ? '🔊' : '🔇';
-  });
-
-  // Pause & Exit
-  function pauseGame() {
-    isPaused = true;
-    document.getElementById('pauseOverlay').classList.remove('hidden');
-  }
-  function resumeGame() {
-    isPaused = false;
-    document.getElementById('pauseOverlay').classList.add('hidden');
-  }
-  function closeGame() {
+  function stopEntireGame() {
     isStopped = true;
-    try { window.parent.postMessage({ type: 'closeGame' }, '*'); } catch (_) {}
-    if (window.history.length > 1) window.history.back();
-    else window.location.href = '/';
+    if (animId) {
+      cancelAnimationFrame(animId);
+      animId = null;
+    }
+    if (Sound.ctx) {
+      try {
+        Sound.ctx.suspend();
+        Sound.ctx.close();
+      } catch (_) {}
+      Sound.ctx = null;
+    }
   }
 
-  document.getElementById('btnPause').addEventListener('click', pauseGame);
-  document.getElementById('btnResume').addEventListener('click', resumeGame);
-  document.getElementById('btnClose').addEventListener('click', closeGame);
-  document.getElementById('btnExitFromPause').addEventListener('click', closeGame);
-
-  // Lifecycle listeners
   window.addEventListener('message', (e) => {
     const act = e.data?.action || e.data?.type || e.data?.cmd;
     if (act === 'destroy' || act === 'stop' || act === 'close') {
-      closeGame();
+      stopEntireGame();
     } else if (act === 'pause' || act === 'PAUSE_GAME') {
-      pauseGame();
+      isPaused = true;
+      if (Sound.ctx && Sound.ctx.state === 'running') {
+        try { Sound.ctx.suspend(); } catch (_) {}
+      }
     } else if (act === 'resume' || act === 'RESUME_GAME') {
-      resumeGame();
+      isPaused = false;
+      if (Sound.ctx && Sound.ctx.state === 'suspended') {
+        try { Sound.ctx.resume(); } catch (_) {}
+      }
     }
   });
 
-  window.addEventListener('pagehide', closeGame);
-  window.addEventListener('beforeunload', closeGame);
+  window.addEventListener('pagehide', stopEntireGame);
+  window.addEventListener('unload', stopEntireGame);
+  window.addEventListener('beforeunload', stopEntireGame);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && Sound.ctx && Sound.ctx.state === 'running') {
+      try { Sound.ctx.suspend(); } catch (_) {}
+    }
+  });
 
-  // START
-  initThree();
-  updateUI();
-  animate();
+  // If embedded in webapp iframe, hide redundant inner close button
+  if (window.self !== window.top) {
+    const closeBtn = document.getElementById('btnCloseGame');
+    if (closeBtn) closeBtn.style.display = 'none';
+  }
+
+  // Start
+  resize();
+  updateStatsUI();
+  gameLoop();
 })();
 </script>
 </body>

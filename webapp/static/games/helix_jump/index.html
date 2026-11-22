@@ -1241,8 +1241,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Single start popup: if embedded in webapp iframe, bypass duplicate start modal
+  // Single start popup & clean navigation: if embedded in webapp iframe, hide redundant inner buttons and start
   if (window.self !== window.top) {
+    const innerNav = document.getElementById('btnHelixClose')?.parentElement;
+    if (innerNav) innerNav.style.display = 'none';
     document.getElementById('modalStart')?.classList.add('hidden');
     gameState = 'playing';
     ballMesh.visible = true;

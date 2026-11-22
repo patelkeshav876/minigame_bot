@@ -1088,8 +1088,10 @@ document.getElementById('btnExitToLobby')?.addEventListener('click', () => {
   else window.location.href = '/';
 });
 
-// Single start popup: if embedded in webapp iframe, bypass duplicate start modal
+// Single start popup: if embedded in webapp iframe, bypass duplicate start modal and use webapp player back button
 if (window.self !== window.top) {
+  const closeBtn = document.getElementById('btnKnifeClose');
+  if (closeBtn) closeBtn.style.display = 'none';
   startGame();
 }
 </script>

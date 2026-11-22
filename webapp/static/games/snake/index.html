@@ -340,30 +340,33 @@ function initThree() {
   scene.background = new THREE.Color(0x050b14);
   scene.fog = new THREE.Fog(0x050b14, 18, 42);
 
-  // Isometric / Tilt Perspective Camera
-  camera = new THREE.PerspectiveCamera(46, W / H, 0.1, 100);
-  camera.position.set(0, 16.5, 14.5);
-  camera.lookAt(0, -1.0, 0);
+  // Clean 2D Top-Down Camera Perspective
+  camera = new THREE.PerspectiveCamera(44, W / H, 0.1, 100);
+  camera.position.set(0, 22.5, 0.001);
+  camera.lookAt(0, 0, 0);
 
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
   renderer.setSize(W, H);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-  // Lights
-  const ambient = new THREE.AmbientLight(0xffffff, 0.45);
+  // Lights optimized to make the 3D Snake pop on the 2D board
+  const ambient = new THREE.AmbientLight(0xffffff, 0.55);
   scene.add(ambient);
 
-  const dirLight = new THREE.DirectionalLight(0x10b981, 1.2);
-  dirLight.position.set(8, 18, 12);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.95);
+  dirLight.position.set(7, 20, 9);
   dirLight.castShadow = true;
+  dirLight.shadow.mapSize.width = 1024;
+  dirLight.shadow.mapSize.height = 1024;
   scene.add(dirLight);
 
-  const blueLight = new THREE.DirectionalLight(0x38bdf8, 0.8);
-  blueLight.position.set(-8, 12, -8);
-  scene.add(blueLight);
+  const greenGlow = new THREE.DirectionalLight(0x10b981, 0.4);
+  greenGlow.position.set(-8, 15, -8);
+  scene.add(greenGlow);
 
-  // Build 3D Arena Board
+  // Build 2D Arena Board
   createBoard();
 
   // Create 3D Food Mesh
@@ -375,46 +378,41 @@ function initThree() {
 function createBoard() {
   boardGroup = new THREE.Group();
 
-  // Platform Floor
-  const floorGeo = new THREE.BoxGeometry(GRID_SIZE * CELL_SIZE + 0.6, 0.4, GRID_SIZE * CELL_SIZE + 0.6);
+  // Clean Flat 2D Board Floor
+  const floorGeo = new THREE.PlaneGeometry(GRID_SIZE * CELL_SIZE, GRID_SIZE * CELL_SIZE);
   const floorMat = new THREE.MeshStandardMaterial({
-    color: 0x0f172a,
-    roughness: 0.6,
-    metalness: 0.2,
+    color: 0x070d18,
+    roughness: 0.85,
+    metalness: 0.1,
   });
   const floor = new THREE.Mesh(floorGeo, floorMat);
-  floor.position.y = -0.22;
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = 0;
   floor.receiveShadow = true;
   boardGroup.add(floor);
 
-  // Glowing Grid Lines
-  const gridHelper = new THREE.GridHelper(GRID_SIZE * CELL_SIZE, GRID_SIZE, 0x10b981, 0x1e293b);
+  // Clean 2D Grid Lines
+  const gridHelper = new THREE.GridHelper(GRID_SIZE * CELL_SIZE, GRID_SIZE, 0x10b981, 0x172554);
   gridHelper.position.y = 0.01;
   boardGroup.add(gridHelper);
 
-  // Glowing Outer Neon Rails
-  const railMat = new THREE.MeshStandardMaterial({
-    color: 0x10b981,
-    roughness: 0.2,
-    emissive: 0x059669,
-    emissiveIntensity: 0.6,
-  });
-
-  const railH = 0.35, railW = 0.18;
-  const len = GRID_SIZE * CELL_SIZE + 0.6;
+  // Outer Flat 2D Neon Border Rails
+  const railMat = new THREE.MeshBasicMaterial({ color: 0x10b981 });
+  const railH = 0.08, railW = 0.14;
+  const len = GRID_SIZE * CELL_SIZE;
 
   // North & South
-  [-HALF_GRID - 0.15, HALF_GRID + 0.15].forEach(z => {
+  [-HALF_GRID, HALF_GRID].forEach(z => {
     const geo = new THREE.BoxGeometry(len, railH, railW);
     const m = new THREE.Mesh(geo, railMat);
-    m.position.set(0, railH / 2, z);
+    m.position.set(0, 0.04, z);
     boardGroup.add(m);
   });
   // East & West
-  [-HALF_GRID - 0.15, HALF_GRID + 0.15].forEach(x => {
+  [-HALF_GRID, HALF_GRID].forEach(x => {
     const geo = new THREE.BoxGeometry(railW, railH, len);
     const m = new THREE.Mesh(geo, railMat);
-    m.position.set(x, railH / 2, 0);
+    m.position.set(x, 0.04, 0);
     boardGroup.add(m);
   });
 
@@ -422,20 +420,22 @@ function createBoard() {
 }
 
 function createFoodMesh() {
-  const geo = new THREE.DodecahedronGeometry(0.38, 0);
+  const geo = new THREE.SphereGeometry(0.38, 24, 24);
   const mat = new THREE.MeshStandardMaterial({
     color: 0xef4444,
     roughness: 0.15,
-    metalness: 0.8,
+    metalness: 0.7,
     emissive: 0xdc2626,
-    emissiveIntensity: 0.7,
+    emissiveIntensity: 0.5,
   });
   foodMesh = new THREE.Mesh(geo, mat);
   foodMesh.castShadow = true;
+  foodMesh.position.y = 0.4;
   scene.add(foodMesh);
 
   // Food glow point light
-  foodLight = new THREE.PointLight(0xef4444, 1.5, 3.5);
+  foodLight = new THREE.PointLight(0xef4444, 1.4, 4);
+  foodLight.position.y = 0.5;
   foodMesh.add(foodLight);
 }
 
@@ -600,28 +600,39 @@ function updateSnakeVisuals() {
     const idx = snakeMeshes.length;
     const isHead = (idx === 0);
 
-    const geo = new THREE.BoxGeometry(0.85, 0.72, 0.85);
-    const color = isHead ? 0x38bdf8 : (idx % 2 === 0 ? 0x10b981 : 0x059669);
+    // 3D Smooth Circular Spheres instead of boxes
+    const geo = new THREE.SphereGeometry(isHead ? 0.46 : 0.42, 28, 28);
+    const color = isHead ? 0x06b6d4 : (idx % 2 === 0 ? 0x10b981 : 0x059669);
     const mat = new THREE.MeshStandardMaterial({
       color: color,
-      roughness: 0.25,
-      metalness: 0.4,
-      emissive: isHead ? 0x0284c7 : 0x047857,
-      emissiveIntensity: 0.4,
+      roughness: 0.2,
+      metalness: 0.5,
+      emissive: isHead ? 0x0891b2 : 0x047857,
+      emissiveIntensity: 0.35,
     });
     const m = new THREE.Mesh(geo, mat);
     m.castShadow = true;
     m.receiveShadow = true;
 
-    // Glowing eyes on head
+    // Glowing 3D eyes on head
     if (isHead) {
-      const eyeGeo = new THREE.SphereGeometry(0.12, 8, 8);
+      const eyeGeo = new THREE.SphereGeometry(0.12, 16, 16);
       const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const pupilGeo = new THREE.SphereGeometry(0.06, 12, 12);
+      const pupilMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+
       const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
-      leftEye.position.set(-0.25, 0.25, 0.42);
+      leftEye.position.set(-0.24, 0.22, 0.32);
+      const leftPupil = new THREE.Mesh(pupilGeo, pupilMat);
+      leftPupil.position.set(0, 0, 0.08);
+      leftEye.add(leftPupil);
       m.add(leftEye);
+
       const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
-      rightEye.position.set(0.25, 0.25, 0.42);
+      rightEye.position.set(0.24, 0.22, 0.32);
+      const rightPupil = new THREE.Mesh(pupilGeo, pupilMat);
+      rightPupil.position.set(0, 0, 0.08);
+      rightEye.add(rightPupil);
       m.add(rightEye);
     }
 
@@ -629,16 +640,20 @@ function updateSnakeVisuals() {
     snakeMeshes.push(m);
   }
 
-  // Update segment positions
+  // Update segment positions & smooth circular slithering
   for (let i = 0; i < snake.length; i++) {
     const s = snake[i];
     const m = snakeMeshes[i];
     const wp = gridToWorld(s.x, s.z);
 
-    // Smooth lerp to cell position
-    m.position.x += (wp.x - m.position.x) * 0.45;
-    m.position.y = 0.42;
-    m.position.z += (wp.z - m.position.z) * 0.45;
+    // Smooth fluid lerp to cell position
+    m.position.x += (wp.x - m.position.x) * 0.55;
+    m.position.y = 0.44;
+    m.position.z += (wp.z - m.position.z) * 0.55;
+
+    // Smooth organic tapering towards tail
+    const taper = i === 0 ? 1.05 : Math.max(0.65, 1.0 - (i / (snake.length + 3)) * 0.4);
+    m.scale.set(taper, taper, taper);
 
     // Head rotation
     if (i === 0) {
