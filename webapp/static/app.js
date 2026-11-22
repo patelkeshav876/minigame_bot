@@ -51,6 +51,35 @@
     addGame: document.getElementById("view-add-game"),
   };
 
+  // --- DAY / NIGHT THEME SWITCH (SCREENSHOT 1) ---
+  const themeToggleBtn = document.getElementById("themeToggleBtn");
+  function applyTheme(theme) {
+    if (theme === "light") {
+      document.body.classList.add("theme-light");
+      document.documentElement.classList.add("theme-light");
+      document.documentElement.setAttribute("data-theme", "light");
+    } else {
+      document.body.classList.remove("theme-light");
+      document.documentElement.classList.remove("theme-light");
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
+  }
+
+  // Initial apply
+  applyTheme(localStorage.getItem("app_theme") || "dark");
+
+  themeToggleBtn?.addEventListener("click", () => {
+    const isCurrentlyLight = document.body.classList.contains("theme-light");
+    const newTheme = isCurrentlyLight ? "dark" : "light";
+    applyTheme(newTheme);
+    localStorage.setItem("app_theme", newTheme);
+    try {
+      if (window.Telegram?.WebApp?.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred("light");
+      }
+    } catch (_) {}
+  });
+
   function teardownArenaIframe() {
     const iframe = document.getElementById("arenaGameIframe");
     if (iframe) {

@@ -463,6 +463,7 @@ let ballPhysics = {
   scaleZ: 1,
   passedRingsCombo: 0,
   isFireball: false,
+  boosterTimer: 0,
 };
 
 // --- Three.js Initialization ---
@@ -854,6 +855,18 @@ function updatePhysics() {
   }
   towerGroup.rotation.y = towerAngle;
 
+  // 2-Second Booster Countdown
+  if (ballPhysics.boosterTimer > 0) {
+    ballPhysics.boosterTimer -= 1 / 60;
+    ballPhysics.isFireball = true;
+    if (ballPhysics.boosterTimer <= 0) {
+      ballPhysics.boosterTimer = 0;
+      ballPhysics.isFireball = false;
+      const b = document.getElementById('fireBanner');
+      if (b) b.classList.remove('show');
+    }
+  }
+
   // Continuous Collision Sweep Check
   const prevY = ballPhysics.y;
   ballPhysics.vy -= 0.009; // Smooth slow gravity for relaxed ball speed
@@ -874,14 +887,33 @@ function updatePhysics() {
     if (floor.isCleared) continue;
 
     // Check if the ball crossed through the floor's plane downwards during this frame
-    if (ballPhysics.vy < 0 && prevBallBottom >= floor.y - 0.05 && currBallBottom <= floor.y) {
-      // Calculate which sector is directly under the ball (at 6 o'clock front, x=0, z=+BALL_Z)
-      let angleUnderBall = (1.5 * Math.PI - towerAngle) % (Math.PI * 2);
-      if (angleUnderBall < 0) angleUnderBall += Math.PI * 2;
-      const currentSector = Math.floor(angleUnderBall / SECTOR_ANGLE) % NUM_SECTORS;
+    if (ballPhysics.vy < 0 && prevBallBottom >= floor.y - 0.06 && currBallBottom <= floor.y) {
+      // Calculate angle under 6 o'clock (front toward camera, +Z axis)
+      let centerAngle = (1.5 * Math.PI - towerAngle) % (Math.PI * 2);
+      if (centerAngle < 0) centerAngle += Math.PI * 2;
+      const centerSector = Math.floor(centerAngle / SECTOR_ANGLE) % NUM_SECTORS;
+
+      // Generous angular tolerance (little before and after 6 o'clock: +/- 0.26 radians)
+      const testAngles = [
+        centerAngle,
+        centerAngle - 0.26,
+        centerAngle + 0.26,
+        centerAngle - 0.13,
+        centerAngle + 0.13,
+      ];
+      let isHole = false;
+      for (const a of testAngles) {
+        let normA = a % (Math.PI * 2);
+        if (normA < 0) normA += Math.PI * 2;
+        const sec = Math.floor(normA / SECTOR_ANGLE) % NUM_SECTORS;
+        if (floor.gapSectors.includes(sec)) {
+          isHole = true;
+          break;
+        }
+      }
 
       // 1. GAP CHECK (Free Fall through opening!)
-      if (floor.gapSectors.includes(currentSector)) {
+      if (isHole) {
         floor.isCleared = true;
         floorsClearedInStage++;
         totalFloorsCleared++;
@@ -897,37 +929,38 @@ function updatePhysics() {
         AudioEngine.play('pass');
         haptic('light');
 
-        // Check if combo triggers FIREBALL / SUPER SMASH
-        if (ballPhysics.passedRingsCombo >= 3 && !ballPhysics.isFireball) {
+        // Check if combo triggers 2-SECOND BOOSTER POWER / SUPER SMASH
+        if (ballPhysics.passedRingsCombo >= 3) {
+          ballPhysics.boosterTimer = 2.0; // 2 seconds booster overdrive!
           ballPhysics.isFireball = true;
-          document.getElementById('fireBanner').classList.add('show');
+          const banner = document.getElementById('fireBanner');
+          if (banner) {
+            banner.textContent = '🔥 2s BOOSTER SMASH OVERDRIVE! 🔥';
+            banner.classList.add('show');
+          }
           haptic('heavy');
         }
         continue;
       }
 
-      // 2. FIREBALL SMASH THROUGH PLATFORM!
-      if (ballPhysics.isFireball) {
+      // 2. BOOSTER / FIREBALL SMASH THROUGH PLATFORM!
+      if (ballPhysics.isFireball || ballPhysics.boosterTimer > 0) {
         floor.isCleared = true;
         floorsClearedInStage++;
         totalFloorsCleared++;
 
-        score += 50;
+        score += 60;
         updateHUD();
 
         AudioEngine.play('smash');
         haptic('heavy');
 
         shatterFloor(floor);
-
-        ballPhysics.passedRingsCombo = 0;
-        ballPhysics.isFireball = false;
-        document.getElementById('fireBanner').classList.remove('show');
-        continue;
+        continue; // Keep smashing downward during booster period!
       }
 
       // 3. DANGER SECTOR HIT -> DEAD!
-      if (floor.dangerSectors.includes(currentSector)) {
+      if (floor.dangerSectors.includes(centerSector)) {
         onGameOver();
         return;
       }
@@ -947,7 +980,9 @@ function updatePhysics() {
 
       ballPhysics.passedRingsCombo = 0;
       ballPhysics.isFireball = false;
-      document.getElementById('fireBanner').classList.remove('show');
+      ballPhysics.boosterTimer = 0;
+      const b = document.getElementById('fireBanner');
+      if (b) b.classList.remove('show');
 
       AudioEngine.play('bounce');
       haptic('medium');

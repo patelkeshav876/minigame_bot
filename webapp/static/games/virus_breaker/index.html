@@ -563,8 +563,8 @@ canvas {
 
     const posX = x !== undefined ? x : (Math.random() * (width - radius * 2 - 40) + radius + 20);
     const posY = y !== undefined ? y : -radius - 10;
-    const velX = vx !== undefined ? vx : (Math.random() * 1.8 - 0.9);
-    const velY = vy !== undefined ? vy : (Math.random() * 0.8 + 0.4);
+    const velX = vx !== undefined ? vx : (Math.random() * 0.8 - 0.4);
+    const velY = vy !== undefined ? vy : (Math.random() * 0.3 + 0.2);
 
     viruses.push({
       x: posX,
@@ -578,10 +578,10 @@ canvas {
       color: color,
       spikeCount: t === 3 ? 12 : (t === 2 ? 10 : 8),
       rotation: Math.random() * Math.PI * 2,
-      rotSpeed: (Math.random() * 0.02 + 0.01) * (Math.random() < 0.5 ? 1 : -1),
+      rotSpeed: (Math.random() * 0.012 + 0.006) * (Math.random() < 0.5 ? 1 : -1),
       hitFlash: 0,
-      bouncePower: t === 3 ? -7.8 : (t === 2 ? -7.2 : -6.5),
-      gravity: 0.11
+      bouncePower: t === 3 ? -4.6 : (t === 2 ? -4.1 : -3.6),
+      gravity: 0.045
     });
   }
 
@@ -1048,7 +1048,7 @@ canvas {
     spawnTimer++;
     if (spawnTimer >= spawnInterval) {
       spawnTimer = 0;
-      spawnInterval = Math.max(90, 160 - level * 10);
+      spawnInterval = Math.max(120, 200 - level * 10);
       spawnVirus();
     }
 
@@ -1145,9 +1145,9 @@ canvas {
             // Split into 2 smaller viruses if tier > 1
             if (v.tier > 1) {
               const nextTier = v.tier - 1;
-              const halfHp = Math.max(2, Math.ceil(v.maxHp * 0.55));
-              spawnVirus(v.x - 14, v.y - 10, nextTier, halfHp, -1.8, -4.5);
-              spawnVirus(v.x + 14, v.y - 10, nextTier, halfHp, 1.8, -4.5);
+              const halfHp = Math.max(2, Math.ceil(v.maxHp * 0.5));
+              spawnVirus(v.x - 14, v.y - 10, nextTier, halfHp, -0.9, -2.6);
+              spawnVirus(v.x + 14, v.y - 10, nextTier, halfHp, 0.9, -2.6);
             }
 
             viruses.splice(i, 1);

@@ -248,8 +248,8 @@ canvas {
   <div class="overlay hidden" id="jackpotOverlay">
     <div class="card">
       <div class="jackpot-anim">🎁✨</div>
-      <h2 style="color:#fde047;">100x MEGA JACKPOT!</h2>
-      <p id="jackpotDesc">Incredible lucky drop right into the center gift box! +1,000 Coins awarded!</p>
+      <h2 style="color:#fde047;">50x MEGA JACKPOT!</h2>
+      <p id="jackpotDesc">Incredible lucky drop right into the center gift box! +500 Coins awarded!</p>
       <button class="modal-btn primary" id="btnClaimJackpot">🎉 CLAIM REWARD</button>
     </div>
   </div>
@@ -322,17 +322,17 @@ canvas {
   let centerDeflectors = [];
 
   // Bucket Layout (9 buckets at bottom)
-  // [ 2x | 3x | 5x | 10x | 100x 🎁 | 10x | 5x | 3x | 2x ]
+  // [ 0.2x | 0.5x | 1.2x | 3x | 50x 🎁 | 3x | 1.2x | 0.5x | 0.2x ]
   const BUCKET_CONFIGS = [
-    { mult: 2, label: '2x', color: '#38bdf8', isCenter: false },
-    { mult: 3, label: '3x', color: '#818cf8', isCenter: false },
-    { mult: 5, label: '5x', color: '#a855f7', isCenter: false },
-    { mult: 10, label: '10x', color: '#ec4899', isCenter: false },
-    { mult: 100, label: '100x 🎁', color: '#eab308', isCenter: true },
-    { mult: 10, label: '10x', color: '#ec4899', isCenter: false },
-    { mult: 5, label: '5x', color: '#a855f7', isCenter: false },
-    { mult: 3, label: '3x', color: '#818cf8', isCenter: false },
-    { mult: 2, label: '2x', color: '#38bdf8', isCenter: false },
+    { mult: 0.2, label: '0.2x', color: '#64748b', isCenter: false },
+    { mult: 0.5, label: '0.5x', color: '#38bdf8', isCenter: false },
+    { mult: 1.2, label: '1.2x', color: '#818cf8', isCenter: false },
+    { mult: 3.0, label: '3x', color: '#ec4899', isCenter: false },
+    { mult: 50.0, label: '50x 🎁', color: '#eab308', isCenter: true },
+    { mult: 3.0, label: '3x', color: '#ec4899', isCenter: false },
+    { mult: 1.2, label: '1.2x', color: '#818cf8', isCenter: false },
+    { mult: 0.5, label: '0.5x', color: '#38bdf8', isCenter: false },
+    { mult: 0.2, label: '0.2x', color: '#64748b', isCenter: false },
   ];
 
   function resize() {
@@ -349,14 +349,14 @@ canvas {
     centerDeflectors = [];
 
     const topY = 110;
-    const bottomY = H - 120;
-    const numRows = 9;
+    const bottomY = H - 145;
+    const numRows = 8;
     const rowHeight = (bottomY - topY) / (numRows - 0.5);
 
     // Staggered Peg Grid (Pyramid / Diamond shape)
     for (let r = 0; r < numRows; r++) {
-      const pinsInRow = 3 + r; // Expands gradually: 3, 4, 5, 6, 7, 8, 9, 10, 11
-      const spacing = Math.min(36, (W - 40) / (pinsInRow + 1));
+      const pinsInRow = 3 + r; // 3, 4, 5, 6, 7, 8, 9, 10
+      const spacing = Math.min(38, (W - 36) / (pinsInRow + 1));
       const rowWidth = (pinsInRow - 1) * spacing;
       const startX = (W - rowWidth) / 2;
       const py = topY + r * rowHeight;
@@ -366,7 +366,7 @@ canvas {
         pegs.push({
           x: px,
           y: py,
-          r: 5,
+          r: 3.5,
           hitAnim: 0
         });
       }
@@ -424,7 +424,7 @@ canvas {
       y: 75,
       vx: (Math.random() - 0.5) * 1.5,
       vy: 1.0,
-      r: 9,
+      r: 5.5,
       color: '#facc15',
       glow: '#eab308',
       trail: [],
@@ -462,6 +462,12 @@ canvas {
       ball.vx *= 0.99; // air resistance
       ball.x += ball.vx;
       ball.y += ball.vy;
+
+      // Anti-stuck gentle nudge near lower rows
+      if (ball.y > H - 180 && Math.abs(ball.vy) < 0.8) {
+        ball.vy = Math.max(ball.vy + 0.5, 1.5);
+        ball.vx += (Math.random() - 0.5) * 1.0;
+      }
 
       // Wall bounce
       if (ball.x - ball.r < 8) {
