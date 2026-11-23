@@ -1133,7 +1133,6 @@ body {
   overflow-x: hidden;
   align-items: center;
 }
-}
 
 .topbar.hidden {
   display: none !important;
@@ -1239,27 +1238,27 @@ body {
 }
 
 #view-match:not(.arena-mode-arcade) #boardContainer {
-  flex: 1 1 auto;
+  flex: 1 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 4px auto;
+  margin: 6px auto;
   max-width: 480px;
   width: 100%;
-  min-height: 0;
-  overflow: hidden;
+  min-height: 300px;
+  overflow: visible;
 }
 
 #view-match:not(.arena-mode-arcade) .chess-board {
-  width: min(88vw, calc(100dvh - 230px));
-  height: min(88vw, calc(100dvh - 230px));
+  width: min(92vw, 380px);
+  height: min(92vw, 380px);
   max-width: 420px;
   max-height: 420px;
   margin: 0 auto;
 }
 
 #view-match:not(.arena-mode-arcade) .connect-board {
-  width: min(92vw, calc((100dvh - 230px) * (7 / 6)));
+  width: min(94vw, 400px);
   max-width: 420px;
   margin: 0 auto;
 }
@@ -2791,13 +2790,6 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: center;
-}
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  max-width: 140px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  pointer-events: none;
 }
 
 /* In-Game Pause Overlay Modal */

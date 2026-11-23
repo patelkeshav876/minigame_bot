@@ -611,9 +611,15 @@
     const room = state.room;
     if (!room) return;
 
-    document.getElementById("roomBadge").textContent = `Room: ${room.room_id}`;
-    document.getElementById("specPill").textContent = `👁️ ${room.spectators || 0}`;
-    updatePlayerCards();
+    try {
+      const roomBadge = document.getElementById("roomBadge");
+      if (roomBadge) roomBadge.textContent = `Room: ${room.room_id}`;
+      const specPill = document.getElementById("specPill");
+      if (specPill) specPill.textContent = `👁️ ${room.spectators || 0}`;
+      updatePlayerCards();
+    } catch (err) {
+      console.warn("Error updating player cards/header in match:", err);
+    }
 
     const selfP = room.players.find((p) => p.user_id === state.userId);
     const oppP = room.players.find((p) => p.user_id !== selfP?.user_id);
@@ -724,15 +730,20 @@
     views.match.classList.toggle("arena-mode-arcade", isArcade);
 
     const container = document.getElementById("boardContainer");
+    if (!container) return;
     if (!isArcade) {
       container.innerHTML = "";
     }
 
-    if (room.game_type === "chess") renderChessBoard(container, room, selfP, myTurn);
-    else if (room.game_type === "othello") renderOthelloBoard(container, room, myTurn);
-    else if (room.game_type === "connect4") renderConnect4Board(container, room, myTurn);
-    else if (isArcade) renderArcadeArenaGame(container, room, selfP);
-    else renderTicTacToeBoard(container, room, myTurn);
+    try {
+      if (room.game_type === "chess") renderChessBoard(container, room, selfP, myTurn);
+      else if (room.game_type === "othello") renderOthelloBoard(container, room, myTurn);
+      else if (room.game_type === "connect4") renderConnect4Board(container, room, myTurn);
+      else if (isArcade) renderArcadeArenaGame(container, room, selfP);
+      else renderTicTacToeBoard(container, room, myTurn);
+    } catch (err) {
+      console.error("Error rendering arena game board:", err);
+    }
   }
 
   function renderArcadeArenaGame(container, room, selfP) {

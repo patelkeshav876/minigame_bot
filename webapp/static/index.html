@@ -7,7 +7,7 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <!-- Lucide Icons Package (Modern Crisp Vector Icons) -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="/static/style.css?v=20261123_1" />
+  <link rel="stylesheet" href="/static/style.css?v=20261123_2" />
   <script>
     if (localStorage.getItem("app_theme") === "light") {
       document.documentElement.classList.add("theme-light");
@@ -608,6 +608,7 @@
         <div class="mth-left">
           <button id="btnLeaveRoom" class="btn small btn-match-exit" title="Exit Board">← Exit</button>
           <div class="match-mode-pill" id="matchModePill">🔥 3+2 • Rated</div>
+          <span class="room-pill" id="roomBadge">Room: ----</span>
         </div>
         <div id="chessMoveTicker" class="chess-move-ticker">1. Start</div>
         <div class="match-header-right">
@@ -1339,6 +1340,6 @@
     </nav>
   </div>
 
-  <script src="/static/app.js?v=20261123_1"></script>
+  <script src="/static/app.js?v=20261123_2"></script>
 </body>
 </html>
