@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import random
 import secrets
 import time
 from dataclasses import dataclass, field
@@ -20,7 +21,7 @@ from webapp.ai import (
     pick_tictactoe_move,
 )
 
-VALID_GAMES = {"chess", "othello", "connect4", "tictactoe", "knife_hit", "fruit_slice", "sheep_fight"}
+VALID_GAMES = {"chess", "othello", "connect4", "tictactoe", "knife_hit", "fruit_slice", "sheep_fight", "virus_breaker"}
 INITIAL_CLOCKS = {
     "chess": 180.0,        # 3:00 blitz
     "othello": 120.0,      # 2:00 blitz
@@ -29,6 +30,7 @@ INITIAL_CLOCKS = {
     "knife_hit": 180.0,    # 3:00 tournament round
     "fruit_slice": 180.0,  # 3:00 tournament round
     "sheep_fight": 90.0,   # 1:30 battle round
+    "virus_breaker": 180.0,# 3:00 blaster survival duel
 }
 OTHELLO_DIRS = [
     (-1, -1), (-1, 0), (-1, 1),
@@ -145,7 +147,7 @@ class ArenaManager:
             return {"board": _init_othello_board(), "last_move": None}, "B"
         if game_type == "connect4":
             return {"board": [["" for _ in range(7)] for _ in range(6)], "last_col": None}, "R"
-        if game_type in ("knife_hit", "fruit_slice", "sheep_fight"):
+        if game_type in ("knife_hit", "fruit_slice", "sheep_fight", "virus_breaker"):
             return {
                 "p1_score": 0, "p2_score": 0,
                 "p1_level": 1, "p2_level": 1,
@@ -160,7 +162,7 @@ class ArenaManager:
             return ("B", "W")
         if game_type == "connect4":
             return ("R", "Y")
-        if game_type in ("knife_hit", "fruit_slice", "sheep_fight"):
+        if game_type in ("knife_hit", "fruit_slice", "sheep_fight", "virus_breaker"):
             return ("P1", "P2")
         return ("X", "O")
 
@@ -390,7 +392,7 @@ class ArenaManager:
         elapsed = now - room.last_tick
         room.last_tick = now
 
-        if room.game_type in ("knife_hit", "fruit_slice", "sheep_fight"):
+        if room.game_type in ("knife_hit", "fruit_slice", "sheep_fight", "virus_breaker"):
             for p in room.players:
                 p.clock = max(0.0, p.clock - elapsed)
             if room.players[0].clock <= 0.0:
@@ -485,7 +487,7 @@ class ArenaManager:
             elif msg_type == "move" and room.status == "active":
                 if not self._update_clock(room):
                     self._apply_move(room, user_id, data)
-            elif msg_type == "score_update" and room.status == "active" and room.game_type in ("knife_hit", "fruit_slice", "sheep_fight"):
+            elif msg_type == "score_update" and room.status == "active" and room.game_type in ("knife_hit", "fruit_slice", "sheep_fight", "virus_breaker"):
                 player = next((p for p in room.players if p.user_id == user_id), None)
                 if player:
                     p_prefix = "p1" if player.role == "P1" else "p2"
@@ -508,6 +510,64 @@ class ArenaManager:
                         p2_s = room.state.get("p2_score", 0)
                         winner = "P1" if p1_s > p2_s else ("P2" if p2_s > p1_s else "Draw")
                         self._finish_room(room, winner, f"Match Completed! Final Score: {p1_s} vs {p2_s}")
+            elif msg_type == "chat":
+                text = str(data.get("text", "")).strip()[:140]
+                if text:
+                    player = next((p for p in room.players if p.user_id == user_id), None)
+                    sender_name = player.name if player else "Player"
+                    sender_role = player.role if player else ""
+                    chat_payload = {
+                        "type": "chat",
+                        "sender_id": user_id,
+                        "sender_name": sender_name,
+                        "sender_role": sender_role,
+                        "text": text,
+                        "timestamp": time.time(),
+                    }
+                    # Send chat immediately to all sockets
+                    for p in list(room.players):
+                        if p.ws is not None:
+                            try:
+                                await p.ws.send_json(chat_payload)
+                            except Exception:
+                                pass
+                    for spec_ws in list(room.spectators):
+                        try:
+                            await spec_ws.send_json(chat_payload)
+                        except Exception:
+                            pass
+
+                    # If playing against AI, reply with a courteous message after a short pause
+                    if room.vs_ai:
+                        ai_replies = [
+                            "Good game! 🤝",
+                            "Nice move! 🔥",
+                            "Let's see how this unfolds...",
+                            "Well played!",
+                            "Thinking through my tactics... 🤔",
+                            "May the best player win! ⚔️",
+                            "Impressive strategy!",
+                        ]
+                        async def _ai_chat_response():
+                            await asyncio.sleep(1.2)
+                            ai_player = next((p for p in room.players if p.is_ai), None)
+                            if ai_player:
+                                ai_msg = {
+                                    "type": "chat",
+                                    "sender_id": ai_player.user_id,
+                                    "sender_name": ai_player.name,
+                                    "sender_role": ai_player.role,
+                                    "text": random.choice(ai_replies),
+                                    "timestamp": time.time(),
+                                }
+                                for p in list(room.players):
+                                    if p.ws is not None:
+                                        try:
+                                            await p.ws.send_json(ai_msg)
+                                        except Exception:
+                                            pass
+                        asyncio.create_task(_ai_chat_response())
+                    return
 
             if room.vs_ai and room.status == "active":
                 ai_player = next((p for p in room.players if p.is_ai), None)

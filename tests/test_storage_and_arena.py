@@ -184,6 +184,21 @@ def test_arena_othello_spectator_and_ai(tmp_path):
         assert sum(1 for c in ai_room.state["board"] if c != "") == 2
         # Human chess/ttt ELO stays untouched by AI matches
         assert test_db.get_game_elo("u1", "tictactoe") == 1200.0
+
+        # 3. Virus breaker multiplayer arena room & in-game chat
+        vb_room = await mgr.create_or_join_room("virus_breaker", "u1", "Alice", vs_ai=True)
+        assert vb_room.game_type == "virus_breaker"
+        assert vb_room.status == "active"
+        vb_ws1 = FakeWebSocket()
+        await mgr.connect_ws(vb_room.room_id, "u1", "Alice", vb_ws1)
+        # Send in-game chat message
+        await mgr.handle_ws_message(vb_room, "u1", {"type": "chat", "text": "Good luck!"})
+        assert any(m.get("type") == "chat" and m.get("text") == "Good luck!" for m in vb_ws1.sent)
+        # Score update
+        await mgr.handle_ws_message(vb_room, "u1", {"type": "score_update", "score": 250, "level": 2})
+        assert vb_room.state["p1_score"] == 250
+        assert vb_room.state["p1_level"] == 2
+
         await mgr.stop()
 
     asyncio.run(run_arena())

@@ -244,11 +244,14 @@
       .join("");
 
     const histEl = document.getElementById("matchHistoryList");
+    const ranksHistEl = document.getElementById("ranksHistoryList");
     if (!data.history.length) {
-      histEl.innerHTML = `<div style="text-align:center;color:var(--muted);padding:14px;font-size:0.85rem;">No ranked PvP matches played yet.<br>Jump into the <strong>Battle</strong> tab to play!</div>`;
+      const emptyMsg = `<div style="text-align:center;color:var(--muted);padding:14px;font-size:0.85rem;">No ranked PvP matches played yet.<br>Jump into the <strong>Battle</strong> tab to play!</div>`;
+      if (histEl) histEl.innerHTML = emptyMsg;
+      if (ranksHistEl) ranksHistEl.innerHTML = emptyMsg;
       return;
     }
-    histEl.innerHTML = data.history
+    const historyHtml = data.history
       .map((m) => {
         const isP1 = m.player1_id === state.userId;
         const opp = isP1 ? m.player2_name : m.player1_name;
@@ -263,7 +266,7 @@
             <div class="hi-left">
               <span class="hi-badge ${resClass}">${resTag}</span>
               <div class="hi-info">
-                <div class="hi-opp">vs ${opp}</div>
+                <div class="hi-opp">vs ${escapeHtml(opp)}</div>
                 <div class="hi-game">${(m.game_type || "pvp").toUpperCase()}</div>
               </div>
             </div>
@@ -271,6 +274,8 @@
           </div>`;
       })
       .join("");
+    if (histEl) histEl.innerHTML = historyHtml;
+    if (ranksHistEl) ranksHistEl.innerHTML = historyHtml;
   }
 
   async function refreshLiveRooms() {
@@ -337,10 +342,14 @@
     refreshLiveRooms();
     loadCustomGames();
 
-    const startParam = tg?.initDataUnsafe?.start_param || "";
-    const urlRoom = new URLSearchParams(window.location.search).get("room");
-    if (startParam.startsWith("room_")) joinRoom(startParam.replace("room_", ""));
-    else if (urlRoom) joinRoom(urlRoom);
+    const urlParams = new URLSearchParams(window.location.search);
+    const startParam = tg?.initDataUnsafe?.start_param || urlParams.get("tgWebAppStartParam") || urlParams.get("startapp") || "";
+    const urlRoom = urlParams.get("room") || "";
+    if (startParam.startsWith("room_")) {
+      setTimeout(() => joinRoom(startParam.replace("room_", "")), 200);
+    } else if (urlRoom) {
+      setTimeout(() => joinRoom(urlRoom), 200);
+    }
   }
 
   async function startRoomRequest(opts) {
@@ -400,6 +409,8 @@
         state.room = msg.room;
         renderMatch();
         if (msg.room.status === "finished") refreshProfileAndHistory();
+      } else if (msg.type === "chat") {
+        appendMatchChatMessage(msg);
       } else if (msg.type === "error") {
         alert(msg.message);
         showView("battle");
@@ -483,6 +494,57 @@
     } catch (_) {}
   }
 
+  let unreadChatCount = 0;
+  let isChatOpen = false;
+
+  function appendMatchChatMessage(msg) {
+    const list = document.getElementById("chatMessagesList");
+    if (!list) return;
+    const isSelf = msg.sender_id === state.userId;
+    const bubble = document.createElement("div");
+    bubble.className = `chat-bubble ${isSelf ? "self" : "opp"}`;
+    const name = escapeHtml(msg.sender_name || (isSelf ? "You" : "Opponent"));
+    const text = escapeHtml(msg.text || "");
+    bubble.innerHTML = `
+      <div class="chat-sender-name">${name}</div>
+      <div class="chat-text">${text}</div>
+    `;
+    list.appendChild(bubble);
+    list.scrollTop = list.scrollHeight;
+
+    if (!isChatOpen && !isSelf) {
+      unreadChatCount++;
+      const badge = document.getElementById("chatBadge");
+      if (badge) {
+        badge.textContent = unreadChatCount > 9 ? "9+" : unreadChatCount;
+        badge.classList.remove("hidden");
+      }
+      try { tg?.HapticFeedback?.notificationOccurred("warning"); } catch (_) {}
+    }
+  }
+
+  function toggleMatchChat(open) {
+    const modal = document.getElementById("matchChatModal");
+    if (!modal) return;
+    if (open === undefined) open = modal.classList.contains("hidden");
+    isChatOpen = open;
+    if (open) {
+      modal.classList.remove("hidden");
+      unreadChatCount = 0;
+      const badge = document.getElementById("chatBadge");
+      if (badge) badge.classList.add("hidden");
+      const inp = document.getElementById("chatInputText");
+      if (inp) inp.focus();
+    } else {
+      modal.classList.add("hidden");
+    }
+  }
+
+  function sendMatchChat(text) {
+    if (!text || !text.trim()) return;
+    sendWs({ type: "chat", text: text.trim() });
+  }
+
   function updatePlayerCards() {
     const room = state.room;
     if (!room) return;
@@ -496,25 +558,38 @@
     if (selfP) {
       let extra = "";
       if (room.game_type === "othello" && room.counts) extra = ` • ${room.counts[selfP.role] ?? 0}`;
-      selfCard.querySelector(".p-name").textContent = `${selfP.name} (${selfP.role})${extra}`;
-      selfCard.querySelector(".p-elo").textContent = isChess ? `${selfP.elo} ELO` : `🏆 ${selfP.wins || 0} Wins`;
-      selfCard.querySelector(".p-clock").textContent = formatClock(selfP.clock);
-      selfCard.classList.toggle("active-turn", room.status === "active" && room.turn_role === selfP.role);
+      const nameEl = document.getElementById("selfName") || selfCard?.querySelector(".p-name");
+      const eloEl = document.getElementById("selfElo") || selfCard?.querySelector(".p-elo");
+      const clockEl = document.getElementById("selfClock") || selfCard?.querySelector(".p-clock");
+      if (nameEl) nameEl.textContent = `${selfP.name}${extra}`;
+      if (eloEl) eloEl.textContent = isChess ? `${selfP.elo} ELO` : `🏆 ${selfP.wins || 0} Wins`;
+      if (clockEl) clockEl.textContent = formatClock(selfP.clock);
+      selfCard?.classList.toggle("active-turn", room.status === "active" && room.turn_role === selfP.role);
     }
 
     if (oppP) {
       let extra = "";
       if (room.game_type === "othello" && room.counts) extra = ` • ${room.counts[oppP.role] ?? 0}`;
-      oppCard.querySelector(".p-name").textContent = `${oppP.name} (${oppP.role})${extra}`;
+      const nameEl = document.getElementById("oppName") || oppCard?.querySelector(".p-name");
+      const eloEl = document.getElementById("oppElo") || oppCard?.querySelector(".p-elo");
+      const clockEl = document.getElementById("oppClock") || oppCard?.querySelector(".p-clock");
+      const dotEl = document.getElementById("oppStatusDot");
+      if (nameEl) nameEl.textContent = `${oppP.name}${extra}`;
       const oppRating = isChess ? (oppP.is_ai ? "AI" : `${oppP.elo} ELO`) : (oppP.is_ai ? "AI Bot" : `🏆 ${oppP.wins || 0} Wins`);
-      oppCard.querySelector(".p-elo").textContent = oppRating;
-      oppCard.querySelector(".p-clock").textContent = oppP.is_ai ? "∞" : formatClock(oppP.clock);
-      oppCard.classList.toggle("active-turn", room.status === "active" && room.turn_role === oppP.role);
+      if (eloEl) eloEl.textContent = oppRating;
+      if (clockEl) clockEl.textContent = oppP.is_ai ? "∞" : formatClock(oppP.clock);
+      if (dotEl) dotEl.classList.add("active");
+      oppCard?.classList.toggle("active-turn", room.status === "active" && room.turn_role === oppP.role);
     } else {
-      oppCard.querySelector(".p-name").textContent = "Waiting for opponent...";
-      oppCard.querySelector(".p-elo").textContent = isChess ? "-- ELO" : "-- Wins";
-      oppCard.querySelector(".p-clock").textContent = "--:--";
-      oppCard.classList.remove("active-turn");
+      const nameEl = document.getElementById("oppName") || oppCard?.querySelector(".p-name");
+      const eloEl = document.getElementById("oppElo") || oppCard?.querySelector(".p-elo");
+      const clockEl = document.getElementById("oppClock") || oppCard?.querySelector(".p-clock");
+      const dotEl = document.getElementById("oppStatusDot");
+      if (nameEl) nameEl.textContent = "Waiting for opponent...";
+      if (eloEl) eloEl.textContent = isChess ? "-- ELO" : "-- Wins";
+      if (clockEl) clockEl.textContent = "--:--";
+      if (dotEl) dotEl.classList.remove("active");
+      oppCard?.classList.remove("active-turn");
     }
   }
 
@@ -625,7 +700,27 @@
     document.getElementById("btnResign").classList.toggle("hidden", isSpectator || room.status !== "active");
     document.getElementById("btnRematch").classList.toggle("hidden", isSpectator || room.status !== "finished");
 
-    const isArcade = room.game_type === "knife_hit" || room.game_type === "fruit_slice" || room.game_type === "sheep_fight";
+    const ticker = document.getElementById("chessMoveTicker");
+    if (ticker) {
+      if (room.game_type === "chess") {
+        ticker.style.display = "block";
+        const lastMove = room.state.last_move || (room.state.history && room.state.history.length ? room.state.history[room.state.history.length - 1] : null);
+        if (lastMove) {
+          ticker.textContent = typeof lastMove === "string" ? lastMove : `1. ${lastMove}`;
+        } else {
+          ticker.textContent = "1. Start";
+        }
+      } else {
+        ticker.style.display = "none";
+      }
+    }
+    const modePill = document.getElementById("matchModePill");
+    if (modePill) {
+      const isRated = room.rated !== false ? "Rated" : "Casual";
+      modePill.textContent = `🔥 3+2 • ${isRated}`;
+    }
+
+    const isArcade = room.game_type === "knife_hit" || room.game_type === "fruit_slice" || room.game_type === "sheep_fight" || room.game_type === "virus_breaker";
     views.match.classList.toggle("arena-mode-arcade", isArcade);
 
     const container = document.getElementById("boardContainer");
@@ -668,6 +763,7 @@
     let gamePath = "/static/games/fruit_slice/index.html";
     if (room.game_type === "knife_hit") gamePath = "/static/games/knife_hit/index.html";
     else if (room.game_type === "sheep_fight") gamePath = "/static/games/sheep_fight/index.html";
+    else if (room.game_type === "virus_breaker") gamePath = "/static/games/virus_breaker/index.html";
 
     const iframeSrc = `${gamePath}?mode=arena&opp=${encodeURIComponent(oppP.name || "Rival")}`;
 
@@ -737,7 +833,16 @@
           }
         }
 
-        sqEl.innerHTML = (piece ? pieceSvg(piece) : "") + `<span class="chess-coord">${sq.toUpperCase()}</span>`;
+        // Lichess corner coordinate labels
+        let coordHtml = "";
+        if (vc === 0) {
+          coordHtml += `<span class="coord-rank">${8 - r}</span>`;
+        }
+        if (vr === 7) {
+          coordHtml += `<span class="coord-file">${String.fromCharCode(97 + c)}</span>`;
+        }
+
+        sqEl.innerHTML = (piece ? pieceSvg(piece) : "") + coordHtml;
 
         sqEl.addEventListener("click", () => {
           if (!myTurn) return;
@@ -984,6 +1089,14 @@
       desc: "Hago-style 5-lane sheep pushing battle! Deploy small, medium, and giant horned rams to push opponent into their barn!",
       timer: "⏱️ 90s MATCH",
     },
+    virus_breaker: {
+      title: "Virus Breaker",
+      tag: "Hago 1v1 Cannon Arena",
+      icon: "🦠",
+      thumb: "/static/thumbnails/virus_thumb.png",
+      desc: "Hago-style cannon shooter! Blast levitating jumping viruses, unlock multi-barrel shooters, and outscore your rival!",
+      timer: "⏱️ 3 MIN BATTLE",
+    },
   };
 
   function openArenaGameModal(gameKey) {
@@ -1059,7 +1172,10 @@
       state.prevView = v;
       showView(v);
       if (v === "home") refreshLiveRooms();
-      if (v === "ranks") loadLeaderboard();
+      if (v === "ranks") {
+        loadLeaderboard();
+        refreshProfileAndHistory();
+      }
       if (v === "profile") refreshProfileAndHistory();
     });
   });
@@ -1103,22 +1219,34 @@
     showView(state.prevView || "home");
     refreshLiveRooms();
   });
+  document.getElementById("btnLeaveRoomAlt")?.addEventListener("click", () => {
+    document.getElementById("btnLeaveRoom")?.click();
+  });
 
   document.getElementById("btnCopyInvite")?.addEventListener("click", async () => {
     if (!state.room) return;
     const code = state.room.room_id;
+    const gameName = (state.room.game_type || "chess").toUpperCase().replace("_", " ");
     const shareUrl = state.botUsername
       ? `https://t.me/${state.botUsername}?startapp=room_${code}`
       : `${window.location.origin}/?room=${code}`;
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      const btn = document.getElementById("btnCopyInvite");
-      if (btn) {
-        btn.textContent = "✅ Copied";
-        setTimeout(() => { btn.textContent = "📤 Invite"; }, 1500);
+    
+    // In Telegram WebApp: open native Telegram share sheet to directly invite friends
+    if (window.Telegram?.WebApp?.openTelegramLink) {
+      window.Telegram.WebApp.openTelegramLink(
+        `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(`⚔️ Challenge me in ${gameName}! Tap to join my board directly:`)}`
+      );
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        const btn = document.getElementById("btnCopyInvite");
+        if (btn) {
+          btn.textContent = "✅ Link Copied";
+          setTimeout(() => { btn.textContent = "📤 Invite"; }, 1800);
+        }
+      } catch (_) {
+        prompt("Copy this invite link to share:", shareUrl);
       }
-    } catch (_) {
-      alert(`Room Code: ${code}\nLink: ${shareUrl}`);
     }
   });
 
@@ -1133,9 +1261,44 @@
     document.getElementById("modalMatchResult")?.classList.add("hidden");
     document.getElementById("btnLeaveRoom")?.click();
   });
-  document.getElementById("btnRefreshLb")?.addEventListener("click", loadLeaderboard);
+  document.getElementById("btnRefreshLb")?.addEventListener("click", () => {
+    loadLeaderboard();
+    refreshProfileAndHistory();
+  });
   document.getElementById("btnRefreshLive")?.addEventListener("click", refreshLiveRooms);
   document.getElementById("btnRefreshProfile")?.addEventListener("click", refreshProfileAndHistory);
+
+  // In-game Match Chat Wiring
+  document.getElementById("btnOpenMatchChat")?.addEventListener("click", () => {
+    haptic("light");
+    toggleMatchChat(true);
+  });
+  document.getElementById("btnCloseMatchChat")?.addEventListener("click", () => {
+    toggleMatchChat(false);
+  });
+  document.getElementById("chatBackdrop")?.addEventListener("click", () => {
+    toggleMatchChat(false);
+  });
+  document.getElementById("chatSendForm")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const inp = document.getElementById("chatInputText");
+    if (!inp) return;
+    const val = inp.value.trim();
+    if (val) {
+      haptic("light");
+      sendMatchChat(val);
+      inp.value = "";
+    }
+  });
+  document.querySelectorAll(".qc-pill").forEach((pill) => {
+    pill.addEventListener("click", () => {
+      const msg = pill.dataset.msg;
+      if (msg) {
+        haptic("light");
+        sendMatchChat(msg);
+      }
+    });
+  });
 
 
   // Category & search filtering for 50+ HTML5 games
@@ -1874,8 +2037,54 @@
       const res = await fetch("/api/promo-banners");
       if (!res.ok) return;
       const data = await res.json();
-      const banners = (data.banners && data.banners.length) ? data.banners : [];
-      if (!banners.length) return;
+      const DEFAULT_HERO_BANNERS = [
+        {
+          title: "Aviator Crash",
+          description: "Multiply your coin balance before the rocket bursts!",
+          badge: "HOT 🔥",
+          badge2: "x1000",
+          bg_theme: "slide-aviator",
+          game_title: "Aviator Rocket",
+          game_url: "/static/games/aviator/index.html",
+          game_icon: "🚀",
+          image_url: "/static/banners/aviator_promo.png"
+        },
+        {
+          title: "T-Rex Cyber Run",
+          description: "Infinite cyberpunk hurdle runner with high-speed neon ramps!",
+          badge: "FEATURED 🦖",
+          badge2: "SPEEDWAY",
+          bg_theme: "slide-speedway",
+          game_title: "T-Rex Cyber Run",
+          game_url: "/static/games/dino/index.html",
+          game_icon: "🦖",
+          image_url: "/static/banners/dino_promo.png"
+        },
+        {
+          title: "Galaxy Defender",
+          description: "Classic neon 3D retro space shooter action with boss fights!",
+          badge: "ARCADE 👾",
+          badge2: "BOSS RAID",
+          bg_theme: "slide-invaders",
+          game_title: "Galaxy Defender 3D",
+          game_url: "/static/games/space_invaders/index.html",
+          game_icon: "👾",
+          image_url: "/static/banners/space_promo.png"
+        },
+        {
+          title: "Retro Tetris",
+          description: "Classic block-clearing arcade puzzle with glowing neon lines!",
+          badge: "PUZZLE 🧩",
+          badge2: "CLASSIC",
+          bg_theme: "slide-tetris",
+          game_title: "Retro Tetris",
+          game_url: "/static/games/tetris/index.html",
+          game_icon: "🧩",
+          image_url: "/static/banners/tetris_promo.png"
+        }
+      ];
+
+      const banners = (data.banners && data.banners.length) ? data.banners : DEFAULT_HERO_BANNERS;
 
       heroTotalSlides = banners.length;
       wrapper.innerHTML = "";

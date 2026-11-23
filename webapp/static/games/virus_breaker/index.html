@@ -669,6 +669,7 @@ canvas {
   function updateHUD() {
     document.getElementById('scoreDisplay').textContent = score;
     document.getElementById('levelDisplay').textContent = `LVL ${level} • ${shootersCount} CANNON${shootersCount > 1 ? 'S' : ''}`;
+    broadcastArenaScore(false);
   }
 
   function updateHearts() {
@@ -710,9 +711,23 @@ canvas {
     }
   }
 
+  function broadcastArenaScore(isFinal = false) {
+    try {
+      window.parent?.postMessage({
+        type: 'arena_live_score',
+        game: 'virus_breaker',
+        score: score,
+        level: level,
+        lives: lives,
+        status: isFinal ? 'game_over' : 'playing',
+      }, '*');
+    } catch (_) {}
+  }
+
   // --- GAME OVER ---
   function gameOver() {
     isGameOver = true;
+    broadcastArenaScore(true);
     if (score > bestScore) {
       bestScore = score;
       localStorage.setItem('virus_breaker_high', bestScore);
