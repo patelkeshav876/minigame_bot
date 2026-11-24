@@ -5053,3 +5053,158 @@ body.theme-light .admin-banner-card {
   padding: 2px 8px;
   border-radius: 12px;
 }
+
+/* =========================================================
+   ACETERNITY UI 3D CARD EFFECT (CARD BODY & FLOATING ITEMS)
+   Inspired by Aceternity UI 3D Card (CardContainer, CardBody, CardItem)
+   ========================================================= */
+.custom-game-card,
+.arena-mode-card,
+.carousel-game-card,
+.trending-game-card,
+.category-card {
+  perspective: 1100px !important;
+  transform-style: preserve-3d !important;
+  will-change: transform;
+  position: relative;
+  transition: transform 0.45s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.45s ease, border-color 0.35s ease !important;
+}
+
+.custom-game-card.is-tilting,
+.arena-mode-card.is-tilting,
+.carousel-game-card.is-tilting,
+.trending-game-card.is-tilting,
+.category-card.is-tilting {
+  transition: transform 0.08s ease-out, box-shadow 0.15s ease, border-color 0.15s ease !important;
+}
+
+/* Aceternity Spotlight Reflection / Radial Glare */
+.custom-game-card::after,
+.arena-mode-card::after,
+.carousel-game-card::after,
+.trending-game-card::after,
+.category-card::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(255, 255, 255, 0.18) 0%,
+    rgba(56, 189, 248, 0.1) 30%,
+    transparent 65%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 20;
+  mix-blend-mode: screen;
+}
+
+.custom-game-card:hover::after,
+.arena-mode-card:hover::after,
+.carousel-game-card:hover::after,
+.trending-game-card:hover::after,
+.category-card:hover::after {
+  opacity: 1;
+}
+
+/* Aceternity Dark / Emerald / Cyan 3D Card Shadows */
+.custom-game-card:hover,
+.arena-mode-card:hover,
+.carousel-game-card:hover,
+.trending-game-card:hover,
+.category-card:hover {
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.8),
+              0 0 24px rgba(16, 185, 129, 0.18),
+              0 0 36px rgba(56, 189, 248, 0.22) !important;
+  border-color: rgba(56, 189, 248, 0.55) !important;
+}
+
+body.theme-light .custom-game-card:hover,
+body.theme-light .arena-mode-card:hover,
+body.theme-light .carousel-game-card:hover,
+body.theme-light .trending-game-card:hover,
+body.theme-light .category-card:hover {
+  box-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.14),
+              0 0 20px rgba(56, 189, 248, 0.2) !important;
+  border-color: rgba(56, 189, 248, 0.6) !important;
+}
+
+/* Aceternity CardItem TranslateZ Layers (Z-Floating Elements) */
+.custom-game-card .cgc-top,
+.arena-mode-card .arena-card-thumb-wrap,
+.carousel-game-card .cgc-thumb-wrap,
+.trending-game-card .tgc-thumb,
+.category-card .cat-icon {
+  transform: translateZ(30px);
+  transform-style: preserve-3d;
+  transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.custom-game-card:hover .cgc-top,
+.arena-mode-card:hover .arena-card-thumb-wrap,
+.carousel-game-card:hover .cgc-thumb-wrap,
+.trending-game-card:hover .tgc-thumb,
+.category-card:hover .cat-icon {
+  transform: translateZ(45px);
+}
+
+.custom-game-card .cgc-box-img,
+.arena-mode-card .arena-card-thumb,
+.carousel-game-card .cgc-thumb-img,
+.trending-game-card .tgc-thumb-img {
+  transform: translateZ(20px);
+  transform-style: preserve-3d;
+  transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.custom-game-card:hover .cgc-box-img,
+.arena-mode-card:hover .arena-card-thumb,
+.carousel-game-card:hover .cgc-thumb-img,
+.trending-game-card:hover .tgc-thumb-img {
+  transform: translateZ(32px) scale(1.08);
+}
+
+.custom-game-card .cgc-play-badge,
+.arena-mode-card .arena-card-tag,
+.arena-mode-card .arena-card-timer,
+.carousel-game-card .cgc-card-tag {
+  transform: translateZ(45px);
+  transform-style: preserve-3d;
+  transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.custom-game-card:hover .cgc-play-badge,
+.arena-mode-card:hover .arena-card-tag,
+.arena-mode-card:hover .arena-card-timer,
+.carousel-game-card:hover .cgc-card-tag {
+  transform: translateZ(60px);
+}
+
+.custom-game-card .cgc-title,
+.arena-mode-card .arena-card-name,
+.carousel-game-card .cgc-card-title,
+.trending-game-card .tgc-title,
+.category-card .cat-title {
+  transform: translateZ(24px);
+  transform-style: preserve-3d;
+  transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.custom-game-card:hover .cgc-title,
+.arena-mode-card:hover .arena-card-name,
+.carousel-game-card:hover .cgc-card-title,
+.trending-game-card:hover .tgc-title,
+.category-card:hover .cat-title {
+  transform: translateZ(36px);
+}
+
+.custom-game-card .cgc-desc,
+.arena-mode-card .arena-card-meta,
+.trending-game-card .tgc-sub,
+.category-card .cat-sub {
+  transform: translateZ(12px);
+  transform-style: preserve-3d;
+  transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+}

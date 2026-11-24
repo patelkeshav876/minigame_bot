@@ -3318,6 +3318,89 @@
     }
   });
 
+  // =========================================================
+  // ACETERNITY UI 3D CARD ENGINE
+  // =========================================================
+  function initAceternity3DCards() {
+    let activeTiltingCard = null;
+
+    function find3DCard(target) {
+      if (!target || !target.closest) return null;
+      return target.closest(
+        ".custom-game-card, .arena-mode-card, .carousel-game-card, .trending-game-card, .category-card"
+      );
+    }
+
+    function apply3DTilt(card, clientX, clientY) {
+      const rect = card.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      // Max +/- 14 degree 3D rotation (matching Aceternity 3d-card physics)
+      const rotateX = ((y - centerY) / centerY) * -14;
+      const rotateY = ((x - centerX) / centerX) * 14;
+
+      card.classList.add("is-tilting");
+      card.style.transform = `perspective(1100px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.035, 1.035, 1.035)`;
+      card.style.setProperty("--mouse-x", `${((x / rect.width) * 100).toFixed(1)}%`);
+      card.style.setProperty("--mouse-y", `${((y / rect.height) * 100).toFixed(1)}%`);
+    }
+
+    function reset3DTilt(card) {
+      if (!card) return;
+      card.classList.remove("is-tilting");
+      card.style.transform = "perspective(1100px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)";
+    }
+
+    // High performance global event delegation
+    document.addEventListener("pointermove", (e) => {
+      // Allow touch scrolling without locking cards
+      if (e.pointerType === "touch" && e.buttons === 0) return;
+      const card = find3DCard(e.target);
+      if (card) {
+        if (activeTiltingCard && activeTiltingCard !== card) {
+          reset3DTilt(activeTiltingCard);
+        }
+        activeTiltingCard = card;
+        apply3DTilt(card, e.clientX, e.clientY);
+      } else if (activeTiltingCard) {
+        reset3DTilt(activeTiltingCard);
+        activeTiltingCard = null;
+      }
+    }, { passive: true });
+
+    document.addEventListener("pointerleave", () => {
+      if (activeTiltingCard) {
+        reset3DTilt(activeTiltingCard);
+        activeTiltingCard = null;
+      }
+    });
+
+    // Touch feedback for mobile & Telegram Mini App
+    document.addEventListener("touchstart", (e) => {
+      const touch = e.touches[0];
+      if (!touch) return;
+      const card = find3DCard(e.target);
+      if (card) {
+        apply3DTilt(card, touch.clientX, touch.clientY);
+      }
+    }, { passive: true });
+
+    document.addEventListener("touchend", (e) => {
+      const card = find3DCard(e.target);
+      if (card) {
+        setTimeout(() => reset3DTilt(card), 180);
+      }
+      if (activeTiltingCard) {
+        reset3DTilt(activeTiltingCard);
+        activeTiltingCard = null;
+      }
+    }, { passive: true });
+  }
+
+  initAceternity3DCards();
   loadCustomGames();
   initAuth();
 
