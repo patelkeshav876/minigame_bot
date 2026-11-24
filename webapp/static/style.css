@@ -5208,3 +5208,167 @@ body.theme-light .category-card:hover {
   transform-style: preserve-3d;
   transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1);
 }
+
+/* =========================================================
+   BUBBLE TEXT INTERACTIVE HOVER WAVE EFFECT
+   ========================================================= */
+.bubble-text,
+.hub-section-title,
+.comm-badge,
+.arena-head-pill {
+  cursor: default;
+  display: inline-block;
+}
+
+.bubble-char {
+  display: inline-block;
+  font-weight: inherit;
+  transition: font-weight 0.22s cubic-bezier(0.23, 1, 0.32, 1),
+              transform 0.22s cubic-bezier(0.23, 1, 0.32, 1),
+              color 0.22s ease,
+              text-shadow 0.22s ease;
+  will-change: transform, font-weight;
+  white-space: pre;
+}
+
+.bubble-char.bubble-active {
+  font-weight: 900 !important;
+  color: #38bdf8 !important;
+  transform: translateY(-4px) scale(1.24);
+  text-shadow: 0 0 16px rgba(56, 189, 248, 0.85), 0 0 32px rgba(99, 102, 241, 0.5);
+}
+
+.bubble-char.bubble-near {
+  font-weight: 700 !important;
+  color: #818cf8 !important;
+  transform: translateY(-2px) scale(1.12);
+  text-shadow: 0 0 10px rgba(129, 140, 248, 0.5);
+}
+
+.bubble-char.bubble-far {
+  font-weight: 600 !important;
+  transform: translateY(-1px) scale(1.05);
+}
+
+body.theme-light .bubble-char.bubble-active {
+  color: #0284c7 !important;
+  text-shadow: 0 0 14px rgba(2, 132, 199, 0.5);
+}
+
+body.theme-light .bubble-char.bubble-near {
+  color: #6366f1 !important;
+}
+
+/* =========================================================
+   ADMIN SLIDING WINDOW SMART AUTO-SUGGEST BOX
+   ========================================================= */
+.banner-auto-suggest-box {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin: 6px 0 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.bas-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bas-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.02em;
+}
+
+.bas-sub {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.bas-btn-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bas-magic-btn {
+  background: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  font-weight: 800 !important;
+  font-size: 0.78rem !important;
+  padding: 7px 14px !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.35) !important;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.bas-magic-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.5) !important;
+}
+
+.bas-magic-btn:active {
+  transform: scale(0.96);
+}
+
+.bas-random-btn {
+  font-size: 0.78rem !important;
+  padding: 7px 12px !important;
+  border-radius: 10px !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #cbd5e1 !important;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.bas-random-btn:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+.bas-presets-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bas-preset-lbl {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.btn-preset-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-preset-pill:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.btn-preset-pill:active {
+  transform: scale(0.95);
+}

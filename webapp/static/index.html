@@ -7,7 +7,7 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <!-- Lucide Icons Package (Modern Crisp Vector Icons) -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="/static/style.css?v=20261124_1" />
+  <link rel="stylesheet" href="/static/style.css?v=20261124_2" />
   <script>
     if (localStorage.getItem("app_theme") === "light") {
       document.documentElement.classList.add("theme-light");
@@ -356,10 +356,10 @@
       <div class="card">
         <div class="card-head">
           <div>
-            <span class="comm-badge" style="margin-bottom: 4px; display:inline-block;">⚔️ 1v1 REAL-TIME ARENA</span>
-            <h2>Choose Your Battle Game</h2>
+            <span class="comm-badge bubble-text" style="margin-bottom: 4px; display:inline-block;">⚔️ 1v1 REAL-TIME ARENA</span>
+            <h2 class="bubble-text">Choose Your Battle Game</h2>
           </div>
-          <span class="arena-head-pill">RANKED ELO</span>
+          <span class="arena-head-pill bubble-text">RANKED ELO</span>
         </div>
         
         <div class="arena-game-cards-grid" id="gameSelector">
@@ -716,7 +716,7 @@
     <section id="view-ranks" class="view">
       <div class="card">
         <div class="card-head">
-          <h2>🏆 ELO Rankings</h2>
+          <h2 class="bubble-text">🏆 ELO Rankings</h2>
           <button id="btnRefreshLb" class="btn small">🔄</button>
         </div>
         <div class="filter-pills" id="lbFilters">
@@ -1011,6 +1011,30 @@
             <span class="field-hint" style="font-size:0.75rem; color:#94a3b8; margin-top:-6px; margin-bottom:8px; display:block;">
               💡 Selecting a game auto-fills title, launch URL, icon, and latest game logo!
             </span>
+
+            <!-- Smart Auto-Suggest & Marketing Presets -->
+            <div class="banner-auto-suggest-box">
+              <div class="bas-header">
+                <span class="bas-title">⚡ Smart Auto-Suggest & Settings</span>
+                <span class="bas-sub">1-Click Auto-Fill</span>
+              </div>
+              <div class="bas-btn-row">
+                <button type="button" id="btnAutoSuggestBanner" class="btn small primary bas-magic-btn">
+                  ✨ Auto-Suggest All Fields
+                </button>
+                <button type="button" id="btnRandomizeHook" class="btn small outline bas-random-btn">
+                  🎲 Randomize Creative Hook
+                </button>
+              </div>
+              <div class="bas-presets-row">
+                <span class="bas-preset-lbl">Marketing Styles:</span>
+                <button type="button" class="btn-preset-pill" data-style="hot">🔥 High Stakes</button>
+                <button type="button" class="btn-preset-pill" data-style="speed">⚡ Cyber Speed</button>
+                <button type="button" class="btn-preset-pill" data-style="arcade">👾 Boss Raid</button>
+                <button type="button" class="btn-preset-pill" data-style="pvp">⚔️ Ranked Duel</button>
+                <button type="button" class="btn-preset-pill" data-style="gold">🏆 Jackpot / Gold</button>
+              </div>
+            </div>
 
             <div class="form-row-2">
               <div>
@@ -1340,6 +1364,6 @@
     </nav>
   </div>
 
-  <script src="/static/app.js?v=20261124_1"></script>
+  <script src="/static/app.js?v=20261124_2"></script>
 </body>
 </html>

@@ -144,6 +144,7 @@
     if (window.lucide) {
       setTimeout(() => { window.lucide.createIcons(); }, 10);
     }
+    setTimeout(initBubbleText, 30);
   }
 
   function haptic(type = "light") {
@@ -2171,6 +2172,7 @@
       if (window.lucide) {
         window.lucide.createIcons();
       }
+      setTimeout(initBubbleText, 40);
 
       setHeroSlide(0);
       startHeroAutoSlide();
@@ -3066,30 +3068,407 @@
     if (currentVal) sel.value = currentVal;
   }
 
+  const BANNER_SMART_SUGGESTIONS = {
+    "aviator": {
+      title: "AVIATOR SKY HIGH",
+      theme: "slide-aviator",
+      badge: "HOT 🔥",
+      badge2: "x1000 CRASH",
+      desc: "Multiply your coin balance before the rocket bursts into space!",
+      cta: "Play Aviator Rocket",
+      hooks: [
+        "Multiply your coin balance before the rocket bursts into space!",
+        "Cash out before the crash! High stakes multiplier thrills!",
+        "Ascend to cosmic heights! Will you hold or take profits early?",
+        "Daily multiplier leaderboard! Reach 100x and win giant jackpots!"
+      ]
+    },
+    "dino": {
+      title: "T-REX CYBER RUN",
+      theme: "slide-speedway",
+      badge: "FEATURED 🦖",
+      badge2: "SPEEDWAY",
+      desc: "Infinite cyberpunk hurdle runner with high-speed neon ramps!",
+      cta: "Play Cyber Dino",
+      hooks: [
+        "Infinite cyberpunk hurdle runner with high-speed neon ramps!",
+        "Sprint across neon dunes and jump blazing cyber obstacles!",
+        "Survive ultra-speed velocity ramps and unlock legendary avatars!",
+        "High-velocity reflex dash! How far can you outrun the grid?"
+      ]
+    },
+    "space_invaders": {
+      title: "GALAXY DEFENDER 3D",
+      theme: "slide-invaders",
+      badge: "ARCADE 👾",
+      badge2: "BOSS RAID",
+      desc: "Blast descending alien swarms and defeat colossal boss battles!",
+      cta: "Play Galaxy Defender",
+      hooks: [
+        "Blast descending alien swarms and defeat colossal boss battles!",
+        "Retro arcade 3D space shooter with laser powerups and titan bosses!",
+        "Defend the galaxy against alien fleets in pulse-pounding arcade combat!",
+        "Upgrade lasers and shield generators to crush the cosmic invaders!"
+      ]
+    },
+    "tetris": {
+      title: "RETRO TETRIS",
+      theme: "slide-tetris",
+      badge: "PUZZLE 🧩",
+      badge2: "CLASSIC",
+      desc: "Classic block-clearing arcade puzzle with glowing neon lines!",
+      cta: "Play Retro Tetris",
+      hooks: [
+        "Classic block-clearing arcade puzzle with glowing neon lines!",
+        "Clear multi-line Tetris combos and climb global puzzle leaderboards!",
+        "Pure retro arcade perfection with glowing synthwave blocks!",
+        "Fast block-dropping puzzle action to test your speed and foresight!"
+      ]
+    },
+    "chess": {
+      title: "GRANDMASTER CHESS",
+      theme: "slide-gold",
+      badge: "PVP DUEL ♟️",
+      badge2: "RANKED ELO",
+      desc: "Tactical 8x8 tournament duels with live clocks, chat, and ranked ELO!",
+      cta: "Play Ranked Chess",
+      hooks: [
+        "Tactical 8x8 tournament duels with live clocks, chat, and ranked ELO!",
+        "Challenge grandmasters worldwide in real-time rated blitz matches!",
+        "Outwit your rival with tactical pins, forks, and checkmates!",
+        "Climb the master tier! Prove your board supremacy in 1v1 PvP!"
+      ]
+    },
+    "connect4": {
+      title: "CONNECT 4 ROYALE",
+      theme: "slide-aviator",
+      badge: "4-IN-A-ROW 🔴",
+      badge2: "TACTICAL",
+      desc: "Drop glowing discs and outsmart your rival with 4-in-a-row connections!",
+      cta: "Play Connect 4",
+      hooks: [
+        "Drop glowing discs and outsmart your rival with 4-in-a-row connections!",
+        "Fast-paced tactical gravity duel! Block traps and claim victory!",
+        "Form diagonal and horizontal lines before your opponent detects the setup!"
+      ]
+    },
+    "othello": {
+      title: "OTHELLO REVERSI",
+      theme: "slide-tetris",
+      badge: "STRATEGY ⚫",
+      badge2: "FLIP DUEL",
+      desc: "Outflank opposing discs, trap the four corners, and conquer the board!",
+      cta: "Play Othello Reversi",
+      hooks: [
+        "Outflank opposing discs, trap the four corners, and conquer the board!",
+        "A minute to learn, a lifetime to master! Flank and flip all discs!",
+        "Strategic reversi showdowns with live timers and ranked ladder points!"
+      ]
+    },
+    "tictactoe": {
+      title: "XO BLITZ ARENA",
+      theme: "slide-cyan",
+      badge: "⚡ 5s BLITZ",
+      badge2: "FAST PACED",
+      desc: "Ultra-fast 3x3 tactical duels with 5-second blitz timeout forfeits!",
+      cta: "Play XO Blitz",
+      hooks: [
+        "Ultra-fast 3x3 tactical duels with 5-second blitz timeout forfeits!",
+        "No time to hesitate! 5-second turns in lightning-quick tic-tac-toe!",
+        "Ranked 3x3 lightning duels! Speed and precision decide the champion!"
+      ]
+    },
+    "knife_hit": {
+      title: "KNIFE MASTER 3D",
+      theme: "slide-aviator",
+      badge: "TOURNAMENT 🗡️",
+      badge2: "15+ LEVELS",
+      desc: "MPL-style speedrun! Slice spinning targets and defeat boss logs!",
+      cta: "Play Knife Master",
+      hooks: [
+        "MPL-style speedrun! Slice spinning targets and defeat boss logs!",
+        "Throw sharp daggers into the target wheel without hitting existing blades!",
+        "15+ escalating boss stages! Test your surgical timing and reflexes!"
+      ]
+    },
+    "fruit_slice": {
+      title: "FRUIT SLICE BLADE",
+      theme: "slide-tetris",
+      badge: "ARCADE 🍉",
+      badge2: "3 LIVES",
+      desc: "Swipe juicy multi-fruit combos and dodge explosive bombs in blitz mode!",
+      cta: "Play Fruit Slice",
+      hooks: [
+        "Swipe juicy multi-fruit combos and dodge explosive bombs in blitz mode!",
+        "Unleash blade strikes on flying melons, pineapples, and dragonfruits!",
+        "3 minutes of slicing frenzy! Rack up multi-combos for huge scores!"
+      ]
+    },
+    "sheep_fight": {
+      title: "SHEEP FIGHT ROYALE",
+      theme: "slide-cyan",
+      badge: "HAGO 🐑",
+      badge2: "5 LANES",
+      desc: "Hago-style 5-lane sheep pushing battle! Clash horned rams to victory!",
+      cta: "Play Sheep Fight",
+      hooks: [
+        "Hago-style 5-lane sheep pushing battle! Clash horned rams to victory!",
+        "Deploy rams across 5 lanes to push your rival off the pasture!",
+        "Tactical weight and speed duel! Match heavy rams against light runners!"
+      ]
+    },
+    "virus_breaker": {
+      title: "VIRUS BREAKER CANNON",
+      theme: "slide-invaders",
+      badge: "NEW 🔥",
+      badge2: "CANNON BLAST",
+      desc: "Hago-style blaster duel! Pop levitating jumping viruses with upgraded cannons!",
+      cta: "Play Virus Breaker",
+      hooks: [
+        "Hago-style blaster duel! Pop levitating jumping viruses with upgraded cannons!",
+        "Fire multi-barrel cannons at floating viral swarms before they drop!",
+        "Fast-paced levitating bubble pop challenge with escalating firepower!"
+      ]
+    },
+    "helix_jump": {
+      title: "HELIX DROP 3D",
+      theme: "slide-speedway",
+      badge: "ADDICTIVE 🌀",
+      badge2: "ENDLESS TOWER",
+      desc: "Rotate the spiral helix tower and bounce through colorful sector gaps!",
+      cta: "Play Helix Drop",
+      hooks: [
+        "Rotate the spiral helix tower and bounce through colorful sector gaps!",
+        "Freefall through multiple floor stages and activate fiery booster breaks!",
+        "Endless spiral tower drop! Test your coordination and fall depth!"
+      ]
+    },
+    "plinko": {
+      title: "PLINKO LUCKY DROP",
+      theme: "slide-gold",
+      badge: "LUCKY 🪙",
+      badge2: "x100 MULTIPLIER",
+      desc: "Drop lucky coins through the peg pyramid into high multiplier prize gift boxes!",
+      cta: "Play Plinko Drop",
+      hooks: [
+        "Drop lucky coins through the peg pyramid into high multiplier prize gift boxes!",
+        "Watch the physics coin bounce between glowing pegs toward the jackpot!",
+        "Aim for the high-multiplier corners and collect giant gift rewards!"
+      ]
+    }
+  };
+
+  let currentBannerHooks = [];
+  let currentBannerHookIdx = 0;
+
+  function getSmartBannerData(opt) {
+    if (!opt) return null;
+    const title = opt.dataset.title || "";
+    const url = opt.value || "";
+    const desc = opt.dataset.desc || "";
+    const img = opt.dataset.image || "";
+
+    const key = Object.keys(BANNER_SMART_SUGGESTIONS).find(k => 
+      url.toLowerCase().includes(k) || title.toLowerCase().includes(k)
+    );
+    if (key && BANNER_SMART_SUGGESTIONS[key]) {
+      const s = BANNER_SMART_SUGGESTIONS[key];
+      currentBannerHooks = s.hooks || [s.desc];
+      currentBannerHookIdx = 0;
+      return {
+        title: s.title,
+        theme: s.theme,
+        badge: s.badge,
+        badge2: s.badge2,
+        desc: s.desc,
+        cta: s.cta || `Play ${title}`,
+        url,
+        image: img
+      };
+    }
+
+    // Dynamic generation for custom games
+    const lower = `${title} ${desc}`.toLowerCase();
+    let theme = "slide-speedway";
+    let badge = "HOT 🔥";
+    let badge2 = "FEATURED";
+    let hooks = [
+      desc || `Play ${title} instantly in the Ghost Plays arcade!`,
+      `Experience high-speed action and compete for top ranks in ${title}!`,
+      `The hottest new release in the arcade catalog! Play ${title} now!`,
+      `Shatter high scores and challenge friends in ${title}!`
+    ];
+
+    if (/space|galaxy|alien|shooter|invader|laser|cosmic/.test(lower)) {
+      theme = "slide-invaders";
+      badge = "SCI-FI 🚀";
+      badge2 = "BOSS RAID";
+      hooks = [
+        `Blast through cosmic space fleets and defeat bosses in ${title}!`,
+        `Upgrade your space artillery and conquer the star systems in ${title}!`,
+        desc || `Retro space arcade action with colossal boss encounters!`
+      ];
+    } else if (/race|speed|run|dino|dash|car|moto/.test(lower)) {
+      theme = "slide-speedway";
+      badge = "SPEED ⚡";
+      badge2 = "TURBO RAMP";
+      hooks = [
+        `High-speed velocity reflexes! Outrun the obstacles in ${title}!`,
+        `Hit maximum velocity and shatter leaderboard records in ${title}!`,
+        desc || `Endless speedway hurdles and neon obstacle dodging!`
+      ];
+    } else if (/puzzle|2048|tetris|word|sudoku|mine|match/.test(lower)) {
+      theme = "slide-tetris";
+      badge = "PUZZLE 🧩";
+      badge2 = "BRAIN TEST";
+      hooks = [
+        `Test your logic and clear tricky combos in ${title}!`,
+        `Brain-teasing puzzle action with satisfying neon clears in ${title}!`,
+        desc || `Classic mind-bending puzzle fun for all skill levels!`
+      ];
+    } else if (/pvp|battle|fight|arena|versus|duel/.test(lower)) {
+      theme = "slide-cyan";
+      badge = "1v1 DUEL ⚔️";
+      badge2 = "RANKED ELO";
+      hooks = [
+        `Challenge live rivals in intense 1v1 multiplayer showdowns!`,
+        `Climb global arena rankings and prove your skills in ${title}!`,
+        desc || `Real-time competitive battle arena with ranked ELO!`
+      ];
+    } else if (/jackpot|gold|coin|luck|bet|money|casino|aviator/.test(lower)) {
+      theme = "slide-gold";
+      badge = "JACKPOT 🏆";
+      badge2 = "BIG WIN";
+      hooks = [
+        `High multiplier jackpot action! Multiply your coin balance!`,
+        `Stake your tokens and aim for legendary top multipliers in ${title}!`,
+        desc || `High-stakes multiplier thrills and rewards!`
+      ];
+    }
+
+    currentBannerHooks = hooks;
+    currentBannerHookIdx = 0;
+    return {
+      title: `${title.toUpperCase()}`,
+      theme,
+      badge,
+      badge2,
+      desc: hooks[0],
+      cta: `Play ${title}`,
+      url,
+      image: img
+    };
+  }
+
+  function applyBannerAutoSuggestions(data) {
+    if (!data) return;
+    const bTitle = document.getElementById("bannerTitle");
+    if (bTitle) bTitle.value = data.title || "";
+
+    const bTheme = document.getElementById("bannerTheme");
+    if (bTheme && data.theme) bTheme.value = data.theme;
+
+    const bBadge = document.getElementById("bannerBadge");
+    if (bBadge) bBadge.value = data.badge || "";
+
+    const bBadge2 = document.getElementById("bannerBadge2");
+    if (bBadge2) bBadge2.value = data.badge2 || "";
+
+    const bDesc = document.getElementById("bannerDesc");
+    if (bDesc) bDesc.value = data.desc || "";
+
+    const gUrl = document.getElementById("bannerGameUrl");
+    if (gUrl) gUrl.value = data.url || "";
+
+    const gTitle = document.getElementById("bannerGameTitle");
+    if (gTitle) gTitle.value = data.cta || "";
+
+    if (data.image) {
+      const inputImg = document.getElementById("inputBannerImageUrl");
+      if (inputImg) inputImg.value = data.image;
+      const preview = document.getElementById("bannerImgPreview");
+      if (preview) preview.src = data.image;
+    }
+  }
+
   document.getElementById("bannerSelectGame")?.addEventListener("change", (e) => {
     const sel = e.target;
     const opt = sel.options[sel.selectedIndex];
     if (!opt || !opt.value) return;
+    const data = getSmartBannerData(opt);
+    applyBannerAutoSuggestions(data);
+    haptic("light");
+  });
 
-    const bTitle = document.getElementById("bannerTitle");
-    if (bTitle) bTitle.value = (opt.dataset.title || "").toUpperCase();
-
-    const gUrl = document.getElementById("bannerGameUrl");
-    if (gUrl) gUrl.value = opt.value;
-
-    const gTitle = document.getElementById("bannerGameTitle");
-    if (gTitle) gTitle.value = opt.dataset.title || "";
-
-    const bDesc = document.getElementById("bannerDesc");
-    if (bDesc && opt.dataset.desc) bDesc.value = opt.dataset.desc;
-
-    const imgUrl = opt.dataset.image;
-    if (imgUrl) {
-      const inputImg = document.getElementById("inputBannerImageUrl");
-      if (inputImg) inputImg.value = imgUrl;
-      const preview = document.getElementById("bannerImgPreview");
-      if (preview) preview.src = imgUrl;
+  document.getElementById("btnAutoSuggestBanner")?.addEventListener("click", () => {
+    const sel = document.getElementById("bannerSelectGame");
+    if (!sel || !sel.selectedIndex || !sel.value) {
+      // Pick first game if none selected
+      if (sel && sel.options.length > 1) {
+        sel.selectedIndex = 1;
+      } else {
+        alert("Please select a game first or add one to the catalog!");
+        return;
+      }
     }
+    const opt = sel.options[sel.selectedIndex];
+    const data = getSmartBannerData(opt);
+    applyBannerAutoSuggestions(data);
+    haptic("medium");
+  });
+
+  document.getElementById("btnRandomizeHook")?.addEventListener("click", () => {
+    if (!currentBannerHooks || !currentBannerHooks.length) {
+      const sel = document.getElementById("bannerSelectGame");
+      const opt = sel?.options[sel?.selectedIndex];
+      if (opt && opt.value) getSmartBannerData(opt);
+    }
+    if (currentBannerHooks && currentBannerHooks.length > 1) {
+      currentBannerHookIdx = (currentBannerHookIdx + 1) % currentBannerHooks.length;
+      const hook = currentBannerHooks[currentBannerHookIdx];
+      const bDesc = document.getElementById("bannerDesc");
+      if (bDesc) bDesc.value = hook;
+      haptic("light");
+    }
+  });
+
+  document.querySelectorAll(".btn-preset-pill").forEach((pill) => {
+    pill.addEventListener("click", () => {
+      const style = pill.dataset.style;
+      const bTheme = document.getElementById("bannerTheme");
+      const bBadge = document.getElementById("bannerBadge");
+      const bBadge2 = document.getElementById("bannerBadge2");
+      const bDesc = document.getElementById("bannerDesc");
+      const gTitle = document.getElementById("bannerGameTitle")?.value || "this game";
+
+      haptic("light");
+      if (style === "hot") {
+        if (bTheme) bTheme.value = "slide-aviator";
+        if (bBadge) bBadge.value = "HOT 🔥";
+        if (bBadge2) bBadge2.value = "HIGH STAKES";
+        if (bDesc) bDesc.value = `Intense high-stakes multiplier frenzy! Cash out before the crash in ${gTitle}!`;
+      } else if (style === "speed") {
+        if (bTheme) bTheme.value = "slide-speedway";
+        if (bBadge) bBadge.value = "SPEED ⚡";
+        if (bBadge2) bBadge2.value = "CYBERPUNK";
+        if (bDesc) bDesc.value = `High-velocity reflex hurdles across glowing neon tracks! Play ${gTitle} now!`;
+      } else if (style === "arcade") {
+        if (bTheme) bTheme.value = "slide-invaders";
+        if (bBadge) bBadge.value = "ARCADE 👾";
+        if (bBadge2) bBadge2.value = "BOSS RAID";
+        if (bDesc) bDesc.value = `Retro synthwave combat, giant boss battles, and high-energy laser warfare!`;
+      } else if (style === "pvp") {
+        if (bTheme) bTheme.value = "slide-cyan";
+        if (bBadge) bBadge.value = "PVP ⚔️";
+        if (bBadge2) bBadge2.value = "1v1 ARENA";
+        if (bDesc) bDesc.value = `Real-time 1v1 multiplayer duel with rated ELO rankings and live clock pressure!`;
+      } else if (style === "gold") {
+        if (bTheme) bTheme.value = "slide-gold";
+        if (bBadge) bBadge.value = "JACKPOT 🏆";
+        if (bBadge2) bBadge2.value = "BIG WIN";
+        if (bDesc) bDesc.value = `Exclusive tournament rewards and massive multiplier prizes waiting to be won!`;
+      }
+    });
   });
 
   const inputBannerFile = document.getElementById("inputBannerFile");
@@ -3400,7 +3779,75 @@
     }, { passive: true });
   }
 
+  // =========================================================
+  // BUBBLE TEXT EFFECT (Hover.dev / Aceternity Wave)
+  // =========================================================
+  function initBubbleText() {
+    const bubbleTargets = document.querySelectorAll(
+      ".bubble-text, .hub-section-title, .comm-badge, .arena-head-pill, .studio-section-title, .hero-feature-title"
+    );
+
+    bubbleTargets.forEach((container) => {
+      if (container.dataset.bubbleInit === "true") return;
+      if (container.querySelector("button, input, select, form, .bubble-char")) return;
+
+      const rawText = container.textContent.trim();
+      if (!rawText || rawText.length < 2) return;
+
+      container.dataset.bubbleInit = "true";
+      const chars = Array.from(rawText);
+      container.innerHTML = "";
+
+      const charSpans = chars.map((ch) => {
+        const span = document.createElement("span");
+        span.className = "bubble-char";
+        span.textContent = ch === " " ? "\u00A0" : ch;
+        container.appendChild(span);
+        return span;
+      });
+
+      charSpans.forEach((span, idx) => {
+        span.addEventListener("mouseenter", () => {
+          span.classList.add("bubble-active");
+          if (charSpans[idx - 1]) charSpans[idx - 1].classList.add("bubble-near");
+          if (charSpans[idx + 1]) charSpans[idx + 1].classList.add("bubble-near");
+          if (charSpans[idx - 2]) charSpans[idx - 2].classList.add("bubble-far");
+          if (charSpans[idx + 2]) charSpans[idx + 2].classList.add("bubble-far");
+        });
+
+        span.addEventListener("mouseleave", () => {
+          span.classList.remove("bubble-active");
+          if (charSpans[idx - 1]) charSpans[idx - 1].classList.remove("bubble-near");
+          if (charSpans[idx + 1]) charSpans[idx + 1].classList.remove("bubble-near");
+          if (charSpans[idx - 2]) charSpans[idx - 2].classList.remove("bubble-far");
+          if (charSpans[idx + 2]) charSpans[idx + 2].classList.remove("bubble-far");
+        });
+      });
+
+      // Mobile Touch Drag support for Bubble Text
+      container.addEventListener("touchmove", (e) => {
+        const touch = e.touches[0];
+        if (!touch) return;
+        const target = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (target && target.classList.contains("bubble-char") && container.contains(target)) {
+          charSpans.forEach(s => s.classList.remove("bubble-active", "bubble-near", "bubble-far"));
+          const curIdx = charSpans.indexOf(target);
+          if (curIdx !== -1) {
+            target.classList.add("bubble-active");
+            if (charSpans[curIdx - 1]) charSpans[curIdx - 1].classList.add("bubble-near");
+            if (charSpans[curIdx + 1]) charSpans[curIdx + 1].classList.add("bubble-near");
+          }
+        }
+      }, { passive: true });
+
+      container.addEventListener("touchend", () => {
+        charSpans.forEach(s => s.classList.remove("bubble-active", "bubble-near", "bubble-far"));
+      }, { passive: true });
+    });
+  }
+
   initAceternity3DCards();
+  initBubbleText();
   loadCustomGames();
   initAuth();
 
