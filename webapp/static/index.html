@@ -7,7 +7,7 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <!-- Lucide Icons Package (Modern Crisp Vector Icons) -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="/static/style.css?v=20261125_2" />
+  <link rel="stylesheet" href="/static/style.css?v=20261125_3" />
   <script>
     if (localStorage.getItem("app_theme") === "light") {
       document.documentElement.classList.add("theme-light");
@@ -653,9 +653,6 @@
 
       <!-- LICHESS MATCH CONTROLS BOTTOM TOOLBAR -->
       <div class="match-controls lichess-controls-bar" id="matchControls">
-        <button id="btnLeaveRoomAlt" class="btn-lichess-tool" title="Options / Menu">
-          <span class="tool-icon">≡</span>
-        </button>
         <button id="btnResign" class="btn-lichess-tool btn-tool-resign" title="Resign Match">
           <span class="tool-icon">🏳</span>
         </button>
@@ -712,11 +709,11 @@
             <button type="button" class="btn-screen-react" data-emoji="🎉" data-fx="rain" title="Party Confetti">🎉</button>
           </div>
 
-          <!-- MiniGame Bot 5 Personal Mascot Stickers Tray -->
+          <!-- MiniGame Bot Personal Mascot & Taunt Stickers Tray -->
           <div class="sticker-picker-tray hidden" id="stickerPickerTray">
             <div class="spt-header">
-              <span class="spt-title">🤖 MiniGame Bot Premium Mascot Stickers</span>
-              <span class="spt-sub">Tap to blast across screen!</span>
+              <span class="spt-title">🤖 MiniGame Bot Stickers</span>
+              <span class="spt-trial-badge" id="stickerTrialBanner">✨ 7-Day Free Trial</span>
             </div>
             <div class="sticker-cards-grid" id="stickerCardsGrid">
               <!-- Dynamically populated from MINIGAME_STICKERS -->
@@ -825,6 +822,7 @@
                   <div class="hbc-stat-row"><span>Matches</span><strong id="holoBackMatches">0</strong></div>
                   <div class="hbc-stat-row"><span>Win Rate</span><strong id="holoBackWinRate">0%</strong></div>
                   <div class="hbc-stat-row"><span>Coins</span><strong id="holoBackCoins">1,250</strong></div>
+                  <div class="hbc-stat-row"><span>Stickers</span><strong id="holoBackSub">✨ 7d Free Trial</strong></div>
                 </div>
                 <div class="hbc-bio" id="holoBackBio">"Ready to dominate the arena!"</div>
                 <div class="hbc-footer">Tap card to flip back ↺</div>
@@ -1571,6 +1569,6 @@
     <div id="reactionToastPill" class="reaction-toast-pill hidden"></div>
   </div>
 
-  <script src="/static/app.js?v=20261125_2"></script>
+  <script src="/static/app.js?v=20261125_3"></script>
 </body>
 </html>

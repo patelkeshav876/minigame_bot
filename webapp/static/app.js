@@ -229,7 +229,7 @@
     if (holoHandle) holoHandle.textContent = handleStr;
 
     const holoSub = document.getElementById("holoCardSubline");
-    if (holoSub) holoSub.textContent = `LVL ${profile.level || 1} • ${elo} ELO`;
+    if (holoSub) holoSub.textContent = `LVL ${profile.level || 1} • ${total} Played (${profile.wins || 0}W/${profile.losses || 0}L)`;
 
     const tierLabel = elo >= 1500 ? "LEGEND" : elo >= 1350 ? "MASTER" : elo >= 1220 ? "PRO" : "VIP";
     const holoTier = document.getElementById("holoCardTier");
@@ -248,6 +248,10 @@
     if (bWr) bWr.textContent = `${wr}%`;
     const bCoins = document.getElementById("holoBackCoins");
     if (bCoins) bCoins.textContent = Number(storedCoins).toLocaleString();
+    const bSub = document.getElementById("holoBackSub");
+    if (bSub && typeof getStickerSubscriptionStatus === "function") {
+      bSub.textContent = getStickerSubscriptionStatus().label;
+    }
     const bBio = document.getElementById("holoBackBio");
     const savedBio = localStorage.getItem("minigame_prof_bio") || "Ready to dominate the arena!";
     if (bBio) bBio.textContent = `"${savedBio}"`;
@@ -456,12 +460,22 @@
         const item = gr[g] || { elo: 1200, wins: 0, losses: 0, draws: 0, tier: { icon: "🥉", name: "Bronze" } };
         const icon = gameIcons[g] || "🎮";
         const gName = g.replaceAll("_", " ").toUpperCase();
+        const played = (item.wins || 0) + (item.losses || 0) + (item.draws || 0);
+        if (g === "chess") {
+          return `
+            <div class="rating-box">
+              <div class="rb-icon">${icon}</div>
+              <div class="rb-title">${gName}</div>
+              <div class="rb-elo">${item.tier?.icon || "🥉"} ${Math.round(item.elo)} ELO</div>
+              <div class="rb-record">${played} Played • ${item.wins}W / ${item.losses}L</div>
+            </div>`;
+        }
         return `
           <div class="rating-box">
             <div class="rb-icon">${icon}</div>
             <div class="rb-title">${gName}</div>
-            <div class="rb-elo">${item.tier?.icon || "🥉"} ${Math.round(item.elo)}</div>
-            <div class="rb-record">${item.wins}W • ${item.losses}L • ${item.draws}D</div>
+            <div class="rb-elo" style="color:#38bdf8;">${played} Played</div>
+            <div class="rb-record">${item.wins}W • ${item.losses}L${item.draws ? ` • ${item.draws}D` : ""}</div>
           </div>`;
       })
       .join("");
@@ -873,7 +887,143 @@
         <ellipse cx="38" cy="48" rx="6" ry="3" fill="rgba(255,255,255,0.4)" transform="rotate(-30 38 48)"/>
       </svg>`,
     },
+    bot_cry: {
+      id: "bot_cry",
+      title: "CRY MORE",
+      tag: "Salt Rain",
+      emoji: "😭",
+      fx: "rain",
+      premium: true,
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="38" fill="#0f172a" stroke="#38bdf8" stroke-width="3"/>
+        <path d="M32 38 Q38 33 44 38" stroke="#e2e8f0" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M56 38 Q62 33 68 38" stroke="#e2e8f0" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M34 44 L34 80 M42 44 L42 82" stroke="#38bdf8" stroke-width="5" stroke-linecap="round" opacity="0.85"/>
+        <path d="M58 44 L58 82 M66 44 L66 80" stroke="#38bdf8" stroke-width="5" stroke-linecap="round" opacity="0.85"/>
+        <ellipse cx="50" cy="64" rx="11" ry="8" fill="#ef4444" stroke="#fff" stroke-width="1.5"/>
+      </svg>`,
+    },
+    bot_clown: {
+      id: "bot_clown",
+      title: "NICE TRY",
+      tag: "Clown Taunt",
+      emoji: "🤡",
+      fx: "blast",
+      premium: true,
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="22" cy="42" r="12" fill="#a855f7"/>
+        <circle cx="78" cy="42" r="12" fill="#a855f7"/>
+        <circle cx="50" cy="52" r="34" fill="#fef9c3" stroke="#f59e0b" stroke-width="3"/>
+        <circle cx="38" cy="42" r="5" fill="#0f172a"/>
+        <circle cx="62" cy="42" r="5" fill="#0f172a"/>
+        <circle cx="50" cy="54" r="9" fill="#ef4444"/>
+        <path d="M32 66 Q50 80 68 66" stroke="#ef4444" stroke-width="4" fill="none" stroke-linecap="round"/>
+      </svg>`,
+    },
+    bot_sleep: {
+      id: "bot_sleep",
+      title: "TOO EASY",
+      tag: "Wake Up!",
+      emoji: "😴",
+      fx: "float",
+      premium: false,
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <rect x="20" y="24" width="60" height="54" rx="18" fill="#1e293b" stroke="#818cf8" stroke-width="3"/>
+        <path d="M32 48 Q38 54 44 48" stroke="#94a3b8" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M56 48 Q62 54 68 48" stroke="#94a3b8" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <circle cx="50" cy="64" r="5" fill="#818cf8"/>
+        <text x="68" y="24" font-size="14" font-weight="900" fill="#38bdf8" font-family="sans-serif">Z</text>
+        <text x="78" y="16" font-size="11" font-weight="900" fill="#a855f7" font-family="sans-serif">z</text>
+      </svg>`,
+    },
+    bot_mindblown: {
+      id: "bot_mindblown",
+      title: "MIND BLOWN",
+      tag: "Galaxy Brain",
+      emoji: "🤯",
+      fx: "blast",
+      premium: true,
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22 44 Q50 4 78 44 Q72 22 50 28 Q28 22 22 44 Z" fill="#f97316"/>
+        <circle cx="30" cy="20" r="5" fill="#fde047"/>
+        <circle cx="70" cy="20" r="5" fill="#fde047"/>
+        <circle cx="50" cy="12" r="6" fill="#ef4444"/>
+        <circle cx="50" cy="60" r="30" fill="#0f172a" stroke="#f59e0b" stroke-width="3"/>
+        <circle cx="39" cy="54" r="5" fill="#38bdf8"/>
+        <circle cx="61" cy="54" r="5" fill="#38bdf8"/>
+        <ellipse cx="50" cy="72" rx="8" ry="6" fill="#ef4444"/>
+      </svg>`,
+    },
+    bot_toxic: {
+      id: "bot_toxic",
+      title: "EZ CLAP",
+      tag: "Smirk Taunt",
+      emoji: "😈",
+      fx: "float",
+      premium: true,
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <path d="M26 30 L18 14 L38 24 Z" fill="#a855f7"/>
+        <path d="M74 30 L82 14 L62 24 Z" fill="#a855f7"/>
+        <circle cx="50" cy="54" r="34" fill="#3b0764" stroke="#c084fc" stroke-width="3"/>
+        <path d="M33 44 L45 48 L35 52 Z" fill="#fde047"/>
+        <path d="M67 44 L55 48 L65 52 Z" fill="#fde047"/>
+        <path d="M34 65 Q50 77 66 63" stroke="#e879f9" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      </svg>`,
+    },
+    bot_respect: {
+      id: "bot_respect",
+      title: "RESPECT",
+      tag: "GG Love",
+      emoji: "💖",
+      fx: "float",
+      premium: false,
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <path d="M50 86 C20 66 12 42 26 26 C36 16 48 24 50 32 C52 24 64 16 74 26 C88 42 80 66 50 86 Z" fill="#ec4899" stroke="#fbcfe8" stroke-width="3"/>
+        <rect x="34" y="42" width="32" height="18" rx="6" fill="#0f172a"/>
+        <circle cx="43" cy="51" r="3" fill="#67e8f9"/>
+        <circle cx="57" cy="51" r="3" fill="#67e8f9"/>
+      </svg>`,
+    },
   };
+
+  function getStickerSubscriptionStatus() {
+    if (localStorage.getItem("minigame_sticker_premium") === "true") {
+      return { active: true, isPremium: true, daysLeft: 999, label: "💎 Premium Active" };
+    }
+    let start = parseInt(localStorage.getItem("minigame_sticker_trial_start") || "0", 10);
+    if (!start) {
+      start = Date.now();
+      localStorage.setItem("minigame_sticker_trial_start", String(start));
+    }
+    const elapsedDays = Math.floor((Date.now() - start) / 86400000);
+    const daysLeft = Math.max(0, 7 - elapsedDays);
+    if (daysLeft > 0) {
+      return { active: true, isPremium: false, daysLeft, label: `✨ ${daysLeft}d Free Trial` };
+    }
+    return { active: false, isPremium: false, daysLeft: 0, label: "🔒 Trial Ended" };
+  }
+
+  function unlockPremiumStickers() {
+    const curCoins = parseInt(localStorage.getItem("flipster_coins") || "1250", 10);
+    if (curCoins < 500) {
+      alert("⚠️ Need 500 Coins to unlock Permanent Premium Stickers! Claim Daily Bonus or visit Shop.");
+      return false;
+    }
+    if (!confirm("💎 Unlock all Premium Stickers permanently for 500 Coins?")) return false;
+    const nextCoins = curCoins - 500;
+    localStorage.setItem("flipster_coins", String(nextCoins));
+    localStorage.setItem("minigame_sticker_premium", "true");
+    const coinValEl = document.getElementById("coinVal");
+    if (coinValEl) coinValEl.textContent = nextCoins.toLocaleString();
+    if (state.profile) renderProfileSummary(state.profile);
+    const grid = document.getElementById("stickerCardsGrid");
+    if (grid) {
+      grid.dataset.inited = "";
+      initStickerPicker();
+    }
+    triggerMagicalScreenReaction({ type: "reaction", emoji: "💎", fx: "rain", senderName: "Premium Unlocked", isSelf: true });
+    return true;
+  }
 
   function triggerMagicalScreenReaction({ type, emoji, sticker_id, fx, senderName, isSelf }) {
     const overlay = document.getElementById("screenReactionOverlay");
@@ -1266,6 +1416,12 @@
     const s = MINIGAME_STICKERS[stickerId];
     if (!s) return;
 
+    const sub = getStickerSubscriptionStatus();
+    if (s.premium && !sub.active) {
+      unlockPremiumStickers();
+      return;
+    }
+
     triggerMagicalScreenReaction({
       type: "sticker",
       sticker_id: stickerId,
@@ -1282,12 +1438,26 @@
       });
     }
 
-    document.getElementById("stickerPickerTray")?.classList.add("hidden");
-    document.getElementById("btnToggleStickerTray")?.classList.remove("active");
+    toggleStickersTray(false);
     document.getElementById("inGameReactionDock")?.classList.add("hidden");
   }
 
   function initStickerPicker() {
+    const banner = document.getElementById("stickerTrialBanner");
+    const sub = getStickerSubscriptionStatus();
+    if (banner) {
+      banner.textContent = sub.isPremium ? "💎 PREMIUM ACTIVE" : sub.active ? `${sub.label} • Upgrade 💎` : "🔒 Unlock Premium (500 🪙)";
+      banner.classList.toggle("premium-active", sub.isPremium);
+      if (!banner.dataset.wired) {
+        banner.dataset.wired = "true";
+        banner.addEventListener("click", () => {
+          if (!getStickerSubscriptionStatus().isPremium) {
+            unlockPremiumStickers();
+          }
+        });
+      }
+    }
+
     const grid = document.getElementById("stickerCardsGrid");
     if (!grid || grid.dataset.inited === "true") return;
     grid.dataset.inited = "true";
@@ -1296,7 +1466,9 @@
     Object.values(MINIGAME_STICKERS).forEach((s) => {
       const card = document.createElement("div");
       card.className = "sticker-card";
+      const premBadge = s.premium ? `<span class="sticker-premium-tag">${sub.active ? "PRO ✨" : "🔒 PRO"}</span>` : "";
       card.innerHTML = `
+        ${premBadge}
         <div class="sticker-art-wrap">${s.svg}</div>
         <div class="sticker-lbl">${s.title}</div>
         <div class="sticker-tag">${s.tag}</div>
@@ -2371,14 +2543,17 @@
 
   function toggleStickersTray(force) {
     if (!stickerPickerTray) return;
+    const quickPills = document.querySelector(".quick-chat-pills");
     const shouldOpen = force !== undefined ? force : stickerPickerTray.classList.contains("hidden");
     if (shouldOpen) {
       initStickerPicker();
       stickerPickerTray.classList.remove("hidden");
       btnToggleStickerTray?.classList.add("active");
+      if (quickPills) quickPills.classList.add("hidden");
     } else {
       stickerPickerTray.classList.add("hidden");
       btnToggleStickerTray?.classList.remove("active");
+      if (quickPills) quickPills.classList.remove("hidden");
     }
   }
 

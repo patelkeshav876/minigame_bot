@@ -672,10 +672,12 @@ function handleKnifeClash(x, y) {
       gameOver('clash');
     }, 350);
   } else {
-    // Has remaining lives: ready next throw!
+    // Has remaining lives: restore the clashed knife so the player is never stuck!
+    remainingKnivesToThrow++;
+    updateKnifeBar();
     setTimeout(() => {
       flyingKnife = null;
-    }, 280);
+    }, 220);
   }
 }
 

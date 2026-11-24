@@ -819,151 +819,191 @@ canvas {
       ctx.globalAlpha = 0.4;
     }
 
-    // Force shield glow
+    // Force shield glow (zero shadowBlur for 60fps)
     if (player.invincibleTimer > 0) {
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.14)';
+      ctx.beginPath();
+      ctx.arc(0, -4, 38, 0, Math.PI * 2);
+      ctx.fill();
       ctx.strokeStyle = '#38bdf8';
       ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(0, -6, 36, 0, Math.PI * 2);
       ctx.stroke();
     }
 
-    // Engine thruster flames
-    const thrusterFlicker = Math.random() * 6 + 10;
-    ctx.fillStyle = 'rgba(56, 189, 248, 0.85)';
-    ctx.beginPath();
-    ctx.moveTo(-16, 18);
-    ctx.lineTo(0, 18 + thrusterFlicker * 1.3);
-    ctx.lineTo(16, 18);
-    ctx.closePath();
-    ctx.fill();
+    // Twin Plasma Afterburner Thrusters
+    const thrusterFlicker = Math.random() * 7 + 11;
+    [-11, 11].forEach((tx) => {
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.85)';
+      ctx.beginPath();
+      ctx.moveTo(tx - 5, 18);
+      ctx.lineTo(tx, 18 + thrusterFlicker * 1.4);
+      ctx.lineTo(tx + 5, 18);
+      ctx.closePath();
+      ctx.fill();
 
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.moveTo(-8, 18);
-    ctx.lineTo(0, 18 + thrusterFlicker * 0.7);
-    ctx.lineTo(8, 18);
-    ctx.closePath();
-    ctx.fill();
+      ctx.fillStyle = '#e0f2fe';
+      ctx.beginPath();
+      ctx.moveTo(tx - 2.5, 18);
+      ctx.lineTo(tx, 18 + thrusterFlicker * 0.75);
+      ctx.lineTo(tx + 2.5, 18);
+      ctx.closePath();
+      ctx.fill();
+    });
 
-    // Modern Sci-Fi Ship Body
-    // Wings
-    ctx.fillStyle = '#1e293b';
+    // Swept Stealth Outer Wings (Cyber Interceptor)
+    ctx.fillStyle = '#0f172a';
     ctx.strokeStyle = '#38bdf8';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(0, -26);
-    ctx.lineTo(28, 16);
-    ctx.lineTo(16, 18);
-    ctx.lineTo(0, 12);
-    ctx.lineTo(-16, 18);
-    ctx.lineTo(-28, 16);
+    ctx.moveTo(0, -32);
+    ctx.lineTo(14, -10);
+    ctx.lineTo(34, 14);
+    ctx.lineTo(28, 22);
+    ctx.lineTo(16, 16);
+    ctx.lineTo(12, 20);
+    ctx.lineTo(-12, 20);
+    ctx.lineTo(-16, 16);
+    ctx.lineTo(-28, 22);
+    ctx.lineTo(-34, 14);
+    ctx.lineTo(-14, -10);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    // Fuselage / Armor Plating
-    const bodyGrad = ctx.createLinearGradient(-15, -20, 15, 10);
-    bodyGrad.addColorStop(0, '#38bdf8');
-    bodyGrad.addColorStop(0.5, '#0284c7');
-    bodyGrad.addColorStop(1, '#0f172a');
+    // Neon Wing Accent Stripes
+    ctx.strokeStyle = '#a855f7';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-14, -2);
+    ctx.lineTo(-29, 15);
+    ctx.moveTo(14, -2);
+    ctx.lineTo(29, 15);
+    ctx.stroke();
+
+    // Wingtip Laser Emitters
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(-33, 8, 3, 9);
+    ctx.fillRect(30, 8, 3, 9);
+
+    // Armored Center Fuselage
+    const bodyGrad = ctx.createLinearGradient(0, -32, 0, 18);
+    bodyGrad.addColorStop(0, '#7dd3fc');
+    bodyGrad.addColorStop(0.45, '#0284c7');
+    bodyGrad.addColorStop(1, '#1e293b');
     ctx.fillStyle = bodyGrad;
     ctx.beginPath();
-    ctx.moveTo(0, -28);
-    ctx.lineTo(12, 6);
-    ctx.lineTo(0, 10);
-    ctx.lineTo(-12, 6);
+    ctx.moveTo(0, -34);
+    ctx.lineTo(13, 6);
+    ctx.lineTo(8, 18);
+    ctx.lineTo(-8, 18);
+    ctx.lineTo(-13, 6);
     ctx.closePath();
     ctx.fill();
 
-    // Cockpit neon canopy
+    // Glowing Reactor Core
     ctx.fillStyle = '#67e8f9';
-    ctx.shadowColor = '#38bdf8';
-    ctx.shadowBlur = 10;
     ctx.beginPath();
-    ctx.ellipse(0, -8, 5, 11, 0, 0, Math.PI * 2);
+    ctx.arc(0, 7, 4.5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.shadowBlur = 0;
+
+    // Sleek Glass Cockpit Canopy
+    const canopyGrad = ctx.createLinearGradient(0, -20, 0, 0);
+    canopyGrad.addColorStop(0, '#e0f2fe');
+    canopyGrad.addColorStop(0.4, '#38bdf8');
+    canopyGrad.addColorStop(1, '#0369a1');
+    ctx.fillStyle = canopyGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, -10, 5, 11, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#bae6fd';
+    ctx.lineWidth = 1;
+    ctx.stroke();
 
     // Cannon Barrels according to shootersCount
-    ctx.fillStyle = '#94a3b8';
+    ctx.fillStyle = '#cbd5e1';
     if (shootersCount === 1) {
-      ctx.fillRect(-3, -33, 6, 8);
+      ctx.fillRect(-2.5, -38, 5, 8);
     } else if (shootersCount === 2) {
-      ctx.fillRect(-16, -26, 4, 8);
-      ctx.fillRect(12, -26, 4, 8);
+      ctx.fillRect(-16, -24, 4, 9);
+      ctx.fillRect(12, -24, 4, 9);
     } else if (shootersCount === 3) {
-      ctx.fillRect(-3, -34, 6, 8);
-      ctx.fillRect(-17, -24, 4, 8);
-      ctx.fillRect(13, -24, 4, 8);
+      ctx.fillRect(-2.5, -39, 5, 9);
+      ctx.fillRect(-17, -23, 4, 9);
+      ctx.fillRect(13, -23, 4, 9);
     } else if (shootersCount === 4) {
-      ctx.fillRect(-22, -22, 4, 8);
-      ctx.fillRect(-9, -28, 4, 8);
-      ctx.fillRect(5, -28, 4, 8);
-      ctx.fillRect(18, -22, 4, 8);
+      ctx.fillRect(-24, -18, 4, 9);
+      ctx.fillRect(-10, -29, 4, 9);
+      ctx.fillRect(6, -29, 4, 9);
+      ctx.fillRect(20, -18, 4, 9);
     } else {
-      ctx.fillRect(-3, -36, 6, 10);
-      ctx.fillRect(-14, -28, 4, 8);
-      ctx.fillRect(10, -28, 4, 8);
-      ctx.fillRect(-25, -20, 4, 8);
-      ctx.fillRect(21, -20, 4, 8);
+      ctx.fillRect(-2.5, -40, 5, 10);
+      ctx.fillRect(-14, -28, 4, 9);
+      ctx.fillRect(10, -28, 4, 9);
+      ctx.fillRect(-26, -18, 4, 9);
+      ctx.fillRect(22, -18, 4, 9);
     }
 
     ctx.restore();
   }
 
   function drawBullets() {
-    for (let b of bullets) {
-      ctx.save();
-      ctx.shadowColor = '#38bdf8';
-      ctx.shadowBlur = 8;
-      ctx.fillStyle = '#7dd3fc';
+    // High-performance batched bullet rendering without expensive shadowBlur
+    ctx.lineCap = 'round';
+    for (let i = 0; i < bullets.length; i++) {
+      const b = bullets[i];
+      // Outer laser glow (fast translucent stroke)
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+      ctx.lineWidth = b.radius * 3.2;
       ctx.beginPath();
-      ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Bullet trail
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
-      ctx.lineWidth = b.radius * 1.5;
-      ctx.beginPath();
-      ctx.moveTo(b.x - b.vx * 1.2, b.y - b.vy * 1.2);
+      ctx.moveTo(b.x - b.vx * 1.3, b.y - b.vy * 1.3);
       ctx.lineTo(b.x, b.y);
       ctx.stroke();
 
-      ctx.restore();
+      // Bright core bolt
+      ctx.strokeStyle = '#e0f2fe';
+      ctx.lineWidth = b.radius * 1.3;
+      ctx.beginPath();
+      ctx.moveTo(b.x - b.vx * 0.9, b.y - b.vy * 0.9);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
     }
   }
 
   function drawViruses() {
-    for (let v of viruses) {
+    for (let i = 0; i < viruses.length; i++) {
+      const v = viruses[i];
       ctx.save();
       ctx.translate(v.x, v.y);
       ctx.rotate(v.rotation);
 
       const color = v.hitFlash > 0 ? { fill: '#ffffff', ring: '#ffffff', spike: '#ffffff', glow: '#ffffff' } : v.color;
 
-      // Glow behind virus
-      ctx.shadowColor = color.glow;
-      ctx.shadowBlur = 12;
+      // Fast translucent halo behind virus (replaces slow shadowBlur)
+      ctx.fillStyle = v.hitFlash > 0 ? 'rgba(255, 255, 255, 0.35)' : 'rgba(255, 255, 255, 0.12)';
+      ctx.beginPath();
+      ctx.arc(0, 0, v.radius * 1.25, 0, Math.PI * 2);
+      ctx.fill();
 
       // Draw spiky protein receptors
       ctx.fillStyle = color.spike;
-      for (let i = 0; i < v.spikeCount; i++) {
-        const angle = (i / v.spikeCount) * Math.PI * 2;
+      ctx.strokeStyle = color.spike;
+      ctx.lineWidth = v.radius * 0.12;
+      for (let s = 0; s < v.spikeCount; s++) {
+        const angle = (s / v.spikeCount) * Math.PI * 2;
+        const cosA = Math.cos(angle);
+        const sinA = Math.sin(angle);
         const spikeLen = v.radius * 0.32;
-        const sx = Math.cos(angle) * (v.radius + spikeLen);
-        const sy = Math.sin(angle) * (v.radius + spikeLen);
+        const sx = cosA * (v.radius + spikeLen);
+        const sy = sinA * (v.radius + spikeLen);
+
+        ctx.beginPath();
+        ctx.moveTo(cosA * v.radius, sinA * v.radius);
+        ctx.lineTo(sx, sy);
+        ctx.stroke();
 
         ctx.beginPath();
         ctx.arc(sx, sy, v.radius * 0.16, 0, Math.PI * 2);
         ctx.fill();
-
-        ctx.strokeStyle = color.spike;
-        ctx.lineWidth = v.radius * 0.12;
-        ctx.beginPath();
-        ctx.moveTo(Math.cos(angle) * v.radius, Math.sin(angle) * v.radius);
-        ctx.lineTo(sx, sy);
-        ctx.stroke();
       }
 
       // Virus central sphere
@@ -979,38 +1019,36 @@ canvas {
       ctx.arc(0, 0, v.radius * 0.78, 0, Math.PI * 2);
       ctx.stroke();
 
-      ctx.shadowBlur = 0;
       ctx.restore();
 
       // Render HP in center (unrotated so number is always upright)
-      ctx.save();
-      ctx.translate(v.x, v.y);
       const fontSize = Math.max(12, Math.floor(v.radius * 0.8));
       ctx.font = `900 ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
-      // Text stroke for high contrast
       ctx.strokeStyle = '#000000';
       ctx.lineWidth = 3.5;
-      ctx.strokeText(Math.ceil(v.hp), 0, 1);
+      ctx.strokeText(Math.ceil(v.hp), v.x, v.y + 1);
 
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(Math.ceil(v.hp), 0, 1);
-      ctx.restore();
+      ctx.fillText(Math.ceil(v.hp), v.x, v.y + 1);
     }
   }
 
   function drawParticles() {
-    for (let p of particles) {
-      ctx.save();
+    if (particles.length > 65) {
+      particles.splice(0, particles.length - 65);
+    }
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
       ctx.globalAlpha = p.life;
       ctx.fillStyle = p.color;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
       ctx.fill();
-      ctx.restore();
     }
+    ctx.globalAlpha = 1;
 
     for (let t of floatingTexts) {
       ctx.save();
