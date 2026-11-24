@@ -5372,3 +5372,404 @@ body.theme-light .bubble-char.bubble-near {
 .btn-preset-pill:active {
   transform: scale(0.95);
 }
+
+/* =========================================================
+   TELEGRAM PREMIUM STICKERS & MAGICAL FULLSCREEN REACTIONS
+   ========================================================= */
+
+/* In-Arena Tool Row Reaction Button */
+.btn-tool-react {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(56, 189, 248, 0.25) 100%) !important;
+  border: 1px solid rgba(168, 85, 247, 0.5) !important;
+  color: #c084fc !important;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.25);
+  transition: all 0.18s ease;
+}
+.btn-tool-react:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+  color: #ffffff !important;
+}
+
+/* Fullscreen Web Game Player Top Nav Actions */
+.player-top-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.player-btn-react {
+  background: rgba(168, 85, 247, 0.25) !important;
+  border-color: rgba(168, 85, 247, 0.45) !important;
+  color: #e9d5ff !important;
+}
+.player-btn-react:hover {
+  background: rgba(168, 85, 247, 0.4) !important;
+  color: #ffffff !important;
+}
+
+/* In-Game Floating Quick Reaction Dock */
+.in-game-reaction-dock {
+  position: fixed;
+  bottom: 82px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  background: rgba(13, 21, 39, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.7), 0 0 25px rgba(168, 85, 247, 0.35);
+  padding: 6px 10px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 10000;
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease, visibility 0.2s ease;
+}
+.in-game-reaction-dock.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-50%) translateY(20px);
+  pointer-events: none;
+}
+.dock-react-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: transform 0.14s ease, background 0.14s ease, border-color 0.14s ease;
+}
+.dock-react-btn:hover {
+  transform: scale(1.22);
+  background: rgba(168, 85, 247, 0.35);
+  border-color: #c084fc;
+}
+.dock-react-btn:active {
+  transform: scale(0.92);
+}
+.dock-btn-more {
+  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+  color: #fff;
+  border-color: #fde047;
+  font-size: 1rem;
+}
+
+/* Chat Header Actions */
+.cdh-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-chat-sticker-toggle {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(234, 88, 12, 0.22));
+  border: 1px solid rgba(245, 158, 11, 0.55);
+  color: #fde047;
+  font-weight: 800;
+  font-size: 0.74rem;
+  padding: 5px 11px;
+  border-radius: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+.btn-chat-sticker-toggle:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.4), rgba(234, 88, 12, 0.4));
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+}
+.btn-chat-sticker-toggle.active {
+  background: #f59e0b;
+  color: #000;
+  border-color: #fde047;
+}
+
+/* Chat Reactions Strip */
+.chat-reactions-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(15, 23, 42, 0.65);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.chat-reactions-strip::-webkit-scrollbar {
+  display: none;
+}
+.reactions-strip-lbl {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #c084fc;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.btn-screen-react {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+.btn-screen-react:hover {
+  transform: scale(1.22);
+  background: rgba(168, 85, 247, 0.3);
+  border-color: #c084fc;
+}
+.btn-screen-react:active {
+  transform: scale(0.9);
+}
+
+/* Telegram Premium Mascot Stickers Tray */
+.sticker-picker-tray {
+  background: #090e1a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 14px;
+  max-height: 220px;
+  overflow-y: auto;
+  transition: all 0.25s ease;
+}
+.sticker-picker-tray.hidden {
+  display: none;
+}
+.spt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.spt-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #fde047;
+  letter-spacing: 0.4px;
+}
+.spt-sub {
+  font-size: 0.68rem;
+  color: #94a3b8;
+}
+.sticker-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
+  gap: 10px;
+}
+.sticker-card {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.sticker-card:hover {
+  transform: translateY(-3px) scale(1.05);
+  border-color: #38bdf8;
+  box-shadow: 0 8px 20px rgba(56, 189, 248, 0.25);
+  background: rgba(30, 41, 59, 0.95);
+}
+.sticker-card:active {
+  transform: scale(0.95);
+}
+.sticker-art-wrap {
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+}
+.sticker-art-wrap svg {
+  width: 100%;
+  height: 100%;
+}
+.sticker-lbl {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.sticker-tag {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: #38bdf8;
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+
+/* Chat Input Bar Addons */
+.btn-input-addon {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #e2e8f0;
+  font-size: 1.15rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+.btn-input-addon:hover {
+  background: rgba(168, 85, 247, 0.3);
+  border-color: #c084fc;
+  transform: scale(1.08);
+}
+
+/* Sticker & Reaction In Chat Message Bubble */
+.chat-sticker-bubble {
+  background: rgba(15, 23, 42, 0.85) !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  padding: 10px 14px !important;
+  border-radius: 18px !important;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+.chat-sticker-bubble:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+}
+.chat-sticker-bubble .csb-art {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 4px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.5));
+}
+.chat-sticker-bubble .csb-art svg {
+  width: 100%;
+  height: 100%;
+}
+.chat-sticker-bubble .csb-caption {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: center;
+  color: #38bdf8;
+  letter-spacing: 0.4px;
+}
+.chat-reaction-bubble {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  font-size: 2.2rem !important;
+  padding: 2px 6px !important;
+  line-height: 1 !important;
+  cursor: pointer;
+  animation: popInBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes popInBounce {
+  0% { transform: scale(0.3); opacity: 0; }
+  60% { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* =========================================================
+   FULLSCREEN MAGICAL SCREEN REACTION OVERLAY & PHYSICS
+   ========================================================= */
+.screen-reaction-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 999999;
+  overflow: hidden;
+}
+
+/* Top Reaction Announcement Toast Pill */
+.reaction-toast-pill {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-24px);
+  background: rgba(13, 21, 39, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 22px rgba(56, 189, 248, 0.35);
+  padding: 8px 20px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.22s ease;
+}
+.reaction-toast-pill.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.reaction-toast-pill .rtp-icon {
+  font-size: 1.3rem;
+  filter: drop-shadow(0 0 8px #f59e0b);
+}
+.reaction-toast-pill .rtp-text {
+  color: #f1f5f9;
+}
+.reaction-toast-pill .rtp-text strong {
+  color: #38bdf8;
+}
+
+/* Screen Shake Effect */
+@keyframes screenReactionShake {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  20% { transform: translate(-5px, 3px) rotate(-0.5deg); }
+  40% { transform: translate(5px, -3px) rotate(0.5deg); }
+  60% { transform: translate(-3px, -2px) rotate(-0.3deg); }
+  80% { transform: translate(3px, 2px) rotate(0.3deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+.screen-reaction-shaking {
+  animation: screenReactionShake 0.38s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* Base Magical Particle Element */
+.magical-particle {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  will-change: transform, opacity;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.magical-hero-emoji {
+  filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.8)) drop-shadow(0 0 32px rgba(168, 85, 247, 0.6));
+}
+.magical-hero-svg {
+  filter: drop-shadow(0 0 18px rgba(245, 158, 11, 0.85)) drop-shadow(0 0 36px rgba(234, 88, 12, 0.6));
+}

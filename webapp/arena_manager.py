@@ -510,63 +510,104 @@ class ArenaManager:
                         p2_s = room.state.get("p2_score", 0)
                         winner = "P1" if p1_s > p2_s else ("P2" if p2_s > p1_s else "Draw")
                         self._finish_room(room, winner, f"Match Completed! Final Score: {p1_s} vs {p2_s}")
-            elif msg_type == "chat":
+            elif msg_type in ("chat", "reaction", "sticker"):
                 text = str(data.get("text", "")).strip()[:140]
-                if text:
+                sticker_id = str(data.get("sticker_id", "")).strip()[:64]
+                emoji = str(data.get("emoji", "")).strip()[:32]
+                fx = str(data.get("fx", "float")).strip()[:32]
+
+                if text or sticker_id or emoji:
                     player = next((p for p in room.players if p.user_id == user_id), None)
                     sender_name = player.name if player else "Player"
                     sender_role = player.role if player else ""
-                    chat_payload = {
-                        "type": "chat",
+                    msg_payload = {
+                        "type": msg_type,
                         "sender_id": user_id,
                         "sender_name": sender_name,
                         "sender_role": sender_role,
                         "text": text,
+                        "sticker_id": sticker_id,
+                        "emoji": emoji,
+                        "fx": fx,
                         "timestamp": time.time(),
                     }
-                    # Send chat immediately to all sockets
+                    # Send immediately to all sockets
                     for p in list(room.players):
                         if p.ws is not None:
                             try:
-                                await p.ws.send_json(chat_payload)
+                                await p.ws.send_json(msg_payload)
                             except Exception:
                                 pass
                     for spec_ws in list(room.spectators):
                         try:
-                            await spec_ws.send_json(chat_payload)
+                            await spec_ws.send_json(msg_payload)
                         except Exception:
                             pass
 
-                    # If playing against AI, reply with a courteous message after a short pause
+                    # If playing against AI, reply or react back
                     if room.vs_ai:
-                        ai_replies = [
-                            "Good game! 🤝",
-                            "Nice move! 🔥",
-                            "Let's see how this unfolds...",
-                            "Well played!",
-                            "Thinking through my tactics... 🤔",
-                            "May the best player win! ⚔️",
-                            "Impressive strategy!",
-                        ]
-                        async def _ai_chat_response():
-                            await asyncio.sleep(1.2)
-                            ai_player = next((p for p in room.players if p.is_ai), None)
-                            if ai_player:
-                                ai_msg = {
-                                    "type": "chat",
-                                    "sender_id": ai_player.user_id,
-                                    "sender_name": ai_player.name,
-                                    "sender_role": ai_player.role,
-                                    "text": random.choice(ai_replies),
-                                    "timestamp": time.time(),
-                                }
-                                for p in list(room.players):
-                                    if p.ws is not None:
-                                        try:
-                                            await p.ws.send_json(ai_msg)
-                                        except Exception:
-                                            pass
-                        asyncio.create_task(_ai_chat_response())
+                        if msg_type in ("reaction", "sticker"):
+                            async def _ai_react_response():
+                                await asyncio.sleep(1.3)
+                                ai_player = next((p for p in room.players if p.is_ai), None)
+                                if ai_player:
+                                    ai_choice = random.choice([
+                                        {"type": "reaction", "emoji": "🔥", "fx": "float"},
+                                        {"type": "reaction", "emoji": "🚀", "fx": "rocket"},
+                                        {"type": "reaction", "emoji": "👑", "fx": "rain"},
+                                        {"type": "reaction", "emoji": "💣", "fx": "blast"},
+                                        {"type": "sticker", "sticker_id": "bot_gg", "fx": "rain"},
+                                        {"type": "sticker", "sticker_id": "bot_fire", "fx": "float"},
+                                        {"type": "sticker", "sticker_id": "bot_rocket", "fx": "rocket"},
+                                        {"type": "sticker", "sticker_id": "bot_boom", "fx": "blast"},
+                                    ])
+                                    ai_payload = {
+                                        "type": ai_choice["type"],
+                                        "sender_id": ai_player.user_id,
+                                        "sender_name": ai_player.name,
+                                        "sender_role": ai_player.role,
+                                        "text": "",
+                                        "sticker_id": ai_choice.get("sticker_id", ""),
+                                        "emoji": ai_choice.get("emoji", ""),
+                                        "fx": ai_choice.get("fx", "float"),
+                                        "timestamp": time.time(),
+                                    }
+                                    for p in list(room.players):
+                                        if p.ws is not None:
+                                            try:
+                                                await p.ws.send_json(ai_payload)
+                                            except Exception:
+                                                pass
+                            asyncio.create_task(_ai_react_response())
+                        else:
+                            ai_replies = [
+                                "Good game! 🤝",
+                                "Nice move! 🔥",
+                                "Let's see how this unfolds...",
+                                "Well played!",
+                                "Thinking through my tactics... 🤔",
+                                "May the best player win! ⚔️",
+                                "Impressive strategy!",
+                            ]
+                            async def _ai_chat_response():
+                                await asyncio.sleep(1.2)
+                                ai_player = next((p for p in room.players if p.is_ai), None)
+                                if ai_player:
+                                    ai_msg = {
+                                        "type": "chat",
+                                        "sender_id": ai_player.user_id,
+                                        "sender_name": ai_player.name,
+                                        "sender_role": ai_player.role,
+                                        "text": random.choice(ai_replies),
+                                        "timestamp": time.time(),
+                                    }
+                                    for p in list(room.players):
+                                        if p.ws is not None:
+                                            try:
+                                                await p.ws.send_json(ai_msg)
+                                            except Exception:
+                                                pass
+                            asyncio.create_task(_ai_chat_response())
                     return
 
             if room.vs_ai and room.status == "active":

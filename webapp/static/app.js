@@ -424,6 +424,16 @@
         if (msg.room.status === "finished") refreshProfileAndHistory();
       } else if (msg.type === "chat") {
         appendMatchChatMessage(msg);
+      } else if (msg.type === "reaction" || msg.type === "sticker") {
+        appendMatchChatMessage(msg);
+        triggerMagicalScreenReaction({
+          type: msg.type,
+          emoji: msg.emoji,
+          sticker_id: msg.sticker_id,
+          fx: msg.fx,
+          senderName: msg.sender_name,
+          isSelf: msg.sender_id === state.userId,
+        });
       } else if (msg.type === "error") {
         alert(msg.message);
         showView("battle");
@@ -507,6 +517,587 @@
     } catch (_) {}
   }
 
+  // =========================================================
+  // TELEGRAM PREMIUM STICKERS & MAGICAL FULLSCREEN REACTIONS
+  // =========================================================
+  const MINIGAME_STICKERS = {
+    bot_gg: {
+      id: "bot_gg",
+      title: "GG EASY",
+      tag: "Victory King",
+      emoji: "👑",
+      fx: "rain",
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="stk_gold" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#fef08a"/>
+            <stop offset="50%" stop-color="#eab308"/>
+            <stop offset="100%" stop-color="#ca8a04"/>
+          </linearGradient>
+          <linearGradient id="stk_cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#67e8f9"/>
+            <stop offset="100%" stop-color="#0284c7"/>
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="54" r="38" fill="rgba(234, 179, 8, 0.15)" stroke="url(#stk_gold)" stroke-width="2.5" stroke-dasharray="6 3"/>
+        <rect x="26" y="38" width="48" height="38" rx="14" fill="#0f172a" stroke="url(#stk_cyan)" stroke-width="3"/>
+        <rect x="32" y="47" width="36" height="12" rx="6" fill="#0284c7"/>
+        <circle cx="41" cy="53" r="3" fill="#ffffff"/>
+        <circle cx="59" cy="53" r="3" fill="#ffffff"/>
+        <path d="M40 68 Q50 74 60 68" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        <rect x="19" y="48" width="7" height="16" rx="3.5" fill="url(#stk_gold)"/>
+        <rect x="74" y="48" width="7" height="16" rx="3.5" fill="url(#stk_gold)"/>
+        <path d="M28 36 L34 18 L50 28 L66 18 L72 36 Z" fill="url(#stk_gold)" stroke="#78350f" stroke-width="1.5" stroke-linejoin="round"/>
+        <circle cx="34" cy="18" r="3" fill="#ef4444"/>
+        <circle cx="50" cy="27" r="3.5" fill="#38bdf8"/>
+        <circle cx="66" cy="18" r="3" fill="#10b981"/>
+        <rect x="37" y="78" width="26" height="14" rx="4" fill="url(#stk_gold)"/>
+        <text x="50" y="89" font-size="9" font-weight="900" fill="#78350f" text-anchor="middle" font-family="sans-serif">GG</text>
+      </svg>`,
+    },
+    bot_fire: {
+      id: "bot_fire",
+      title: "ON FIRE",
+      tag: "Hyperspeed",
+      emoji: "🔥",
+      fx: "float",
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="stk_fire" x1="0%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stop-color="#ef4444"/>
+            <stop offset="50%" stop-color="#f97316"/>
+            <stop offset="100%" stop-color="#fde047"/>
+          </linearGradient>
+        </defs>
+        <path d="M50 8 Q68 28 64 48 Q76 42 74 64 Q80 84 50 96 Q20 84 26 64 Q24 42 36 48 Q32 28 50 8 Z" fill="url(#stk_fire)" opacity="0.95"/>
+        <path d="M50 24 Q60 38 56 52 Q64 48 62 64 Q66 78 50 86 Q34 78 38 64 Q36 48 44 52 Q40 38 50 24 Z" fill="#fef08a"/>
+        <rect x="33" y="44" width="34" height="30" rx="9" fill="#0f172a" stroke="#ffffff" stroke-width="2.5"/>
+        <path d="M36 52 L48 52 L46 61 L38 61 Z" fill="#1e293b" stroke="#f97316" stroke-width="1.5"/>
+        <path d="M52 52 L64 52 L62 61 L54 61 Z" fill="#1e293b" stroke="#f97316" stroke-width="1.5"/>
+        <line x1="48" y1="54" x2="52" y2="54" stroke="#f97316" stroke-width="2"/>
+        <path d="M38 54 L44 54" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M54 54 L60 54" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M43 68 Q50 72 57 68" stroke="#fde047" stroke-width="2" stroke-linecap="round" fill="none"/>
+      </svg>`,
+    },
+    bot_rocket: {
+      id: "bot_rocket",
+      title: "TO THE MOON",
+      tag: "Moon Shot",
+      emoji: "🚀",
+      fx: "rocket",
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="stk_rkt" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="50%" stop-color="#38bdf8"/>
+            <stop offset="100%" stop-color="#0369a1"/>
+          </linearGradient>
+        </defs>
+        <polygon points="18,22 20,27 25,28 21,32 22,37 18,34 14,37 15,32 11,28 16,27" fill="#fde047"/>
+        <polygon points="82,34 83,38 87,39 84,42 85,46 82,44 79,46 80,42 77,39 81,38" fill="#fde047"/>
+        <g transform="translate(50,50) rotate(-45) translate(-50,-50)">
+          <path d="M42 74 Q50 96 50 98 Q50 96 58 74 Z" fill="#f97316"/>
+          <path d="M45 74 Q50 88 50 90 Q50 88 55 74 Z" fill="#fde047"/>
+          <path d="M34 58 L24 72 L42 70 Z" fill="#ef4444"/>
+          <path d="M66 58 L76 72 L58 70 Z" fill="#ef4444"/>
+          <path d="M38 72 L38 42 Q38 18 50 14 Q62 18 62 42 L62 72 Z" fill="url(#stk_rkt)" stroke="#0f172a" stroke-width="2"/>
+          <path d="M40 32 Q50 14 50 14 Q50 14 60 32 Z" fill="#ef4444"/>
+          <circle cx="50" cy="46" r="9" fill="#0f172a" stroke="#ffffff" stroke-width="2"/>
+          <circle cx="47" cy="45" r="2.5" fill="#38bdf8"/>
+          <circle cx="53" cy="45" r="2.5" fill="#38bdf8"/>
+        </g>
+      </svg>`,
+    },
+    bot_rip: {
+      id: "bot_rip",
+      title: "WASTED",
+      tag: "Matrix Skull",
+      emoji: "💀",
+      fx: "blast",
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="stk_matrix" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#4ade80"/>
+            <stop offset="100%" stop-color="#15803d"/>
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="50" r="40" fill="rgba(34, 197, 94, 0.12)" stroke="#22c55e" stroke-width="2" stroke-dasharray="4 4"/>
+        <path d="M26 44 C26 26 74 26 74 44 C74 54 68 60 62 64 L62 76 L38 76 L38 64 C32 60 26 54 26 44 Z" fill="#0f172a" stroke="url(#stk_matrix)" stroke-width="3"/>
+        <path d="M24 34 L14 22 L28 26 Z" fill="#22c55e"/>
+        <path d="M76 34 L86 22 L72 26 Z" fill="#22c55e"/>
+        <line x1="36" y1="42" x2="44" y2="50" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+        <line x1="44" y1="42" x2="36" y2="50" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+        <line x1="56" y1="42" x2="64" y2="50" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+        <line x1="64" y1="42" x2="56" y2="50" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+        <polygon points="50,56 46,62 54,62" fill="#22c55e"/>
+        <rect x="42" y="68" width="4" height="6" fill="#4ade80"/>
+        <rect x="48" y="68" width="4" height="6" fill="#4ade80"/>
+        <rect x="54" y="68" width="4" height="6" fill="#4ade80"/>
+        <rect x="30" y="80" width="40" height="15" rx="4" fill="#15803d" stroke="#4ade80" stroke-width="1.5"/>
+        <text x="50" y="91" font-size="9" font-weight="900" fill="#ffffff" text-anchor="middle" font-family="sans-serif">R.I.P</text>
+      </svg>`,
+    },
+    bot_boom: {
+      id: "bot_boom",
+      title: "KA-POW!",
+      tag: "Dynamite",
+      emoji: "💣",
+      fx: "blast",
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="stk_bomb" cx="40%" cy="40%" r="60%">
+            <stop offset="0%" stop-color="#475569"/>
+            <stop offset="60%" stop-color="#1e293b"/>
+            <stop offset="100%" stop-color="#090d16"/>
+          </radialGradient>
+        </defs>
+        <polygon points="50,4 53,14 62,8 58,18 68,16 61,24 72,25 62,31 72,37 60,39" fill="#fde047"/>
+        <circle cx="68" cy="18" r="4" fill="#ef4444"/>
+        <path d="M50 34 Q56 22 66 18" stroke="#ca8a04" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <rect x="42" y="32" width="16" height="7" rx="2" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5"/>
+        <circle cx="50" cy="62" r="30" fill="url(#stk_bomb)" stroke="#ef4444" stroke-width="3"/>
+        <rect x="36" y="52" width="10" height="8" rx="2" fill="#f59e0b"/>
+        <rect x="54" y="52" width="10" height="8" rx="2" fill="#f59e0b"/>
+        <path d="M38 72 Q50 64 62 72" stroke="#ef4444" stroke-width="3" stroke-linecap="round" fill="none"/>
+        <ellipse cx="38" cy="48" rx="6" ry="3" fill="rgba(255,255,255,0.4)" transform="rotate(-30 38 48)"/>
+      </svg>`,
+    },
+  };
+
+  function triggerMagicalScreenReaction({ type, emoji, sticker_id, fx, senderName, isSelf }) {
+    const overlay = document.getElementById("screenReactionOverlay");
+    if (!overlay) return;
+
+    const sticker = sticker_id && MINIGAME_STICKERS[sticker_id] ? MINIGAME_STICKERS[sticker_id] : null;
+    const resolvedFx = fx || (sticker ? sticker.fx : "float");
+    const displayEmoji = emoji || (sticker ? sticker.emoji : "🔥");
+    const titleText = sticker ? sticker.title : displayEmoji;
+
+    // 1. Top Reaction Announcement Toast Pill
+    const toast = document.getElementById("reactionToastPill");
+    if (toast) {
+      const fromWho = isSelf ? "You" : (senderName || "Opponent");
+      toast.innerHTML = `
+        <span class="rtp-icon">${sticker ? sticker.emoji : displayEmoji}</span>
+        <span class="rtp-text"><strong>${escapeHtml(fromWho)}</strong> sent ${escapeHtml(titleText)}!</span>
+      `;
+      toast.classList.remove("hidden");
+      toast.classList.add("show");
+      if (toast._timer) clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.classList.add("hidden"), 300);
+      }, 2200);
+    }
+
+    // 2. Telegram Haptics
+    try {
+      if (resolvedFx === "blast") {
+        tg?.HapticFeedback?.impactOccurred("heavy");
+      } else {
+        tg?.HapticFeedback?.impactOccurred("medium");
+      }
+    } catch (_) {}
+
+    // 3. Screen-Shake effect if blast
+    if (resolvedFx === "blast") {
+      const shakeTarget = document.getElementById("view-battle") || document.getElementById("view-player") || document.body;
+      shakeTarget.classList.remove("screen-reaction-shaking");
+      void shakeTarget.offsetWidth;
+      shakeTarget.classList.add("screen-reaction-shaking");
+      setTimeout(() => shakeTarget.classList.remove("screen-reaction-shaking"), 400);
+    }
+
+    // 4. Viewport size
+    const w = window.innerWidth || document.documentElement.clientWidth;
+    const h = window.innerHeight || document.documentElement.clientHeight;
+
+    if (resolvedFx === "rocket") {
+      spawnRocketCruiseEffect(overlay, sticker, displayEmoji, w, h);
+    } else if (resolvedFx === "blast") {
+      spawnBlastExplosionEffect(overlay, sticker, displayEmoji, w, h);
+    } else if (resolvedFx === "rain") {
+      spawnGoldRainEffect(overlay, sticker, displayEmoji, w, h);
+    } else {
+      spawnFloatSkySurgeEffect(overlay, sticker, displayEmoji, w, h);
+    }
+  }
+
+  function spawnFloatSkySurgeEffect(overlay, sticker, emoji, w, h) {
+    const hero = document.createElement("div");
+    hero.className = "magical-particle";
+    if (sticker) {
+      hero.innerHTML = sticker.svg;
+      hero.classList.add("magical-hero-svg");
+      hero.style.width = "130px";
+      hero.style.height = "130px";
+    } else {
+      hero.textContent = emoji || "🔥";
+      hero.classList.add("magical-hero-emoji");
+      hero.style.fontSize = "88px";
+    }
+
+    const startX = w * (0.35 + Math.random() * 0.3);
+    const startY = h * 0.82;
+    hero.style.left = `${startX}px`;
+    hero.style.top = `${startY}px`;
+    overlay.appendChild(hero);
+
+    const companions = [];
+    const compCount = 12;
+    const miniPool = [emoji || "🔥", "✨", "✦", "★", "💖", "⚡"];
+    for (let i = 0; i < compCount; i++) {
+      const comp = document.createElement("div");
+      comp.className = "magical-particle";
+      comp.textContent = miniPool[i % miniPool.length];
+      comp.style.fontSize = `${20 + Math.random() * 26}px`;
+      const cx = w * (0.1 + Math.random() * 0.8);
+      const cy = h * (0.7 + Math.random() * 0.25);
+      comp.style.left = `${cx}px`;
+      comp.style.top = `${cy}px`;
+      overlay.appendChild(comp);
+      companions.push({
+        el: comp,
+        x: cx,
+        y: cy,
+        vy: 3 + Math.random() * 5,
+        freq: 2 + Math.random() * 3,
+        phase: Math.random() * Math.PI * 2,
+        amp: 15 + Math.random() * 35,
+        rot: 0,
+        rotSpeed: (Math.random() - 0.5) * 8,
+      });
+    }
+
+    const startTime = performance.now();
+    const duration = 2400;
+
+    function frame(now) {
+      const elapsed = now - startTime;
+      const p = elapsed / duration;
+      if (p >= 1) {
+        hero.remove();
+        companions.forEach((c) => c.el.remove());
+        return;
+      }
+
+      // Hero movement
+      const heroY = startY - p * (h * 0.88);
+      const heroX = startX + Math.sin(p * 9) * 45;
+      const heroScale = p < 0.2 ? (0.2 + (p / 0.2) * 1.1) : (1.3 - (p - 0.2) * 0.4);
+      const heroOpacity = p > 0.75 ? Math.max(0, 1 - (p - 0.75) / 0.25) : 1;
+      const heroRot = Math.sin(p * 8) * 14;
+      hero.style.transform = `translate3d(${heroX - startX}px, ${heroY - startY}px, 0) scale(${heroScale}) rotate(${heroRot}deg)`;
+      hero.style.opacity = heroOpacity;
+
+      // Companion particles
+      companions.forEach((c) => {
+        c.y -= c.vy;
+        const curX = c.x + Math.sin(p * 12 + c.phase) * c.amp;
+        c.rot += c.rotSpeed;
+        const compOpacity = p > 0.7 ? Math.max(0, 1 - (p - 0.7) / 0.3) : 1;
+        c.el.style.transform = `translate3d(${curX - c.x}px, ${c.y - (h * 0.7)}px, 0) rotate(${c.rot}deg)`;
+        c.el.style.opacity = compOpacity;
+      });
+
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function spawnRocketCruiseEffect(overlay, sticker, emoji, w, h) {
+    const rocket = document.createElement("div");
+    rocket.className = "magical-particle";
+    if (sticker) {
+      rocket.innerHTML = sticker.svg;
+      rocket.classList.add("magical-hero-svg");
+      rocket.style.width = "120px";
+      rocket.style.height = "120px";
+    } else {
+      rocket.textContent = "🚀";
+      rocket.style.fontSize = "82px";
+    }
+
+    const startX = -80;
+    const startY = h * 0.88;
+    const targetX = w + 120;
+    const targetY = h * 0.08;
+    rocket.style.left = "0px";
+    rocket.style.top = "0px";
+    overlay.appendChild(rocket);
+
+    const startTime = performance.now();
+    const duration = 1600;
+    let lastSmokeTime = 0;
+    const trailParticles = [];
+
+    function frame(now) {
+      const elapsed = now - startTime;
+      const p = elapsed / duration;
+      if (p >= 1) {
+        rocket.remove();
+        trailParticles.forEach((t) => t.el.remove());
+        return;
+      }
+
+      // Supersonic trajectory
+      const curX = startX + p * (targetX - startX);
+      const curY = startY + p * (targetY - startY) + Math.sin(p * 10) * 18;
+      const angle = Math.atan2(targetY - startY, targetX - startX) * (180 / Math.PI) + 90;
+
+      rocket.style.transform = `translate3d(${curX}px, ${curY}px, 0) rotate(${angle}deg) scale(${1 + Math.sin(p * Math.PI) * 0.3})`;
+      rocket.style.opacity = p > 0.9 ? (1 - (p - 0.9) / 0.1) : 1;
+
+      // Spawn trailing fiery smoke every 40ms
+      if (now - lastSmokeTime > 40 && p < 0.9) {
+        lastSmokeTime = now;
+        const smoke = document.createElement("div");
+        smoke.className = "magical-particle";
+        smoke.textContent = Math.random() > 0.4 ? "✨" : "🔥";
+        smoke.style.fontSize = `${16 + Math.random() * 20}px`;
+        smoke.style.left = `${curX + (Math.random() - 0.5) * 20}px`;
+        smoke.style.top = `${curY + (Math.random() - 0.5) * 20}px`;
+        overlay.appendChild(smoke);
+        trailParticles.push({
+          el: smoke,
+          birth: now,
+          life: 600,
+          vx: (Math.random() - 0.5) * 3,
+          vy: 2 + Math.random() * 3,
+          curX: curX,
+          curY: curY,
+        });
+      }
+
+      // Update trailing particles
+      for (let i = trailParticles.length - 1; i >= 0; i--) {
+        const tp = trailParticles[i];
+        const age = now - tp.birth;
+        if (age >= tp.life) {
+          tp.el.remove();
+          trailParticles.splice(i, 1);
+        } else {
+          const frac = age / tp.life;
+          tp.curX += tp.vx;
+          tp.curY += tp.vy;
+          tp.el.style.transform = `translate3d(${tp.curX}px, ${tp.curY}px, 0) scale(${1 - frac * 0.5})`;
+          tp.el.style.opacity = 1 - frac;
+        }
+      }
+
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function spawnBlastExplosionEffect(overlay, sticker, emoji, w, h) {
+    const center = document.createElement("div");
+    center.className = "magical-particle";
+    if (sticker) {
+      center.innerHTML = sticker.svg;
+      center.classList.add("magical-hero-svg");
+      center.style.width = "140px";
+      center.style.height = "140px";
+    } else {
+      center.textContent = emoji || "💣";
+      center.style.fontSize = "94px";
+    }
+    const cx = w * 0.5;
+    const cy = h * 0.46;
+    center.style.left = `${cx}px`;
+    center.style.top = `${cy}px`;
+    overlay.appendChild(center);
+
+    const startTime = performance.now();
+    const pulseDuration = 380;
+    const shards = [];
+
+    function frame(now) {
+      const elapsed = now - startTime;
+      if (elapsed < pulseDuration) {
+        // Warning Pulse
+        const p = elapsed / pulseDuration;
+        const scale = 0.3 + p * 1.1;
+        center.style.transform = `translate3d(-50%, -50%, 0) scale(${scale})`;
+        center.style.opacity = Math.min(1, p * 3);
+        requestAnimationFrame(frame);
+      } else if (shards.length === 0) {
+        // DETONATE!
+        center.style.display = "none";
+        const shardCount = 28;
+        const shardPool = ["🔥", "💥", "⚡", "✨", "💣", "✦", "★"];
+        for (let i = 0; i < shardCount; i++) {
+          const s = document.createElement("div");
+          s.className = "magical-particle";
+          s.textContent = shardPool[i % shardPool.length];
+          s.style.fontSize = `${20 + Math.random() * 26}px`;
+          s.style.left = `${cx}px`;
+          s.style.top = `${cy}px`;
+          overlay.appendChild(s);
+          const rad = (i / shardCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+          const speed = 10 + Math.random() * 18;
+          shards.push({
+            el: s,
+            x: 0,
+            y: 0,
+            vx: Math.cos(rad) * speed,
+            vy: Math.sin(rad) * speed,
+            rot: 0,
+            rotSpeed: (Math.random() - 0.5) * 20,
+          });
+        }
+        requestAnimationFrame(frame);
+      } else {
+        // Shards flying outward
+        const p = (elapsed - pulseDuration) / 1400;
+        if (p >= 1) {
+          center.remove();
+          shards.forEach((s) => s.el.remove());
+          return;
+        }
+
+        shards.forEach((s) => {
+          s.x += s.vx;
+          s.y += s.vy;
+          s.vx *= 0.94;
+          s.vy = s.vy * 0.94 + 0.3; // gravity
+          s.rot += s.rotSpeed;
+          s.el.style.transform = `translate3d(calc(-50% + ${s.x}px), calc(-50% + ${s.y}px), 0) scale(${1 - p * 0.4}) rotate(${s.rot}deg)`;
+          s.el.style.opacity = Math.max(0, 1 - p * 1.2);
+        });
+
+        requestAnimationFrame(frame);
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function spawnGoldRainEffect(overlay, sticker, emoji, w, h) {
+    const rainCount = 28;
+    const pool = ["👑", "🪙", "🏆", "💎", "🎉", "✨", "★"];
+    const drops = [];
+
+    for (let i = 0; i < rainCount; i++) {
+      const drop = document.createElement("div");
+      drop.className = "magical-particle";
+      if (sticker && i === 0) {
+        drop.innerHTML = sticker.svg;
+        drop.style.width = "90px";
+        drop.style.height = "90px";
+      } else {
+        drop.textContent = pool[i % pool.length];
+        drop.style.fontSize = `${24 + Math.random() * 26}px`;
+      }
+      const x = w * (0.05 + Math.random() * 0.9);
+      const y = -60 - Math.random() * 120;
+      drop.style.left = `${x}px`;
+      drop.style.top = "0px";
+      overlay.appendChild(drop);
+      drops.push({
+        el: drop,
+        x: x,
+        y: y,
+        vy: 4 + Math.random() * 6,
+        rot: 0,
+        rotSpeed: (Math.random() - 0.5) * 10,
+        swayAmp: 10 + Math.random() * 25,
+        phase: Math.random() * Math.PI * 2,
+      });
+    }
+
+    const startTime = performance.now();
+    const duration = 2600;
+
+    function frame(now) {
+      const elapsed = now - startTime;
+      const p = elapsed / duration;
+      if (p >= 1) {
+        drops.forEach((d) => d.el.remove());
+        return;
+      }
+
+      drops.forEach((d) => {
+        d.y += d.vy;
+        d.rot += d.rotSpeed;
+        const sway = Math.sin(p * 10 + d.phase) * d.swayAmp;
+        const curY = d.y;
+        const dropOpacity = curY > h * 0.85 ? Math.max(0, 1 - (curY - h * 0.85) / (h * 0.15)) : 1;
+        d.el.style.transform = `translate3d(${sway}px, ${curY}px, 0) rotate(${d.rot}deg)`;
+        d.el.style.opacity = dropOpacity;
+      });
+
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function sendMatchReaction(emoji, fx = "float") {
+    triggerMagicalScreenReaction({
+      type: "reaction",
+      emoji: emoji,
+      fx: fx,
+      senderName: state.userName || "You",
+      isSelf: true,
+    });
+
+    if (state.ws && state.ws.readyState === WebSocket.OPEN) {
+      sendWs({
+        type: "reaction",
+        emoji: emoji,
+        fx: fx,
+      });
+    }
+
+    document.getElementById("inGameReactionDock")?.classList.add("hidden");
+  }
+
+  function sendMatchSticker(stickerId) {
+    const s = MINIGAME_STICKERS[stickerId];
+    if (!s) return;
+
+    triggerMagicalScreenReaction({
+      type: "sticker",
+      sticker_id: stickerId,
+      fx: s.fx,
+      senderName: state.userName || "You",
+      isSelf: true,
+    });
+
+    if (state.ws && state.ws.readyState === WebSocket.OPEN) {
+      sendWs({
+        type: "sticker",
+        sticker_id: stickerId,
+        fx: s.fx,
+      });
+    }
+
+    document.getElementById("stickerPickerTray")?.classList.add("hidden");
+    document.getElementById("btnToggleStickerTray")?.classList.remove("active");
+    document.getElementById("inGameReactionDock")?.classList.add("hidden");
+  }
+
+  function initStickerPicker() {
+    const grid = document.getElementById("stickerCardsGrid");
+    if (!grid || grid.dataset.inited === "true") return;
+    grid.dataset.inited = "true";
+    grid.innerHTML = "";
+
+    Object.values(MINIGAME_STICKERS).forEach((s) => {
+      const card = document.createElement("div");
+      card.className = "sticker-card";
+      card.innerHTML = `
+        <div class="sticker-art-wrap">${s.svg}</div>
+        <div class="sticker-lbl">${s.title}</div>
+        <div class="sticker-tag">${s.tag}</div>
+      `;
+      card.addEventListener("click", () => {
+        sendMatchSticker(s.id);
+      });
+      grid.appendChild(card);
+    });
+  }
+
   let unreadChatCount = 0;
   let isChatOpen = false;
 
@@ -514,15 +1105,51 @@
     const list = document.getElementById("chatMessagesList");
     if (!list) return;
     const isSelf = msg.sender_id === state.userId;
-    const bubble = document.createElement("div");
-    bubble.className = `chat-bubble ${isSelf ? "self" : "opp"}`;
+    const row = document.createElement("div");
+    row.className = `chat-msg-row ${isSelf ? "self" : "opp"}`;
     const name = escapeHtml(msg.sender_name || (isSelf ? "You" : "Opponent"));
-    const text = escapeHtml(msg.text || "");
-    bubble.innerHTML = `
-      <div class="chat-sender-name">${name}</div>
-      <div class="chat-text">${text}</div>
-    `;
-    list.appendChild(bubble);
+
+    if (msg.type === "sticker" && msg.sticker_id && MINIGAME_STICKERS[msg.sticker_id]) {
+      const s = MINIGAME_STICKERS[msg.sticker_id];
+      row.innerHTML = `
+        <div class="chat-msg-author">${name}</div>
+        <div class="chat-sticker-bubble" data-sticker="${s.id}" title="Tap to re-blast!">
+          <div class="csb-art">${s.svg}</div>
+          <div class="csb-caption">${s.title}</div>
+        </div>
+      `;
+      row.querySelector(".chat-sticker-bubble")?.addEventListener("click", () => {
+        triggerMagicalScreenReaction({
+          type: "sticker",
+          sticker_id: s.id,
+          fx: s.fx,
+          senderName: isSelf ? "You" : name,
+          isSelf: isSelf,
+        });
+      });
+    } else if (msg.type === "reaction" && msg.emoji) {
+      row.innerHTML = `
+        <div class="chat-msg-author">${name}</div>
+        <div class="chat-reaction-bubble" title="Tap to re-blast!">${msg.emoji}</div>
+      `;
+      row.querySelector(".chat-reaction-bubble")?.addEventListener("click", () => {
+        triggerMagicalScreenReaction({
+          type: "reaction",
+          emoji: msg.emoji,
+          fx: msg.fx || "float",
+          senderName: isSelf ? "You" : name,
+          isSelf: isSelf,
+        });
+      });
+    } else {
+      const text = escapeHtml(msg.text || "");
+      row.innerHTML = `
+        <div class="chat-msg-author">${name}</div>
+        <div class="chat-bubble">${text}</div>
+      `;
+    }
+
+    list.appendChild(row);
     list.scrollTop = list.scrollHeight;
 
     if (!isChatOpen && !isSelf) {
@@ -546,10 +1173,13 @@
       unreadChatCount = 0;
       const badge = document.getElementById("chatBadge");
       if (badge) badge.classList.add("hidden");
+      initStickerPicker();
       const inp = document.getElementById("chatInputText");
       if (inp) inp.focus();
     } else {
       modal.classList.add("hidden");
+      document.getElementById("stickerPickerTray")?.classList.add("hidden");
+      document.getElementById("btnToggleStickerTray")?.classList.remove("active");
     }
   }
 
@@ -1322,6 +1952,95 @@
         sendMatchChat(msg);
       }
     });
+  });
+
+  // Telegram Premium Stickers & Floating Reactions Wiring
+  const btnToggleStickerTray = document.getElementById("btnToggleStickerTray");
+  const stickerPickerTray = document.getElementById("stickerPickerTray");
+  const btnInputSticker = document.getElementById("btnInputSticker");
+  const inGameReactionDock = document.getElementById("inGameReactionDock");
+
+  function toggleStickersTray(force) {
+    if (!stickerPickerTray) return;
+    const shouldOpen = force !== undefined ? force : stickerPickerTray.classList.contains("hidden");
+    if (shouldOpen) {
+      initStickerPicker();
+      stickerPickerTray.classList.remove("hidden");
+      btnToggleStickerTray?.classList.add("active");
+    } else {
+      stickerPickerTray.classList.add("hidden");
+      btnToggleStickerTray?.classList.remove("active");
+    }
+  }
+
+  btnToggleStickerTray?.addEventListener("click", () => {
+    haptic("light");
+    toggleStickersTray();
+  });
+  btnInputSticker?.addEventListener("click", () => {
+    haptic("light");
+    toggleStickersTray();
+  });
+
+  // Reaction buttons inside chat drawer
+  document.querySelectorAll(".btn-screen-react").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const emoji = btn.dataset.emoji || "🔥";
+      const fx = btn.dataset.fx || "float";
+      haptic("medium");
+      sendMatchReaction(emoji, fx);
+    });
+  });
+
+  // In-game quick floating reaction dock triggers
+  function toggleReactionDock(force) {
+    if (!inGameReactionDock) return;
+    const isHidden = inGameReactionDock.classList.contains("hidden");
+    const open = force !== undefined ? force : isHidden;
+    if (open) {
+      inGameReactionDock.classList.remove("hidden");
+    } else {
+      inGameReactionDock.classList.add("hidden");
+    }
+  }
+
+  document.getElementById("btnQuickReaction")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    haptic("light");
+    toggleReactionDock();
+  });
+
+  document.getElementById("btnPlayerReact")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    haptic("light");
+    toggleReactionDock();
+  });
+
+  document.querySelectorAll(".dock-react-btn:not(.dock-btn-more)").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const emoji = btn.dataset.emoji || "🔥";
+      const fx = btn.dataset.fx || "float";
+      haptic("medium");
+      sendMatchReaction(emoji, fx);
+    });
+  });
+
+  document.getElementById("btnDockMoreStickers")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    haptic("light");
+    toggleReactionDock(false);
+    toggleMatchChat(true);
+    toggleStickersTray(true);
+  });
+
+  // Close reaction dock when tapping outside
+  document.addEventListener("click", (e) => {
+    if (inGameReactionDock && !inGameReactionDock.classList.contains("hidden")) {
+      if (!inGameReactionDock.contains(e.target) && !e.target.closest("#btnQuickReaction") && !e.target.closest("#btnPlayerReact")) {
+        inGameReactionDock.classList.add("hidden");
+      }
+    }
   });
 
 

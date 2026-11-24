@@ -663,22 +663,66 @@
           <span class="tool-icon">💬</span>
           <span id="chatBadge" class="chat-badge hidden">0</span>
         </button>
+        <button id="btnQuickReaction" class="btn-lichess-tool btn-tool-react" title="Send Magical Reaction">
+          <span class="tool-icon">✨</span>
+        </button>
         <button id="btnRematch" class="btn-lichess-tool btn-tool-rematch hidden" title="Request Rematch">
           <span class="tool-icon">🔄</span>
         </button>
       </div>
 
-      <!-- REAL-TIME IN-GAME MATCH CHAT DRAWER -->
+      <!-- IN-GAME FLOATING REACTION DOCK -->
+      <div id="inGameReactionDock" class="in-game-reaction-dock hidden">
+        <button type="button" class="dock-react-btn" data-emoji="🔥" data-fx="float" title="Fire Surge">🔥</button>
+        <button type="button" class="dock-react-btn" data-emoji="🚀" data-fx="rocket" title="Moon Shot">🚀</button>
+        <button type="button" class="dock-react-btn" data-emoji="👑" data-fx="rain" title="Crown Royale">👑</button>
+        <button type="button" class="dock-react-btn" data-emoji="💀" data-fx="blast" title="Matrix Glitch">💀</button>
+        <button type="button" class="dock-react-btn" data-emoji="💣" data-fx="blast" title="Ka-Boom Blast">💣</button>
+        <button type="button" class="dock-react-btn dock-btn-more" id="btnDockMoreStickers" title="Stickers &amp; Reactions">⭐</button>
+      </div>
+
+      <!-- REAL-TIME IN-GAME MATCH CHAT & STICKERS DRAWER -->
       <div id="matchChatModal" class="match-chat-drawer hidden">
         <div class="chat-drawer-backdrop" id="chatBackdrop"></div>
         <div class="chat-drawer-card">
           <div class="chat-drawer-header">
             <div class="cdh-left">
               <span class="chat-icon">💬</span>
-              <span class="chat-title">Live Match Chat</span>
+              <span class="chat-title">Live Match Chat &amp; Reactions</span>
             </div>
-            <button id="btnCloseMatchChat" class="btn-close-chat">✕</button>
+            <div class="cdh-actions">
+              <button type="button" id="btnToggleStickerTray" class="btn-chat-sticker-toggle" title="MiniGame Bot Stickers">
+                ⭐ Stickers
+              </button>
+              <button id="btnCloseMatchChat" class="btn-close-chat">✕</button>
+            </div>
           </div>
+
+          <!-- Telegram Premium Reactions Strip -->
+          <div class="chat-reactions-strip" id="chatReactionsStrip">
+            <span class="reactions-strip-lbl">✨ Blast:</span>
+            <button type="button" class="btn-screen-react" data-emoji="🔥" data-fx="float" title="Fire Surge">🔥</button>
+            <button type="button" class="btn-screen-react" data-emoji="🚀" data-fx="rocket" title="Moon Shot">🚀</button>
+            <button type="button" class="btn-screen-react" data-emoji="👑" data-fx="rain" title="Crown Royale">👑</button>
+            <button type="button" class="btn-screen-react" data-emoji="💀" data-fx="blast" title="Matrix Glitch">💀</button>
+            <button type="button" class="btn-screen-react" data-emoji="💣" data-fx="blast" title="Ka-Boom Blast">💣</button>
+            <button type="button" class="btn-screen-react" data-emoji="💖" data-fx="float" title="Heart Aura">💖</button>
+            <button type="button" class="btn-screen-react" data-emoji="⚡" data-fx="float" title="Thunderbolt">⚡</button>
+            <button type="button" class="btn-screen-react" data-emoji="🏆" data-fx="rain" title="Trophy Gold">🏆</button>
+            <button type="button" class="btn-screen-react" data-emoji="🎉" data-fx="rain" title="Party Confetti">🎉</button>
+          </div>
+
+          <!-- MiniGame Bot 5 Personal Mascot Stickers Tray -->
+          <div class="sticker-picker-tray hidden" id="stickerPickerTray">
+            <div class="spt-header">
+              <span class="spt-title">🤖 MiniGame Bot Premium Mascot Stickers</span>
+              <span class="spt-sub">Tap to blast across screen!</span>
+            </div>
+            <div class="sticker-cards-grid" id="stickerCardsGrid">
+              <!-- Dynamically populated from MINIGAME_STICKERS -->
+            </div>
+          </div>
+
           <div class="quick-chat-pills">
             <button class="qc-pill" data-msg="Good luck! 🤝">Good luck! 🤝</button>
             <button class="qc-pill" data-msg="Nice move! 🔥">Nice move! 🔥</button>
@@ -687,11 +731,14 @@
             <button class="qc-pill" data-msg="Rematch? 🔄">Rematch? 🔄</button>
             <button class="qc-pill" data-msg="GG! ⚔️">GG! ⚔️</button>
           </div>
+
           <div id="chatMessagesList" class="chat-messages-scroll">
-            <div class="chat-system-notice">Match chat connected. Say hi!</div>
+            <div class="chat-system-notice">Match chat connected. Send messages, emojis or magical stickers!</div>
           </div>
+
           <form id="chatSendForm" class="chat-input-bar">
-            <input type="text" id="chatInputText" placeholder="Type a message..." maxlength="120" autocomplete="off" />
+            <button type="button" id="btnInputSticker" class="btn-input-addon" title="Stickers &amp; Reactions">🤖</button>
+            <input type="text" id="chatInputText" placeholder="Type a message or react..." maxlength="120" autocomplete="off" />
             <button type="submit" id="btnSendChat" class="btn-send-chat">➤</button>
           </form>
         </div>
@@ -844,9 +891,14 @@
           <span class="btn-sym">←</span> Back
         </button>
         <div id="gamePlayerTitle" class="game-player-watermark">Game</div>
-        <button id="btnPauseGamePlayer" class="player-floating-btn player-btn-pause" title="Pause Game">
-          <span class="btn-sym">⏸</span> Pause
-        </button>
+        <div class="player-top-nav-actions">
+          <button id="btnPlayerReact" class="player-floating-btn player-btn-react" title="Send Magical Reaction">
+            <span class="btn-sym">✨</span> React
+          </button>
+          <button id="btnPauseGamePlayer" class="player-floating-btn player-btn-pause" title="Pause Game">
+            <span class="btn-sym">⏸</span> Pause
+          </button>
+        </div>
       </div>
 
       <!-- In-Game Pause Overlay Modal -->
@@ -1378,6 +1430,11 @@
     </nav>
   </div>
 
-  <script src="/static/app.js?v=20261124_3"></script>
+  <!-- FULLSCREEN MAGICAL SCREEN REACTION OVERLAY -->
+  <div id="screenReactionOverlay" class="screen-reaction-overlay">
+    <div id="reactionToastPill" class="reaction-toast-pill hidden"></div>
+  </div>
+
+  <script src="/static/app.js?v=20261125_1"></script>
 </body>
 </html>
