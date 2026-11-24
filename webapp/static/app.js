@@ -185,6 +185,8 @@
     const storedCoins = localStorage.getItem("flipster_coins") || "1250";
     const coinValEl = document.getElementById("coinVal");
     if (coinValEl) coinValEl.textContent = Number(storedCoins).toLocaleString();
+    const profWalletCoins = document.getElementById("profWalletCoins");
+    if (profWalletCoins) profWalletCoins.textContent = `🪙 ${Number(storedCoins).toLocaleString()}`;
     const energyValEl = document.getElementById("energyVal");
     if (energyValEl) energyValEl.textContent = "25";
 
@@ -196,7 +198,7 @@
     const pTier = document.getElementById("profTierBadge");
     if (pTier) pTier.textContent = `${profile.tier?.icon || "🥉"} ${profile.tier?.name || "Bronze"}`;
     const pElo = document.getElementById("profGlobalElo");
-    if (pElo) pElo.textContent = `${Math.round(profile.elo || 1200)} ELO`;
+    if (pElo) pElo.textContent = `${elo} ELO`;
     const pLvl = document.getElementById("profLevelBadge");
     if (pLvl) pLvl.textContent = `LEVEL ${profile.level || 1}`;
     const pXpTxt = document.getElementById("profXpText");
@@ -213,6 +215,52 @@
     const sStreak = document.getElementById("profStatStreak");
     if (sStreak) sStreak.textContent = profile.wins > 0 ? `${profile.wins}` : "0";
 
+    // Update Simey 3D Holographic Member Card
+    const savedAvatar = localStorage.getItem("minigame_prof_avatar") || "";
+    const tgPhoto = tg?.initDataUnsafe?.user?.photo_url || "";
+    const avatarUrl = savedAvatar || tgPhoto || "/static/bot_avatar.jpg";
+    const holoAvatar = document.getElementById("holoCardAvatar");
+    if (holoAvatar) holoAvatar.src = avatarUrl;
+
+    const handleStr = profile.username
+      ? `@${profile.username}`
+      : `@${(profile.display_name || "player").toLowerCase().replace(/[^a-z0-9_]/g, "") || "player"}`;
+    const holoHandle = document.getElementById("holoCardHandle");
+    if (holoHandle) holoHandle.textContent = handleStr;
+
+    const holoSub = document.getElementById("holoCardSubline");
+    if (holoSub) holoSub.textContent = `LVL ${profile.level || 1} • ${elo} ELO`;
+
+    const tierLabel = elo >= 1500 ? "LEGEND" : elo >= 1350 ? "MASTER" : elo >= 1220 ? "PRO" : "VIP";
+    const holoTier = document.getElementById("holoCardTier");
+    if (holoTier) holoTier.textContent = tierLabel;
+
+    // Back of Card
+    const bId = document.getElementById("holoBackId");
+    if (bId) bId.textContent = `#${String(profile.user_id || "0000").slice(-6)}`;
+    const bName = document.getElementById("holoBackName");
+    if (bName) bName.textContent = profile.display_name || "Player";
+    const bTier = document.getElementById("holoBackTier");
+    if (bTier) bTier.textContent = `${profile.tier?.icon || "🥉"} ${profile.tier?.name || "Bronze"}`;
+    const bMatches = document.getElementById("holoBackMatches");
+    if (bMatches) bMatches.textContent = total;
+    const bWr = document.getElementById("holoBackWinRate");
+    if (bWr) bWr.textContent = `${wr}%`;
+    const bCoins = document.getElementById("holoBackCoins");
+    if (bCoins) bCoins.textContent = Number(storedCoins).toLocaleString();
+    const bBio = document.getElementById("holoBackBio");
+    const savedBio = localStorage.getItem("minigame_prof_bio") || "Ready to dominate the arena!";
+    if (bBio) bBio.textContent = `"${savedBio}"`;
+
+    // Apply Saved Card Skin
+    applyHoloCardSkin(localStorage.getItem("minigame_card_skin") || "crown");
+
+    // Update Daily Bonus Button State
+    updateDailyBonusBtnState();
+
+    // Update Badges Showcase
+    renderProfileBadges(profile, total, Number(storedCoins));
+
     const gr = profile.game_ratings || {};
     ["chess", "othello", "connect4", "tictactoe"].forEach((g) => {
       const span = document.querySelector(`[data-elo="${g}"]`);
@@ -221,6 +269,168 @@
         span.textContent = `${gElo} ELO`;
       }
     });
+  }
+
+  const HOLO_SKINS = ["crown", "gold", "cyber", "matrix"];
+  const HOLO_SKIN_LABELS = {
+    crown: "🎨 Crown",
+    gold: "🎨 Gold",
+    cyber: "🎨 Cyber",
+    matrix: "🎨 Matrix",
+  };
+
+  function applyHoloCardSkin(skin) {
+    const card = document.getElementById("profileHoloCard");
+    if (!card) return;
+    HOLO_SKINS.forEach((s) => card.classList.remove(`skin-${s}`));
+    const valid = HOLO_SKINS.includes(skin) ? skin : "crown";
+    card.classList.add(`skin-${valid}`);
+    localStorage.setItem("minigame_card_skin", valid);
+    const btn = document.getElementById("btnCycleCardSkin");
+    if (btn) btn.textContent = HOLO_SKIN_LABELS[valid] || "🎨 Skin";
+  }
+
+  function updateDailyBonusBtnState() {
+    const btn = document.getElementById("btnClaimDailyBonus");
+    if (!btn) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const lastClaim = localStorage.getItem("minigame_daily_claim_date");
+    if (lastClaim === today) {
+      btn.textContent = "✅ Claimed";
+      btn.disabled = true;
+      btn.style.opacity = "0.65";
+    } else {
+      btn.textContent = "🎁 Daily +250";
+      btn.disabled = false;
+      btn.style.opacity = "1";
+    }
+  }
+
+  function renderProfileBadges(profile, totalMatches, coins) {
+    const grid = document.getElementById("profileBadgesGrid");
+    if (!grid) return;
+    const elo = Math.round(profile.elo || 1200);
+    const wins = profile.wins || 0;
+    const badges = [
+      { icon: "⚔️", title: "First Blood", desc: "Play 1 Arena match", unlocked: totalMatches >= 1 },
+      { icon: "🏆", title: "Victor", desc: "Win 3 Arena matches", unlocked: wins >= 3 },
+      { icon: "🔥", title: "Gladiator", desc: "Play 10+ total matches", unlocked: totalMatches >= 10 },
+      { icon: "👑", title: "Master Tier", desc: "Reach 1300+ ELO", unlocked: elo >= 1300 },
+      { icon: "💎", title: "High Roller", desc: "Hold 2,000+ Coins", unlocked: coins >= 2000 },
+      { icon: "⭐", title: "Level 5 Pro", desc: "Reach Player Level 5", unlocked: (profile.level || 1) >= 5 },
+    ];
+    grid.innerHTML = badges
+      .map(
+        (b) => `
+        <div class="badge-tile ${b.unlocked ? "unlocked" : "locked"}">
+          <div class="bt-icon">${b.icon}</div>
+          <div class="bt-title">${b.title}</div>
+          <div class="bt-desc">${b.desc}</div>
+          <div class="bt-status">${b.unlocked ? "✓ UNLOCKED" : "🔒 LOCKED"}</div>
+        </div>`
+      )
+      .join("");
+  }
+
+  function attachHoloTilt(cardEl) {
+    if (!cardEl || cardEl.dataset.holoWired === "true") return;
+    cardEl.dataset.holoWired = "true";
+
+    const updateTilt = (clientX, clientY) => {
+      if (cardEl.classList.contains("is-flipped")) return;
+      const rect = cardEl.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      const y = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+      const rx = (0.5 - y) * 24;
+      const ry = (x - 0.5) * 24;
+      cardEl.classList.add("is-tilting");
+      cardEl.style.setProperty("--rx", `${rx.toFixed(2)}deg`);
+      cardEl.style.setProperty("--ry", `${ry.toFixed(2)}deg`);
+      cardEl.style.setProperty("--mx", `${(x * 100).toFixed(1)}%`);
+      cardEl.style.setProperty("--my", `${(y * 100).toFixed(1)}%`);
+      cardEl.style.setProperty("--px", `${(x * 100).toFixed(1)}%`);
+      cardEl.style.setProperty("--py", `${(y * 100).toFixed(1)}%`);
+    };
+
+    const resetTilt = () => {
+      cardEl.classList.remove("is-tilting");
+      cardEl.style.setProperty("--rx", "0deg");
+      cardEl.style.setProperty("--ry", "0deg");
+      cardEl.style.setProperty("--mx", "50%");
+      cardEl.style.setProperty("--my", "50%");
+    };
+
+    cardEl.addEventListener("mousemove", (e) => updateTilt(e.clientX, e.clientY));
+    cardEl.addEventListener("mouseleave", resetTilt);
+    cardEl.addEventListener(
+      "touchmove",
+      (e) => {
+        if (e.touches && e.touches[0]) {
+          updateTilt(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      },
+      { passive: true }
+    );
+    cardEl.addEventListener("touchend", resetTilt);
+  }
+
+  async function loadMembersHoloCards() {
+    const grid = document.getElementById("membersHoloGrid");
+    if (!grid) return;
+    grid.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:12px;">Loading member cards...</div>';
+    try {
+      const res = await fetch("/api/leaderboard?game_type=overall");
+      if (!res.ok) {
+        grid.innerHTML = '<div style="color:#ef4444;font-size:0.85rem;padding:12px;">Could not load members.</div>';
+        return;
+      }
+      const data = await res.json();
+      const players = data.players || [];
+      if (!players.length) {
+        grid.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:12px;">No members registered yet.</div>';
+        return;
+      }
+      const skins = ["skin-crown", "skin-gold", "skin-cyber", "skin-matrix"];
+      grid.innerHTML = "";
+      players.forEach((p, idx) => {
+        const elo = Math.round(p.elo || 1200);
+        const tierLabel = elo >= 1500 ? "LEGEND" : elo >= 1350 ? "MASTER" : elo >= 1220 ? "PRO" : "VIP";
+        const handle = p.username
+          ? `@${p.username}`
+          : `@${(p.display_name || "player").toLowerCase().replace(/[^a-z0-9_]/g, "") || "player"}`;
+        const skinClass = skins[idx % skins.length];
+
+        const scene = document.createElement("div");
+        scene.className = "member-mini-scene";
+        scene.innerHTML = `
+          <div class="member-mini-card holo-card ${skinClass}" style="width:100%;height:205px;">
+            <div class="holo-foil-layer"></div>
+            <div class="holo-glare-layer"></div>
+            <div class="mmc-rank-tag">#${idx + 1}</div>
+            <img src="/static/bot_avatar.jpg" class="mmc-avatar" alt="${escapeHtml(p.display_name)}" />
+            <div class="mmc-handle">${escapeHtml(handle)}</div>
+            <div class="mmc-elo">${elo} ELO • ${p.wins || 0}W</div>
+            <div class="mmc-pill">${tierLabel}</div>
+          </div>
+        `;
+        const card = scene.querySelector(".member-mini-card");
+        attachHoloTilt(card);
+        card.addEventListener("click", () => {
+          haptic("light");
+          triggerMagicalScreenReaction({
+            type: "reaction",
+            emoji: idx === 0 ? "👑" : "⚡",
+            fx: idx === 0 ? "rain" : "float",
+            senderName: p.display_name || handle,
+            isSelf: false,
+          });
+        });
+        grid.appendChild(scene);
+      });
+    } catch (e) {
+      grid.innerHTML = `<div style="color:#ef4444;font-size:0.85rem;padding:12px;">Error: ${escapeHtml(e.message)}</div>`;
+    }
   }
 
   async function refreshProfileAndHistory() {
@@ -1921,6 +2131,205 @@
   });
   document.getElementById("btnRefreshLive")?.addEventListener("click", refreshLiveRooms);
   document.getElementById("btnRefreshProfile")?.addEventListener("click", refreshProfileAndHistory);
+
+  // =========================================================
+  // INTERACTIVE PROFILE & 3D HOLOGRAPHIC MEMBER CARD WIRING
+  // =========================================================
+  const profileHoloCard = document.getElementById("profileHoloCard");
+  if (profileHoloCard) {
+    attachHoloTilt(profileHoloCard);
+    profileHoloCard.addEventListener("click", () => {
+      haptic("light");
+      profileHoloCard.classList.toggle("is-flipped");
+    });
+  }
+
+  document.getElementById("btnFlipHoloCard")?.addEventListener("click", () => {
+    haptic("light");
+    profileHoloCard?.classList.toggle("is-flipped");
+  });
+
+  document.getElementById("btnCycleCardSkin")?.addEventListener("click", () => {
+    haptic("medium");
+    const cur = localStorage.getItem("minigame_card_skin") || "crown";
+    const nextIdx = (HOLO_SKINS.indexOf(cur) + 1) % HOLO_SKINS.length;
+    applyHoloCardSkin(HOLO_SKINS[nextIdx]);
+  });
+
+  document.getElementById("btnClaimDailyBonus")?.addEventListener("click", () => {
+    const today = new Date().toISOString().slice(0, 10);
+    if (localStorage.getItem("minigame_daily_claim_date") === today) return;
+    haptic("heavy");
+    const curCoins = parseInt(localStorage.getItem("flipster_coins") || "1250", 10);
+    const nextCoins = curCoins + 250;
+    localStorage.setItem("flipster_coins", String(nextCoins));
+    localStorage.setItem("minigame_daily_claim_date", today);
+
+    const coinValEl = document.getElementById("coinVal");
+    if (coinValEl) coinValEl.textContent = nextCoins.toLocaleString();
+    const profWalletCoins = document.getElementById("profWalletCoins");
+    if (profWalletCoins) profWalletCoins.textContent = `🪙 ${nextCoins.toLocaleString()}`;
+    const bCoins = document.getElementById("holoBackCoins");
+    if (bCoins) bCoins.textContent = nextCoins.toLocaleString();
+
+    updateDailyBonusBtnState();
+    triggerMagicalScreenReaction({
+      type: "reaction",
+      emoji: "🪙",
+      fx: "rain",
+      senderName: "Daily Bonus (+250)",
+      isSelf: true,
+    });
+  });
+
+  document.getElementById("btnProfOpenShop")?.addEventListener("click", () => {
+    haptic("light");
+    if (typeof openStarsShop === "function") openStarsShop();
+  });
+
+  // Profile Tabs
+  document.querySelectorAll(".prof-tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      haptic("light");
+      const target = btn.dataset.proftab;
+      document.querySelectorAll(".prof-tab-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      document.querySelectorAll(".prof-tab-pane").forEach((pane) => pane.classList.add("hidden"));
+      const activePane = document.getElementById(`profPane-${target}`);
+      if (activePane) activePane.classList.remove("hidden");
+      if (target === "members") {
+        loadMembersHoloCards();
+      }
+    });
+  });
+
+  document.getElementById("btnRefreshMembers")?.addEventListener("click", () => {
+    haptic("light");
+    loadMembersHoloCards();
+  });
+
+  // Share Member Card
+  document.getElementById("btnShareMemberCard")?.addEventListener("click", async () => {
+    haptic("medium");
+    const name = state.profile?.display_name || state.userName || "Player";
+    const elo = Math.round(state.profile?.elo || 1200);
+    const botUser = state.botUsername || "minigame_bot";
+    const shareUrl = `https://t.me/${botUser}?startapp=ref_${state.userId}`;
+    const shareText = `⚡ Check out my Ghost Plays Member Card! ${name} • ${elo} ELO. Challenge me in the Arena!`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Ghost Plays Member Card", text: shareText, url: shareUrl });
+        return;
+      } catch (_) {}
+    }
+    try {
+      await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+      alert("✅ Member Card & Arena invite link copied!");
+    } catch (_) {
+      alert(`${shareText}\n${shareUrl}`);
+    }
+  });
+
+  // Edit Profile Modal
+  let selectedPresetAvatar = localStorage.getItem("minigame_prof_avatar") || "/static/bot_avatar.jpg";
+  document.getElementById("btnEditProfile")?.addEventListener("click", () => {
+    haptic("light");
+    const modal = document.getElementById("modalEditProfile");
+    if (!modal) return;
+    const nameInp = document.getElementById("editProfNameInput");
+    const bioInp = document.getElementById("editProfBioInput");
+    const skinSel = document.getElementById("editProfSkinSelect");
+    if (nameInp) nameInp.value = state.profile?.display_name || state.userName || "Player";
+    if (bioInp) bioInp.value = localStorage.getItem("minigame_prof_bio") || "Ready to dominate the arena!";
+    if (skinSel) skinSel.value = localStorage.getItem("minigame_card_skin") || "crown";
+
+    document.querySelectorAll(".av-preset-btn").forEach((b) => {
+      b.classList.toggle("active", b.dataset.av === selectedPresetAvatar);
+    });
+    modal.classList.remove("hidden");
+  });
+
+  document.getElementById("btnCloseEditProfile")?.addEventListener("click", () => {
+    document.getElementById("modalEditProfile")?.classList.add("hidden");
+  });
+
+  document.querySelectorAll(".av-preset-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".av-preset-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      selectedPresetAvatar = btn.dataset.av || "/static/bot_avatar.jpg";
+    });
+  });
+
+  document.getElementById("formEditProfile")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const newName = document.getElementById("editProfNameInput")?.value.trim() || "Player";
+    const newBio = document.getElementById("editProfBioInput")?.value.trim() || "Ready to dominate the arena!";
+    const newSkin = document.getElementById("editProfSkinSelect")?.value || "crown";
+
+    localStorage.setItem("minigame_prof_bio", newBio);
+    localStorage.setItem("minigame_prof_avatar", selectedPresetAvatar);
+    localStorage.setItem("guest_name", newName);
+    applyHoloCardSkin(newSkin);
+    state.userName = newName;
+
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          init_data: tg?.initData || "",
+          guest_id: state.userId,
+          guest_name: newName,
+        }),
+      });
+      if (res.ok) {
+        const d = await res.json();
+        if (d.profile) renderProfileSummary(d.profile);
+      } else if (state.profile) {
+        state.profile.display_name = newName;
+        renderProfileSummary(state.profile);
+      }
+    } catch (_) {
+      if (state.profile) {
+        state.profile.display_name = newName;
+        renderProfileSummary(state.profile);
+      }
+    }
+
+    document.getElementById("modalEditProfile")?.classList.add("hidden");
+    haptic("medium");
+  });
+
+  // Preferences Toggles
+  function initPrefToggles() {
+    const sfxBtn = document.getElementById("btnPrefSfx");
+    const hapBtn = document.getElementById("btnPrefHaptics");
+    const sfxOn = localStorage.getItem("minigame_pref_sfx") !== "off";
+    const hapOn = localStorage.getItem("minigame_pref_haptics") !== "off";
+
+    if (sfxBtn) {
+      sfxBtn.classList.toggle("active", sfxOn);
+      sfxBtn.textContent = sfxOn ? "ON" : "OFF";
+      sfxBtn.addEventListener("click", () => {
+        const next = !sfxBtn.classList.contains("active");
+        sfxBtn.classList.toggle("active", next);
+        sfxBtn.textContent = next ? "ON" : "OFF";
+        localStorage.setItem("minigame_pref_sfx", next ? "on" : "off");
+      });
+    }
+    if (hapBtn) {
+      hapBtn.classList.toggle("active", hapOn);
+      hapBtn.textContent = hapOn ? "ON" : "OFF";
+      hapBtn.addEventListener("click", () => {
+        const next = !hapBtn.classList.contains("active");
+        hapBtn.classList.toggle("active", next);
+        hapBtn.textContent = next ? "ON" : "OFF";
+        localStorage.setItem("minigame_pref_haptics", next ? "on" : "off");
+      });
+    }
+  }
+  initPrefToggles();
 
   // In-game Match Chat Wiring
   document.getElementById("btnOpenMatchChat")?.addEventListener("click", () => {

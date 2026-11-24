@@ -7,7 +7,7 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <!-- Lucide Icons Package (Modern Crisp Vector Icons) -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="/static/style.css?v=20261124_2" />
+  <link rel="stylesheet" href="/static/style.css?v=20261125_2" />
   <script>
     if (localStorage.getItem("app_theme") === "light") {
       document.documentElement.classList.add("theme-light");
@@ -792,24 +792,58 @@
 
     <!-- ==================== PROFILE VIEW ==================== -->
     <section id="view-profile" class="view">
-      <div class="card profile-hero-card">
-        <div class="prof-hero-top">
-          <div class="avatar-ring">
-            <img src="/static/bot_avatar.jpg" class="prof-avatar-img" alt="Avatar" />
-            <span class="avatar-status-dot"></span>
-          </div>
-          <div class="prof-hero-details">
-            <div class="prof-username-row">
-              <span id="profPlayerName" class="prof-player-name">Player</span>
-              <span class="prof-verified-badge">⚡ VIP</span>
+      <!-- 1. INTERACTIVE 3D HOLOGRAPHIC MEMBER CARD (Simey Foil Design) -->
+      <div class="profile-card-showcase">
+        <div class="holo-card-scene" id="profileHoloScene">
+          <div class="holo-card skin-crown" id="profileHoloCard">
+            <!-- FRONT FACE -->
+            <div class="holo-card-face holo-card-front">
+              <div class="holo-foil-layer"></div>
+              <div class="holo-glare-layer"></div>
+              <div class="holo-card-content">
+                <div class="holo-avatar-wrap">
+                  <img id="holoCardAvatar" src="/static/bot_avatar.jpg" alt="Avatar" class="holo-avatar-img" />
+                  <span class="holo-online-dot"></span>
+                </div>
+                <div class="holo-handle" id="holoCardHandle">@player</div>
+                <div class="holo-subline" id="holoCardSubline">LVL 1 • 1200 ELO</div>
+                <div class="holo-tier-pill" id="holoCardTier">PRO</div>
+              </div>
             </div>
-            <div class="prof-rank-row">
-              <span class="prof-tier-pill" id="profTierBadge">🥉 Bronze</span>
-              <span class="prof-global-elo" id="profGlobalElo">1200 ELO</span>
+
+            <!-- BACK FACE -->
+            <div class="holo-card-face holo-card-back">
+              <div class="holo-glare-layer"></div>
+              <div class="holo-back-content">
+                <div class="hbc-top">
+                  <span class="hbc-brand">⚡ GHOST PLAYS PASS</span>
+                  <span class="hbc-id" id="holoBackId">#0000</span>
+                </div>
+                <div class="hbc-stats-list">
+                  <div class="hbc-stat-row"><span>Name</span><strong id="holoBackName">Player</strong></div>
+                  <div class="hbc-stat-row"><span>Tier</span><strong id="holoBackTier">🥉 Bronze</strong></div>
+                  <div class="hbc-stat-row"><span>Matches</span><strong id="holoBackMatches">0</strong></div>
+                  <div class="hbc-stat-row"><span>Win Rate</span><strong id="holoBackWinRate">0%</strong></div>
+                  <div class="hbc-stat-row"><span>Coins</span><strong id="holoBackCoins">1,250</strong></div>
+                </div>
+                <div class="hbc-bio" id="holoBackBio">"Ready to dominate the arena!"</div>
+                <div class="hbc-footer">Tap card to flip back ↺</div>
+              </div>
             </div>
           </div>
         </div>
 
+        <!-- Card Quick Controls -->
+        <div class="holo-controls-row">
+          <button type="button" id="btnFlipHoloCard" class="holo-ctrl-btn">🔄 Flip</button>
+          <button type="button" id="btnCycleCardSkin" class="holo-ctrl-btn">🎨 Crown</button>
+          <button type="button" id="btnEditProfile" class="holo-ctrl-btn">✏️ Edit</button>
+          <button type="button" id="btnShareMemberCard" class="holo-ctrl-btn primary">📤 Share</button>
+        </div>
+      </div>
+
+      <!-- 2. LEVEL XP & DAILY REWARD / WALLET STRIP -->
+      <div class="card profile-wallet-card">
         <div class="prof-level-box">
           <div class="prof-level-head">
             <span id="profLevelBadge" class="badge-accent">LEVEL 1</span>
@@ -819,69 +853,171 @@
             <div class="xp-bar-fill" id="profXpFill" style="width: 0%"></div>
           </div>
         </div>
-      </div>
-
-      <!-- Combat Records 4-Grid -->
-      <div class="card">
-        <div class="card-head">
-          <h3>📊 Battle Records</h3>
-        </div>
-        <div class="combat-stats-grid">
-          <div class="combat-stat-tile">
-            <div class="cs-icon">⚔️</div>
-            <div class="cs-val" id="profStatTotal">0</div>
-            <div class="cs-lbl">Matches</div>
+        <div class="prof-wallet-actions">
+          <div class="pwa-balance">
+            <span class="pwa-lbl">Wallet</span>
+            <strong id="profWalletCoins">🪙 1,250</strong>
           </div>
-          <div class="combat-stat-tile">
-            <div class="cs-icon">🏆</div>
-            <div class="cs-val" id="profStatWins">0</div>
-            <div class="cs-lbl">Victories</div>
-          </div>
-          <div class="combat-stat-tile">
-            <div class="cs-icon">🎯</div>
-            <div class="cs-val" id="profStatWinRate">0%</div>
-            <div class="cs-lbl">Win Rate</div>
-          </div>
-          <div class="combat-stat-tile">
-            <div class="cs-icon">⚡</div>
-            <div class="cs-val" id="profStatStreak">0</div>
-            <div class="cs-lbl">Win Streak</div>
+          <div class="pwa-btns">
+            <button type="button" id="btnClaimDailyBonus" class="btn small primary">🎁 Daily +250</button>
+            <button type="button" id="btnProfOpenShop" class="btn small outline">🛒 Shop</button>
           </div>
         </div>
       </div>
 
-      <!-- Arena Ratings -->
-      <div class="card">
-        <div class="card-head">
-          <h3>🎮 Arena Ratings</h3>
-        </div>
-        <div id="profileRatingsGrid" class="ratings-grid">Loading...</div>
+      <!-- 3. INTERACTIVE PROFILE TABS -->
+      <div class="profile-tabs-bar">
+        <button type="button" class="prof-tab-btn active" data-proftab="stats">📊 Stats</button>
+        <button type="button" class="prof-tab-btn" data-proftab="members">👥 Members</button>
+        <button type="button" class="prof-tab-btn" data-proftab="badges">🏅 Badges</button>
+        <button type="button" class="prof-tab-btn" data-proftab="history">📜 History</button>
       </div>
 
-      <!-- Mini Apps 2.0 Feature: Add to Home Screen -->
-      <div class="card homescreen-install-card">
-        <div class="homescreen-install-content">
-          <div class="hs-badge"><i data-lucide="sparkles" class="lucide-xs"></i> BOT API 8.0 READY</div>
-          <h3 class="hs-title">📲 Install Ghost Plays on Phone</h3>
-          <p class="hs-desc">Launch instantly from your mobile home screen with full-screen immersive mode, zero browser bars, and ultra-fast loading.</p>
-          <div class="hs-btn-row">
-            <button id="btnAddToHomeScreen" class="btn primary full">
-              <i data-lucide="smartphone" class="lucide-sm"></i> Add to Home Screen
-            </button>
+      <!-- TAB: STATS & RATINGS -->
+      <div class="prof-tab-pane active" id="profPane-stats">
+        <div class="card">
+          <div class="card-head">
+            <h3>📊 Battle Records</h3>
           </div>
-          <div id="homeScreenStatusMsg" class="hs-status-note">Compatible with Telegram iOS & Android</div>
+          <div class="combat-stats-grid">
+            <div class="combat-stat-tile">
+              <div class="cs-icon">⚔️</div>
+              <div class="cs-val" id="profStatTotal">0</div>
+              <div class="cs-lbl">Matches</div>
+            </div>
+            <div class="combat-stat-tile">
+              <div class="cs-icon">🏆</div>
+              <div class="cs-val" id="profStatWins">0</div>
+              <div class="cs-lbl">Victories</div>
+            </div>
+            <div class="combat-stat-tile">
+              <div class="cs-icon">🎯</div>
+              <div class="cs-val" id="profStatWinRate">0%</div>
+              <div class="cs-lbl">Win Rate</div>
+            </div>
+            <div class="combat-stat-tile">
+              <div class="cs-icon">⚡</div>
+              <div class="cs-val" id="profStatStreak">0</div>
+              <div class="cs-lbl">Win Streak</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>🎮 Arena Ratings</h3>
+          </div>
+          <div id="profileRatingsGrid" class="ratings-grid">Loading...</div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>⚙️ Player Preferences</h3>
+          </div>
+          <div class="prof-prefs-list">
+            <div class="prof-pref-row">
+              <div>
+                <div class="ppr-title">🔊 Sound Effects</div>
+                <div class="ppr-sub">Arena moves, clocks &amp; reactions</div>
+              </div>
+              <button type="button" id="btnPrefSfx" class="pref-toggle-btn active">ON</button>
+            </div>
+            <div class="prof-pref-row">
+              <div>
+                <div class="ppr-title">📳 Haptic Vibration</div>
+                <div class="ppr-sub">Tactile feedback on mobile</div>
+              </div>
+              <button type="button" id="btnPrefHaptics" class="pref-toggle-btn active">ON</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mini Apps 2.0 Feature: Add to Home Screen -->
+        <div class="card homescreen-install-card">
+          <div class="homescreen-install-content">
+            <div class="hs-badge"><i data-lucide="sparkles" class="lucide-xs"></i> BOT API 8.0 READY</div>
+            <h3 class="hs-title">📲 Install Ghost Plays on Phone</h3>
+            <p class="hs-desc">Launch instantly from your mobile home screen with full-screen immersive mode, zero browser bars, and ultra-fast loading.</p>
+            <div class="hs-btn-row">
+              <button id="btnAddToHomeScreen" class="btn primary full">
+                <i data-lucide="smartphone" class="lucide-sm"></i> Add to Home Screen
+              </button>
+            </div>
+            <div id="homeScreenStatusMsg" class="hs-status-note">Compatible with Telegram iOS &amp; Android</div>
+          </div>
         </div>
       </div>
 
-      <!-- Match History -->
-      <div class="card">
-        <div class="card-head">
-          <h3>📜 Recent Match History</h3>
-          <button id="btnRefreshProfile" class="btn small">🔄</button>
+      <!-- TAB: ALL MEMBERS HOLOGRAPHIC CARDS -->
+      <div class="prof-tab-pane hidden" id="profPane-members">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h3>👥 Member Cards</h3>
+              <p style="font-size:0.74rem;color:var(--muted);margin:2px 0 0;">Hover or drag any card for 3D holographic foil</p>
+            </div>
+            <button type="button" id="btnRefreshMembers" class="btn small">🔄</button>
+          </div>
+          <div id="membersHoloGrid" class="members-holo-grid">Loading member cards...</div>
         </div>
-        <div id="matchHistoryList" class="history-list">No matches played yet.</div>
+      </div>
+
+      <!-- TAB: ACHIEVEMENTS & BADGES -->
+      <div class="prof-tab-pane hidden" id="profPane-badges">
+        <div class="card">
+          <div class="card-head">
+            <h3>🏅 Achievements &amp; Milestones</h3>
+          </div>
+          <div id="profileBadgesGrid" class="badges-showcase-grid"></div>
+        </div>
+      </div>
+
+      <!-- TAB: MATCH HISTORY -->
+      <div class="prof-tab-pane hidden" id="profPane-history">
+        <div class="card">
+          <div class="card-head">
+            <h3>📜 Recent Match History</h3>
+            <button id="btnRefreshProfile" class="btn small">🔄</button>
+          </div>
+          <div id="matchHistoryList" class="history-list">No matches played yet.</div>
+        </div>
       </div>
     </section>
+
+    <!-- EDIT PROFILE MODAL -->
+    <div id="modalEditProfile" class="modal hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-header-title"><span>✏️</span><h3>Customize Member Card</h3></div>
+          <button type="button" id="btnCloseEditProfile" class="btn-close-modal">✕</button>
+        </div>
+        <form id="formEditProfile" class="modal-form">
+          <label>Display Name</label>
+          <input type="text" id="editProfNameInput" maxlength="24" placeholder="Your Arena Name" required />
+
+          <label>Card Bio / Tagline</label>
+          <input type="text" id="editProfBioInput" maxlength="60" placeholder="Ready to dominate the arena!" />
+
+          <label>Holographic Card Skin</label>
+          <select id="editProfSkinSelect" class="studio-select">
+            <option value="crown">👑 Royal Crown Foil (Blue/Purple)</option>
+            <option value="gold">🔥 Inferno Gold Foil (Gold/Amber)</option>
+            <option value="cyber">⚡ Cyber Neon Foil (Cyan/Pink)</option>
+            <option value="matrix">💎 Emerald Matrix Foil (Green/Teal)</option>
+          </select>
+
+          <label>Avatar Style</label>
+          <div class="edit-avatar-presets" id="editAvatarPresets">
+            <button type="button" class="av-preset-btn active" data-av="/static/bot_avatar.jpg">🤖 Bot</button>
+            <button type="button" class="av-preset-btn" data-av="/static/banners/aviator_promo.png">🚀 Pilot</button>
+            <button type="button" class="av-preset-btn" data-av="/static/banners/dino_promo.png">🦖 Dino</button>
+            <button type="button" class="av-preset-btn" data-av="/static/thumbnails/chess_thumb.png">♟️ King</button>
+          </div>
+
+          <button type="submit" class="btn primary full" style="margin-top:10px;">💾 Save Member Card</button>
+        </form>
+      </div>
+    </div>
 
     <!-- ==================== FULLSCREEN IN-APP WEB GAME PLAYER ==================== -->
     <section id="view-player" class="view fullscreen-player">
@@ -1435,6 +1571,6 @@
     <div id="reactionToastPill" class="reaction-toast-pill hidden"></div>
   </div>
 
-  <script src="/static/app.js?v=20261125_1"></script>
+  <script src="/static/app.js?v=20261125_2"></script>
 </body>
 </html>

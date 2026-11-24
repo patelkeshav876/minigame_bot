@@ -5773,3 +5773,618 @@ body.theme-light .bubble-char.bubble-near {
 .magical-hero-svg {
   filter: drop-shadow(0 0 18px rgba(245, 158, 11, 0.85)) drop-shadow(0 0 36px rgba(234, 88, 12, 0.6));
 }
+
+/* =========================================================
+   SIMEY 3D HOLOGRAPHIC MEMBER CARD & INTERACTIVE PROFILE
+   ========================================================= */
+.profile-card-showcase {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 0 14px;
+}
+
+.holo-card-scene {
+  perspective: 950px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0 16px;
+}
+
+.holo-card {
+  width: 248px;
+  height: 340px;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.65s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.3s ease;
+  cursor: pointer;
+  border-radius: 22px;
+  --rx: 0deg;
+  --ry: 0deg;
+  --mx: 50%;
+  --my: 50%;
+  --px: 50%;
+  --py: 50%;
+  --card-glow: rgba(56, 189, 248, 0.45);
+  --card-glow2: rgba(168, 85, 247, 0.28);
+  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.65), 0 0 28px var(--card-glow), 0 0 54px var(--card-glow2);
+}
+
+.holo-card.is-tilting {
+  transition: transform 0.08s ease-out;
+}
+
+.holo-card.is-flipped {
+  transform: rotateY(180deg) !important;
+}
+
+.holo-card-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 22px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  overflow: hidden;
+  border: 1.5px solid rgba(148, 163, 184, 0.3);
+  background: radial-gradient(circle at 50% 25%, #1e293b 0%, #0f172a 55%, #070b14 100%);
+}
+
+.holo-card-back {
+  transform: rotateY(180deg);
+  background: linear-gradient(155deg, #0b1120 0%, #172554 50%, #090d16 100%);
+  padding: 20px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Skin Variants */
+.holo-card.skin-crown {
+  --card-glow: rgba(56, 189, 248, 0.48);
+  --card-glow2: rgba(139, 92, 246, 0.32);
+}
+.holo-card.skin-gold {
+  --card-glow: rgba(250, 204, 21, 0.5);
+  --card-glow2: rgba(249, 115, 22, 0.32);
+}
+.holo-card.skin-gold .holo-card-front {
+  background: radial-gradient(circle at 50% 25%, #422006 0%, #1c1003 55%, #0a0602 100%);
+  border-color: rgba(250, 204, 21, 0.45);
+}
+.holo-card.skin-cyber {
+  --card-glow: rgba(236, 72, 153, 0.5);
+  --card-glow2: rgba(6, 182, 212, 0.35);
+}
+.holo-card.skin-cyber .holo-card-front {
+  background: radial-gradient(circle at 50% 25%, #3b0764 0%, #170d2e 55%, #070612 100%);
+  border-color: rgba(236, 72, 153, 0.45);
+}
+.holo-card.skin-matrix {
+  --card-glow: rgba(16, 185, 129, 0.48);
+  --card-glow2: rgba(20, 184, 166, 0.3);
+}
+.holo-card.skin-matrix .holo-card-front {
+  background: radial-gradient(circle at 50% 25%, #064e3b 0%, #022c22 55%, #02120e 100%);
+  border-color: rgba(52, 211, 153, 0.45);
+}
+
+/* Holographic Crown Foil Pattern Layer (Simey style) */
+.holo-foil-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.55;
+  background-image:
+    url("data:image/svg+xml,%3Csvg width='56' height='56' viewBox='0 0 56 56' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='rgba(255,255,255,0.22)' stroke-width='1.4'%3E%3Cpath d='M16 32 L13 21 L22 26 L28 18 L34 26 L43 21 L40 32 Z' transform='rotate(-16 28 28)'/%3E%3Ccircle cx='12' cy='12' r='1' fill='rgba(255,255,255,0.3)'/%3E%3Ccircle cx='46' cy='44' r='1.2' fill='rgba(255,255,255,0.25)'/%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(
+      115deg,
+      transparent 15%,
+      rgba(56, 189, 248, 0.55) 35%,
+      rgba(232, 121, 249, 0.6) 50%,
+      rgba(250, 204, 21, 0.5) 65%,
+      transparent 85%
+    );
+  background-size: 56px 56px, 240% 240%;
+  background-position: 0 0, var(--px) var(--py);
+  mix-blend-mode: color-dodge;
+  transition: opacity 0.25s ease;
+}
+
+.holo-card:hover .holo-foil-layer,
+.holo-card.is-tilting .holo-foil-layer {
+  opacity: 0.9;
+}
+
+/* Radial Glare Spotlight */
+.holo-glare-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at var(--mx) var(--my),
+    rgba(255, 255, 255, 0.34) 0%,
+    rgba(56, 189, 248, 0.14) 30%,
+    transparent 68%
+  );
+  mix-blend-mode: overlay;
+  z-index: 3;
+}
+
+.holo-card-content {
+  position: relative;
+  z-index: 4;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 22px 16px;
+  text-align: center;
+  transform: translateZ(24px);
+}
+
+.holo-avatar-wrap {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  padding: 4px;
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.8), rgba(56, 189, 248, 0.85));
+  box-shadow: 0 0 28px rgba(99, 102, 241, 0.55), inset 0 0 12px rgba(255, 255, 255, 0.35);
+}
+
+.holo-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #0f172a;
+}
+
+.holo-online-dot {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2.5px solid #0f172a;
+  box-shadow: 0 0 10px #22c55e;
+}
+
+.holo-handle {
+  margin-top: 20px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.3px;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.9);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.holo-subline {
+  margin-top: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(203, 213, 225, 0.85);
+  letter-spacing: 0.6px;
+}
+
+.holo-tier-pill {
+  margin-top: 18px;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+  padding: 5px 18px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: #f8fafc;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.22), 0 6px 14px rgba(0, 0, 0, 0.5);
+}
+
+/* Card Back Content */
+.holo-back-content {
+  position: relative;
+  z-index: 4;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.hbc-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  padding-bottom: 10px;
+}
+.hbc-brand {
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: #38bdf8;
+  letter-spacing: 0.8px;
+}
+.hbc-id {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.hbc-stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0;
+}
+.hbc-stat-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+}
+.hbc-stat-row strong {
+  color: #ffffff;
+}
+
+.hbc-bio {
+  font-size: 0.76rem;
+  font-style: italic;
+  color: #94a3b8;
+  text-align: center;
+  padding: 8px;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px dashed rgba(56, 189, 248, 0.28);
+  border-radius: 10px;
+}
+.hbc-footer {
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+/* Card Controls Row */
+.holo-controls-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 4px;
+}
+.holo-ctrl-btn {
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #e2e8f0;
+  padding: 7px 12px;
+  border-radius: 12px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+.holo-ctrl-btn:hover {
+  border-color: #38bdf8;
+  transform: translateY(-1px);
+  color: #ffffff;
+}
+.holo-ctrl-btn.primary {
+  background: linear-gradient(135deg, #0284c7, #2563eb);
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+/* Profile Wallet & Daily Strip */
+.profile-wallet-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.prof-wallet-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 10px;
+}
+.pwa-balance {
+  display: flex;
+  flex-direction: column;
+}
+.pwa-lbl {
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.pwa-balance strong {
+  font-size: 1.05rem;
+  color: #fde047;
+}
+.pwa-btns {
+  display: flex;
+  gap: 8px;
+}
+
+/* Profile Tabs Bar */
+.profile-tabs-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin: 12px 0;
+  background: rgba(15, 23, 42, 0.65);
+  padding: 5px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.prof-tab-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 8px 4px;
+  border-radius: 12px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+.prof-tab-btn.active {
+  background: linear-gradient(135deg, #0284c7 0%, #3b82f6 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+}
+.prof-tab-pane.hidden {
+  display: none;
+}
+
+/* All Members Holographic Cards Grid */
+.members-holo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-top: 8px;
+}
+@media (min-width: 600px) {
+  .members-holo-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.member-mini-scene {
+  perspective: 700px;
+}
+.member-mini-card {
+  position: relative;
+  height: 205px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: radial-gradient(circle at 50% 25%, #1e293b 0%, #0f172a 60%, #070b14 100%);
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+  cursor: pointer;
+  --rx: 0deg;
+  --ry: 0deg;
+  --mx: 50%;
+  --my: 50%;
+  --px: 50%;
+  --py: 50%;
+  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform 0.18s ease-out, box-shadow 0.2s ease;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45), 0 0 18px rgba(56, 189, 248, 0.18);
+}
+.member-mini-card:hover {
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6), 0 0 24px rgba(56, 189, 248, 0.42);
+}
+.mmc-rank-tag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 0.66rem;
+  font-weight: 900;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #fde047;
+  padding: 2px 7px;
+  border-radius: 8px;
+  z-index: 4;
+}
+.mmc-avatar {
+  position: relative;
+  z-index: 4;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid rgba(165, 180, 252, 0.6);
+  box-shadow: 0 0 18px rgba(99, 102, 241, 0.45);
+  object-fit: cover;
+  margin-top: 6px;
+}
+.mmc-handle {
+  position: relative;
+  z-index: 4;
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #ffffff;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mmc-elo {
+  position: relative;
+  z-index: 4;
+  font-size: 0.68rem;
+  color: #94a3b8;
+  font-weight: 700;
+}
+.mmc-pill {
+  position: relative;
+  z-index: 4;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #f8fafc;
+  text-transform: uppercase;
+}
+
+/* Badges Showcase Grid */
+.badges-showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.badge-tile {
+  background: rgba(30, 41, 59, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 12px 10px;
+  text-align: center;
+  transition: transform 0.16s ease, border-color 0.16s ease;
+}
+.badge-tile.unlocked {
+  border-color: rgba(250, 204, 21, 0.45);
+  background: linear-gradient(145deg, rgba(250, 204, 21, 0.12), rgba(30, 41, 59, 0.8));
+}
+.badge-tile.locked {
+  opacity: 0.55;
+  filter: grayscale(0.7);
+}
+.badge-tile:hover {
+  transform: translateY(-2px);
+}
+.bt-icon {
+  font-size: 1.8rem;
+  margin-bottom: 4px;
+}
+.bt-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+.bt-desc {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+.bt-status {
+  margin-top: 6px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #fde047;
+}
+
+/* Preferences List */
+.prof-prefs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.prof-pref-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+.ppr-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+.ppr-sub {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+.pref-toggle-btn {
+  background: rgba(100, 116, 139, 0.35);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: #cbd5e1;
+  font-size: 0.74rem;
+  font-weight: 900;
+  padding: 5px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+.pref-toggle-btn.active {
+  background: #22c55e;
+  border-color: #4ade80;
+  color: #052e16;
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.45);
+}
+
+/* Avatar Presets in Edit Modal */
+.edit-avatar-presets {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+}
+.av-preset-btn {
+  background: rgba(30, 41, 59, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #e2e8f0;
+  padding: 8px 4px;
+  border-radius: 10px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.av-preset-btn.active {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.22);
+  color: #ffffff;
+}
+
+/* Light Mode Adjustments */
+body.light-theme .holo-controls-row .holo-ctrl-btn:not(.primary) {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.15);
+}
+body.light-theme .profile-tabs-bar {
+  background: #e2e8f0;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+body.light-theme .prof-tab-btn {
+  color: #475569;
+}
+body.light-theme .prof-pref-row {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+body.light-theme .ppr-title {
+  color: #0f172a;
+}
+body.light-theme .badge-tile {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.12);
+}
+body.light-theme .bt-title {
+  color: #0f172a;
+}
