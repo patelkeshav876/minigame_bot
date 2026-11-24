@@ -1096,6 +1096,20 @@
               </div>
             </div>
 
+            <div class="form-row-2">
+              <div>
+                <label>Admin Secret Passcode *</label>
+                <input id="bannerAdminSecret" type="password" placeholder="admin secret passcode" />
+                <span class="field-hint" style="font-size:0.72rem; color:#94a3b8; margin-top:2px; display:block;">
+                  🔐 Auto-saved &amp; remembered for all admin actions
+                </span>
+              </div>
+              <div>
+                <label>Display Priority / Order</label>
+                <input id="bannerOrderIdx" type="number" value="0" min="0" max="99" placeholder="0" />
+              </div>
+            </div>
+
             <button type="submit" id="btnSubmitBanner" class="btn primary full">💾 Save Sliding Window Banner</button>
           </form>
         </div>
@@ -1364,6 +1378,6 @@
     </nav>
   </div>
 
-  <script src="/static/app.js?v=20261124_2"></script>
+  <script src="/static/app.js?v=20261124_3"></script>
 </body>
 </html>

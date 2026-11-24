@@ -5,6 +5,18 @@
     tg.expand();
   }
 
+  // Universal HTML sanitizer
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+  window.escapeHtml = escapeHtml;
+
   // Clean SVG chess pieces inspired by classic vector tournament sets
   function pieceSvg(code) {
     const isWhite = code === code.toUpperCase();
@@ -2676,7 +2688,38 @@
     }, 400);
   }
 
+  function getAdminSecret() {
+    const fromBanner = document.getElementById("bannerAdminSecret")?.value.trim();
+    const fromGame = document.getElementById("inputAdminSecret")?.value.trim();
+    const fromStorage = localStorage.getItem("minigame_admin_secret")?.trim();
+    return fromBanner || fromGame || fromStorage || "";
+  }
+
+  function syncAdminSecret(val) {
+    if (!val) return;
+    localStorage.setItem("minigame_admin_secret", val);
+    const b = document.getElementById("bannerAdminSecret");
+    const g = document.getElementById("inputAdminSecret");
+    if (b && b.value !== val) b.value = val;
+    if (g && g.value !== val) g.value = val;
+  }
+
+  function initAdminSecretInputs() {
+    const saved = localStorage.getItem("minigame_admin_secret") || "";
+    if (saved) {
+      const b = document.getElementById("bannerAdminSecret");
+      const g = document.getElementById("inputAdminSecret");
+      if (b && !b.value) b.value = saved;
+      if (g && !g.value) g.value = saved;
+    }
+    const b = document.getElementById("bannerAdminSecret");
+    const g = document.getElementById("inputAdminSecret");
+    b?.addEventListener("input", () => syncAdminSecret(b.value.trim()));
+    g?.addEventListener("input", () => syncAdminSecret(g.value.trim()));
+  }
+
   async function loadAdminGamesList() {
+    initAdminSecretInputs();
     const listEl = document.getElementById("adminGamesList");
     const res = await fetch("/api/custom-games");
     const data = await res.json();
@@ -2684,7 +2727,7 @@
       listEl.innerHTML = `<div style="font-size: 0.8rem; color: var(--muted);">No games added yet.</div>`;
       return;
     }
-    const secret = document.getElementById("inputAdminSecret").value || "";
+    const secret = getAdminSecret();
     listEl.innerHTML = data.games
       .map(
         (g) => {
@@ -2947,7 +2990,7 @@
       originalRawLogoSrc = base64Data;
       updateLogoPreview(base64Data);
 
-      const admin_secret = document.getElementById("inputAdminSecret")?.value.trim() || "";
+      const admin_secret = getAdminSecret();
       try {
         const res = await fetch("/api/admin/upload-logo", {
           method: "POST",
@@ -2980,7 +3023,7 @@
     const icon = document.getElementById("inputGameIcon").value.trim() || "🎮";
     const logoUrl = document.getElementById("inputGameLogoUrl")?.value.trim() || "";
     const description = document.getElementById("inputGameDesc").value.trim();
-    const admin_secret = document.getElementById("inputAdminSecret").value.trim();
+    let admin_secret = getAdminSecret();
 
     let finalImageUrl = logoUrl;
     const sourceImage = originalRawLogoSrc || (previewLogoImg && previewLogoImg.src ? previewLogoImg.src : "");
@@ -3512,6 +3555,8 @@
     if (bGTitle) bGTitle.value = "";
     const bTheme = document.getElementById("bannerTheme");
     if (bTheme) bTheme.value = "slide-aviator";
+    const bOrder = document.getElementById("bannerOrderIdx");
+    if (bOrder) bOrder.value = "0";
     if (inputBannerFile) inputBannerFile.value = "";
     if (bannerImgPreview) bannerImgPreview.src = "/static/banners/welcome_banner.jpg";
     const bannerSelectGame = document.getElementById("bannerSelectGame");
@@ -3541,6 +3586,8 @@
     if (bGTitle) bGTitle.value = b.game_title || "";
     const bTheme = document.getElementById("bannerTheme");
     if (bTheme) bTheme.value = b.bg_theme || "slide-aviator";
+    const bOrder = document.getElementById("bannerOrderIdx");
+    if (bOrder) bOrder.value = b.order_idx ?? 0;
     if (bannerImgPreview) {
       bannerImgPreview.src = b.image_url || b.game_current_image || "/static/banners/welcome_banner.jpg";
     }
@@ -3557,7 +3604,7 @@
 
   async function deleteBanner(id) {
     if (!confirm("Are you sure you want to remove this slide from the home carousel?")) return;
-    const secret = document.getElementById("inputAdminSecret")?.value.trim() || "";
+    const secret = getAdminSecret();
     try {
       const res = await fetch(`/api/admin/promo-banners/${id}?user_id=${encodeURIComponent(state.userId)}&admin_secret=${encodeURIComponent(secret)}`, {
         method: "DELETE",
@@ -3567,7 +3614,8 @@
         loadHeroCarouselBanners();
         if (typeof showToast === "function") showToast("Banner deleted from sliding window");
       } else {
-        alert("Failed to delete banner. Check admin permissions.");
+        const err = await res.json().catch(() => ({}));
+        alert(err.detail || "Failed to delete banner. Check admin permissions.");
       }
     } catch (e) {
       alert("Error deleting banner: " + e.message);
@@ -3578,15 +3626,16 @@
   document.getElementById("btnCancelEditBanner")?.addEventListener("click", resetBannerForm);
 
   async function loadAdminBannersList() {
+    initAdminSecretInputs();
     const listEl = document.getElementById("adminBannersList");
     if (!listEl) return;
     listEl.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;padding:12px;">Loading sliding banners...</div>';
 
-    const secret = document.getElementById("inputAdminSecret")?.value.trim() || "";
+    const secret = getAdminSecret();
     try {
       const res = await fetch(`/api/admin/promo-banners?user_id=${encodeURIComponent(state.userId)}&admin_secret=${encodeURIComponent(secret)}`);
       if (!res.ok) {
-        listEl.innerHTML = '<div style="color:#ef4444;font-size:0.85rem;padding:12px;">Failed to load banners (Admin access required)</div>';
+        listEl.innerHTML = '<div style="color:#ef4444;font-size:0.85rem;padding:12px;">⚠️ Admin permissions required to load banners. Enter Admin Secret passcode above.</div>';
         return;
       }
       const data = await res.json();
@@ -3621,7 +3670,7 @@
         listEl.appendChild(row);
       });
     } catch (e) {
-      listEl.innerHTML = `<div style="color:#ef4444;font-size:0.85rem;padding:12px;">Error: ${e.message}</div>`;
+      listEl.innerHTML = `<div style="color:#ef4444;font-size:0.85rem;padding:12px;">Error: ${escapeHtml(e.message)}</div>`;
     }
   }
 
@@ -3637,7 +3686,18 @@
     let image_url = document.getElementById("inputBannerImageUrl").value.trim();
     const game_url = document.getElementById("bannerGameUrl").value.trim();
     const game_title = document.getElementById("bannerGameTitle").value.trim();
-    const admin_secret = document.getElementById("inputAdminSecret")?.value.trim() || "";
+    let admin_secret = getAdminSecret();
+
+    if (!admin_secret && !state.isAdmin) {
+      const prompted = prompt("🔐 Enter Admin Secret passcode to save sliding banners:");
+      if (prompted && prompted.trim()) {
+        admin_secret = prompted.trim();
+        syncAdminSecret(admin_secret);
+      } else {
+        alert("⚠️ Admin Secret passcode is required to save sliding banners.");
+        return;
+      }
+    }
 
     // Upload base64 image if present
     if (image_url.startsWith("data:image/")) {
@@ -3668,6 +3728,7 @@
       game_url,
       game_title,
       bg_theme,
+      order_idx: parseInt(document.getElementById("bannerOrderIdx")?.value, 10) || 0,
       user_id: state.userId,
       admin_secret,
     };
@@ -3684,7 +3745,11 @@
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        alert(err.detail || "Failed to save banner");
+        let msg = err.detail || "Failed to save banner";
+        if (res.status === 403) {
+          msg = "⚠️ " + msg + ". Please check your Admin Secret passcode.";
+        }
+        alert(msg);
         return;
       }
 
