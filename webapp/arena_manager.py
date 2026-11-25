@@ -560,6 +560,11 @@ class ArenaManager:
                                         {"type": "sticker", "sticker_id": "bot_fire", "fx": "float"},
                                         {"type": "sticker", "sticker_id": "bot_rocket", "fx": "rocket"},
                                         {"type": "sticker", "sticker_id": "bot_boom", "fx": "blast"},
+                                        {"type": "sticker", "sticker_id": "bot_bigbrain", "fx": "float"},
+                                        {"type": "sticker", "sticker_id": "bot_cool", "fx": "float"},
+                                        {"type": "sticker", "sticker_id": "bot_mvp", "fx": "rain"},
+                                        {"type": "sticker", "sticker_id": "bot_sweat", "fx": "rain"},
+                                        {"type": "sticker", "sticker_id": "bot_checkmate", "fx": "blast"},
                                     ])
                                     ai_payload = {
                                         "type": ai_choice["type"],

@@ -7,7 +7,7 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <!-- Lucide Icons Package (Modern Crisp Vector Icons) -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="/static/style.css?v=20261125_3" />
+  <link rel="stylesheet" href="/static/style.css?v=20261125_4" />
   <script>
     if (localStorage.getItem("app_theme") === "light") {
       document.documentElement.classList.add("theme-light");
@@ -712,8 +712,15 @@
           <!-- MiniGame Bot Personal Mascot & Taunt Stickers Tray -->
           <div class="sticker-picker-tray hidden" id="stickerPickerTray">
             <div class="spt-header">
-              <span class="spt-title">🤖 MiniGame Bot Stickers</span>
+              <span class="spt-title">🤖 Sticker Packs</span>
               <span class="spt-trial-badge" id="stickerTrialBanner">✨ 7-Day Free Trial</span>
+            </div>
+            <div class="sticker-pack-tabs" id="stickerPackTabs">
+              <button type="button" class="sp-tab-btn active" data-pack="all">✨ All</button>
+              <button type="button" class="sp-tab-btn" data-pack="originals">🤖 Bot</button>
+              <button type="button" class="sp-tab-btn" data-pack="taunts">😈 Taunts</button>
+              <button type="button" class="sp-tab-btn" data-pack="arena">⚔️ Arena</button>
+              <button type="button" class="sp-tab-btn" data-pack="party">🎉 Hype</button>
             </div>
             <div class="sticker-cards-grid" id="stickerCardsGrid">
               <!-- Dynamically populated from MINIGAME_STICKERS -->
@@ -1569,6 +1576,6 @@
     <div id="reactionToastPill" class="reaction-toast-pill hidden"></div>
   </div>
 
-  <script src="/static/app.js?v=20261125_3"></script>
+  <script src="/static/app.js?v=20261125_4"></script>
 </body>
 </html>

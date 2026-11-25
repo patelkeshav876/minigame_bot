@@ -5545,7 +5545,7 @@ body.theme-light .bubble-char.bubble-near {
   background: #090e1a;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding: 10px 14px;
-  max-height: 205px;
+  max-height: 235px;
   overflow-y: auto;
   flex-shrink: 0;
   transition: all 0.25s ease;
@@ -5600,6 +5600,36 @@ body.theme-light .bubble-char.bubble-near {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
   gap: 10px;
+}
+.sticker-pack-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-bottom: 10px;
+  padding-bottom: 4px;
+}
+.sticker-pack-tabs::-webkit-scrollbar {
+  display: none;
+}
+.sp-tab-btn {
+  background: rgba(30, 41, 59, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+.sp-tab-btn.active {
+  background: linear-gradient(135deg, #0284c7, #3b82f6);
+  color: #ffffff;
+  border-color: #38bdf8;
+  box-shadow: 0 2px 10px rgba(56, 189, 248, 0.3);
 }
 .sticker-card {
   background: rgba(30, 41, 59, 0.7);

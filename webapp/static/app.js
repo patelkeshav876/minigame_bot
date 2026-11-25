@@ -972,6 +972,7 @@
     },
     bot_respect: {
       id: "bot_respect",
+      pack: "originals",
       title: "RESPECT",
       tag: "GG Love",
       emoji: "💖",
@@ -984,6 +985,229 @@
         <circle cx="57" cy="51" r="3" fill="#67e8f9"/>
       </svg>`,
     },
+    bot_shh: {
+      id: "bot_shh",
+      pack: "taunts",
+      title: "SHHH!",
+      tag: "Silence!",
+      emoji: "🤫",
+      fx: "float",
+      premium: true,
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="36" fill="#1e293b" stroke="#f59e0b" stroke-width="3"/>
+        <circle cx="38" cy="40" r="4.5" fill="#fde047"/>
+        <circle cx="62" cy="40" r="4.5" fill="#fde047"/>
+        <rect x="46" y="48" width="8" height="28" rx="4" fill="#38bdf8" stroke="#0f172a" stroke-width="1.5"/>
+        <path d="M38 62 L62 62" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+      </svg>`,
+    },
+    bot_bye: {
+      id: "bot_bye",
+      pack: "taunts",
+      title: "BYE BYE!",
+      tag: "Knockout",
+      emoji: "👋",
+      fx: "rocket",
+      premium: false,
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="38" fill="rgba(239, 68, 68, 0.16)" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="5 3"/>
+        <path d="M35 66 L30 34 C30 28 38 28 38 34 L40 48 L42 24 C42 18 50 18 50 24 L50 48 L54 24 C54 18 62 18 62 24 L60 48 L66 32 C68 27 75 30 73 35 L64 68 C60 78 40 78 35 66 Z" fill="#fde047" stroke="#78350f" stroke-width="2"/>
+      </svg>`,
+    },
+    bot_checkmate: {
+      id: "bot_checkmate",
+      pack: "arena",
+      title: "CHECKMATE",
+      tag: "Royal Win",
+      emoji: "♟️",
+      fx: "blast",
+      premium: true,
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="38" fill="#0f172a" stroke="#fde047" stroke-width="3"/>
+        <path d="M46 16 L54 16 L54 24 L62 24 L62 30 L54 30 L54 36 L46 36 L46 30 L38 30 L38 24 L46 24 Z" fill="#fde047"/>
+        <path d="M30 42 L38 68 L62 68 L70 42 L58 50 L50 38 L42 50 Z" fill="#38bdf8" stroke="#ffffff" stroke-width="2"/>
+        <rect x="30" y="72" width="40" height="10" rx="4" fill="#fde047"/>
+      </svg>`,
+    },
+    bot_bigbrain: {
+      id: "bot_bigbrain",
+      pack: "arena",
+      title: "200 IQ",
+      tag: "Big Brain",
+      emoji: "🧠",
+      fx: "float",
+      premium: true,
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="38" fill="#1e1b4b" stroke="#c084fc" stroke-width="3"/>
+        <path d="M32 54 C24 54 24 38 34 36 C34 26 48 24 50 32 C52 24 66 26 66 36 C76 38 76 54 68 54 C72 64 58 72 50 66 C42 72 28 64 32 54 Z" fill="#f472b6" stroke="#fbcfe8" stroke-width="2"/>
+        <path d="M50 32 L50 66" stroke="#831843" stroke-width="2"/>
+        <polygon points="50,10 53,18 61,18 55,22 57,30 50,25 43,30 45,22 39,18 47,18" fill="#fde047"/>
+      </svg>`,
+    },
+    bot_clock: {
+      id: "bot_clock",
+      pack: "arena",
+      title: "HURRY UP!",
+      tag: "Time Low",
+      emoji: "⏳",
+      fx: "blast",
+      premium: false,
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="36" fill="#0f172a" stroke="#ef4444" stroke-width="3"/>
+        <rect x="32" y="22" width="36" height="6" rx="3" fill="#94a3b8"/>
+        <rect x="32" y="72" width="36" height="6" rx="3" fill="#94a3b8"/>
+        <path d="M36 28 L64 28 L52 50 L64 72 L36 72 L48 50 Z" fill="#38bdf8" stroke="#e0f2fe" stroke-width="2"/>
+        <path d="M40 68 L60 68 L50 54 Z" fill="#fde047"/>
+      </svg>`,
+    },
+    bot_sniper: {
+      id: "bot_sniper",
+      pack: "arena",
+      title: "BULLSEYE",
+      tag: "Precision",
+      emoji: "🎯",
+      fx: "rocket",
+      premium: true,
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="36" fill="#ffffff" stroke="#ef4444" stroke-width="6"/>
+        <circle cx="50" cy="50" r="22" fill="#ffffff" stroke="#ef4444" stroke-width="6"/>
+        <circle cx="50" cy="50" r="9" fill="#ef4444"/>
+        <line x1="50" y1="50" x2="82" y2="18" stroke="#38bdf8" stroke-width="4" stroke-linecap="round"/>
+        <polygon points="82,18 72,18 82,28" fill="#38bdf8"/>
+      </svg>`,
+    },
+    bot_sweat: {
+      id: "bot_sweat",
+      pack: "arena",
+      title: "CLOSE CALL!",
+      tag: "Sweating",
+      emoji: "💦",
+      fx: "rain",
+      premium: false,
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="54" r="32" fill="#0f172a" stroke="#38bdf8" stroke-width="3"/>
+        <circle cx="38" cy="48" r="4" fill="#fff"/>
+        <circle cx="62" cy="48" r="4" fill="#fff"/>
+        <path d="M36 66 Q50 58 64 66" stroke="#38bdf8" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M74 18 Q84 34 74 42 Q64 34 74 18 Z" fill="#38bdf8"/>
+        <path d="M24 26 Q32 38 24 44 Q16 38 24 26 Z" fill="#7dd3fc"/>
+      </svg>`,
+    },
+    bot_jackpot: {
+      id: "bot_jackpot",
+      pack: "party",
+      title: "JACKPOT!",
+      tag: "777 Coins",
+      emoji: "🎰",
+      fx: "rain",
+      premium: true,
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <rect x="14" y="24" width="72" height="52" rx="12" fill="#78350f" stroke="#fde047" stroke-width="3"/>
+        <rect x="20" y="34" width="18" height="32" rx="4" fill="#fff"/>
+        <rect x="41" y="34" width="18" height="32" rx="4" fill="#fff"/>
+        <rect x="62" y="34" width="18" height="32" rx="4" fill="#fff"/>
+        <text x="29" y="57" font-size="20" font-weight="900" fill="#ef4444" text-anchor="middle" font-family="sans-serif">7</text>
+        <text x="50" y="57" font-size="20" font-weight="900" fill="#ef4444" text-anchor="middle" font-family="sans-serif">7</text>
+        <text x="71" y="57" font-size="20" font-weight="900" fill="#ef4444" text-anchor="middle" font-family="sans-serif">7</text>
+      </svg>`,
+    },
+    bot_mvp: {
+      id: "bot_mvp",
+      pack: "party",
+      title: "MVP",
+      tag: "Champion",
+      emoji: "🏆",
+      fx: "rain",
+      premium: false,
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <path d="M26 22 L74 22 L66 56 Q50 68 34 56 Z" fill="#eab308" stroke="#fef08a" stroke-width="2.5"/>
+        <path d="M26 28 Q14 28 16 42 Q18 50 28 48" fill="none" stroke="#eab308" stroke-width="4"/>
+        <path d="M74 28 Q86 28 84 42 Q82 50 72 48" fill="none" stroke="#eab308" stroke-width="4"/>
+        <rect x="44" y="60" width="12" height="14" fill="#ca8a04"/>
+        <rect x="32" y="74" width="36" height="10" rx="4" fill="#eab308"/>
+        <text x="50" y="45" font-size="13" font-weight="900" fill="#78350f" text-anchor="middle" font-family="sans-serif">MVP</text>
+      </svg>`,
+    },
+    bot_party: {
+      id: "bot_party",
+      pack: "party",
+      title: "LET'S GO!",
+      tag: "Hype Fiesta",
+      emoji: "🎉",
+      fx: "rain",
+      premium: false,
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22 78 L42 28 L72 58 Z" fill="#f59e0b" stroke="#fde047" stroke-width="2.5"/>
+        <circle cx="68" cy="24" r="6" fill="#ec4899"/>
+        <circle cx="82" cy="40" r="5" fill="#38bdf8"/>
+        <circle cx="52" cy="18" r="5" fill="#4ade80"/>
+        <path d="M58 34 Q74 20 84 26" stroke="#c084fc" stroke-width="4" fill="none" stroke-linecap="round"/>
+      </svg>`,
+    },
+    bot_thunder: {
+      id: "bot_thunder",
+      pack: "party",
+      title: "SHOCKED!",
+      tag: "Thunder",
+      emoji: "⚡",
+      fx: "blast",
+      premium: true,
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="38" fill="#0f172a" stroke="#38bdf8" stroke-width="3"/>
+        <polygon points="56,14 28,54 48,54 42,86 74,44 52,44" fill="#fde047" stroke="#f59e0b" stroke-width="2"/>
+      </svg>`,
+    },
+    bot_cool: {
+      id: "bot_cool",
+      pack: "party",
+      title: "DEAL WITH IT",
+      tag: "Cyber Shades",
+      emoji: "😎",
+      fx: "float",
+      premium: false,
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="36" fill="#eab308" stroke="#fef08a" stroke-width="3"/>
+        <rect x="22" y="36" width="24" height="14" rx="3" fill="#0f172a"/>
+        <rect x="54" y="36" width="24" height="14" rx="3" fill="#0f172a"/>
+        <line x1="46" y1="42" x2="54" y2="42" stroke="#0f172a" stroke-width="4"/>
+        <line x1="26" y1="40" x2="34" y2="40" stroke="#38bdf8" stroke-width="2"/>
+        <line x1="58" y1="40" x2="66" y2="40" stroke="#38bdf8" stroke-width="2"/>
+        <path d="M36 66 Q52 74 66 62" stroke="#0f172a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      </svg>`,
+    },
+    bot_goat: {
+      id: "bot_goat",
+      pack: "party",
+      title: "G.O.A.T.",
+      tag: "Legend",
+      emoji: "🐐",
+      fx: "rain",
+      premium: true,
+      svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="38" fill="#1e293b" stroke="#fde047" stroke-width="3"/>
+        <path d="M34 32 Q24 14 18 24" stroke="#cbd5e1" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <path d="M66 32 Q76 14 82 24" stroke="#cbd5e1" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <rect x="34" y="34" width="32" height="32" rx="10" fill="#f8fafc"/>
+        <circle cx="43" cy="46" r="3" fill="#0f172a"/>
+        <circle cx="57" cy="46" r="3" fill="#0f172a"/>
+        <path d="M46 66 L50 78 L54 66 Z" fill="#94a3b8"/>
+        <text x="50" y="92" font-size="9" font-weight="900" fill="#fde047" text-anchor="middle" font-family="sans-serif">GOAT</text>
+      </svg>`,
+    },
+  };
+
+  const STICKER_PACK_MAP = {
+    bot_gg: "originals",
+    bot_fire: "originals",
+    bot_rocket: "originals",
+    bot_rip: "originals",
+    bot_boom: "originals",
+    bot_respect: "originals",
+    bot_cry: "taunts",
+    bot_clown: "taunts",
+    bot_sleep: "taunts",
+    bot_toxic: "taunts",
+    bot_mindblown: "arena",
   };
 
   function getStickerSubscriptionStatus() {
@@ -1442,7 +1666,11 @@
     document.getElementById("inGameReactionDock")?.classList.add("hidden");
   }
 
-  function initStickerPicker() {
+  let activeStickerPack = "all";
+
+  function initStickerPicker(packFilter) {
+    if (packFilter) activeStickerPack = packFilter;
+
     const banner = document.getElementById("stickerTrialBanner");
     const sub = getStickerSubscriptionStatus();
     if (banner) {
@@ -1458,12 +1686,27 @@
       }
     }
 
+    const tabsWrap = document.getElementById("stickerPackTabs");
+    if (tabsWrap && !tabsWrap.dataset.wired) {
+      tabsWrap.dataset.wired = "true";
+      tabsWrap.querySelectorAll(".sp-tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          haptic("light");
+          tabsWrap.querySelectorAll(".sp-tab-btn").forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          initStickerPicker(btn.dataset.pack || "all");
+        });
+      });
+    }
+
     const grid = document.getElementById("stickerCardsGrid");
-    if (!grid || grid.dataset.inited === "true") return;
-    grid.dataset.inited = "true";
+    if (!grid) return;
     grid.innerHTML = "";
 
     Object.values(MINIGAME_STICKERS).forEach((s) => {
+      const sPack = s.pack || STICKER_PACK_MAP[s.id] || "originals";
+      if (activeStickerPack !== "all" && sPack !== activeStickerPack) return;
+
       const card = document.createElement("div");
       card.className = "sticker-card";
       const premBadge = s.premium ? `<span class="sticker-premium-tag">${sub.active ? "PRO ✨" : "🔒 PRO"}</span>` : "";
