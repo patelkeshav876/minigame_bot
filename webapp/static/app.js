@@ -2958,11 +2958,110 @@
     });
   }
 
+  // Cute Telegram-Style Animated Character Stickers for Gaming Sections
+  const CUTE_ANIMATED_CHARACTERS = {
+    arcade: `<svg class="cute-char-sticker" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <line x1="32" y1="6" x2="32" y2="15" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+      <circle class="ccs-float" cx="32" cy="6" r="4" fill="#fde047"/>
+      <rect x="14" y="15" width="36" height="32" rx="14" fill="#6366f1" stroke="#a5b4fc" stroke-width="2.5"/>
+      <ellipse class="ccs-wiggle" cx="11" cy="31" rx="4" ry="7" fill="#818cf8"/>
+      <ellipse class="ccs-wiggle" cx="53" cy="31" rx="4" ry="7" fill="#818cf8"/>
+      <rect x="20" y="23" width="24" height="13" rx="6.5" fill="#0f172a"/>
+      <circle class="ccs-blink" cx="27" cy="29.5" r="3" fill="#38bdf8"/>
+      <circle class="ccs-blink" cx="37" cy="29.5" r="3" fill="#38bdf8"/>
+      <path d="M27 41 Q32 45 37 41" stroke="#ffffff" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <rect x="21" y="47" width="7" height="7" rx="3.5" fill="#4f46e5"/>
+      <rect x="36" y="47" width="7" height="7" rx="3.5" fill="#4f46e5"/>
+    </svg>`,
+    puzzle: `<svg class="cute-char-sticker" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <path d="M16 26 L12 10 L26 18 Z" fill="#10b981"/>
+      <path d="M48 26 L52 10 L38 18 Z" fill="#10b981"/>
+      <rect x="13" y="18" width="38" height="34" rx="17" fill="#34d399" stroke="#a7f3d0" stroke-width="2.5"/>
+      <circle cx="21" cy="37" r="3.5" fill="#fb7185" opacity="0.6"/>
+      <circle cx="43" cy="37" r="3.5" fill="#fb7185" opacity="0.6"/>
+      <circle class="ccs-blink" cx="24" cy="32" r="3.5" fill="#0f172a"/>
+      <circle cx="25" cy="30.8" r="1.2" fill="#ffffff"/>
+      <circle class="ccs-blink" cx="40" cy="32" r="3.5" fill="#0f172a"/>
+      <circle cx="41" cy="30.8" r="1.2" fill="#ffffff"/>
+      <path d="M28 38 Q32 42 36 38" stroke="#0f172a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <circle class="ccs-float" cx="52" cy="14" r="3" fill="#fde047"/>
+    </svg>`,
+    sport: `<svg class="cute-char-sticker" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <ellipse class="ccs-wiggle" cx="12" cy="34" rx="5" ry="8" fill="#f59e0b"/>
+      <ellipse class="ccs-wiggle" cx="52" cy="34" rx="5" ry="8" fill="#f59e0b"/>
+      <circle cx="32" cy="34" r="19" fill="#fde047" stroke="#f59e0b" stroke-width="2.5"/>
+      <path d="M27 15 Q32 7 37 15" fill="#ef4444"/>
+      <circle class="ccs-blink" cx="25" cy="31" r="3.2" fill="#0f172a"/>
+      <circle cx="26" cy="30" r="1" fill="#ffffff"/>
+      <circle class="ccs-blink" cx="39" cy="31" r="3.2" fill="#0f172a"/>
+      <circle cx="40" cy="30" r="1" fill="#ffffff"/>
+      <polygon points="28,36 36,36 32,42" fill="#f97316"/>
+      <circle cx="20" cy="37" r="3" fill="#fb7185" opacity="0.55"/>
+      <circle cx="44" cy="37" r="3" fill="#fb7185" opacity="0.55"/>
+    </svg>`,
+    cards: `<svg class="cute-char-sticker" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <path class="ccs-float" d="M16 48 L16 28 C16 14 48 14 48 28 L48 48 L41 43 L36 49 L32 43 L28 49 L23 43 Z" fill="#f8fafc" stroke="#c084fc" stroke-width="2.5"/>
+      <polygon points="22,16 32,6 42,16" fill="#a855f7" stroke="#e9d5ff" stroke-width="1.5"/>
+      <circle class="ccs-blink" cx="25" cy="30" r="3" fill="#0f172a"/>
+      <circle class="ccs-blink" cx="39" cy="30" r="3" fill="#0f172a"/>
+      <circle cx="21" cy="35" r="2.8" fill="#f472b6" opacity="0.65"/>
+      <circle cx="43" cy="35" r="2.8" fill="#f472b6" opacity="0.65"/>
+      <path d="M29 36 Q32 40 35 36" stroke="#0f172a" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </svg>`,
+    rocket: `<svg class="cute-char-sticker" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="17" cy="20" r="6" fill="#0f172a"/>
+      <circle cx="47" cy="20" r="6" fill="#0f172a"/>
+      <circle cx="32" cy="35" r="18" fill="#ffffff" stroke="#38bdf8" stroke-width="2.5"/>
+      <ellipse cx="24" cy="33" rx="5" ry="6" fill="#0f172a" transform="rotate(-15 24 33)"/>
+      <ellipse cx="40" cy="33" rx="5" ry="6" fill="#0f172a" transform="rotate(15 40 33)"/>
+      <circle class="ccs-blink" cx="25" cy="32" r="2" fill="#ffffff"/>
+      <circle class="ccs-blink" cx="39" cy="32" r="2" fill="#ffffff"/>
+      <ellipse cx="32" cy="39" rx="3" ry="2" fill="#0f172a"/>
+      <circle class="ccs-float" cx="51" cy="46" r="4" fill="#fde047"/>
+    </svg>`,
+    knight: `<svg class="cute-char-sticker" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <path class="ccs-wiggle" d="M28 12 Q32 4 38 12 L34 18 Z" fill="#ef4444"/>
+      <rect x="16" y="16" width="32" height="32" rx="14" fill="#94a3b8" stroke="#e2e8f0" stroke-width="2.5"/>
+      <rect x="21" y="25" width="22" height="12" rx="5" fill="#0f172a"/>
+      <circle class="ccs-blink" cx="27" cy="31" r="2.6" fill="#fde047"/>
+      <circle class="ccs-blink" cx="37" cy="31" r="2.6" fill="#fde047"/>
+      <rect x="24" y="48" width="16" height="8" rx="4" fill="#38bdf8"/>
+    </svg>`,
+    gamer: `<svg class="cute-char-sticker" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14 32 C14 14 50 14 50 32" fill="none" stroke="#38bdf8" stroke-width="4" stroke-linecap="round"/>
+      <rect x="10" y="27" width="7" height="14" rx="3.5" fill="#0284c7"/>
+      <rect x="47" y="27" width="7" height="14" rx="3.5" fill="#0284c7"/>
+      <circle cx="32" cy="36" r="16" fill="#f97316" stroke="#fed7aa" stroke-width="2"/>
+      <circle class="ccs-blink" cx="26" cy="34" r="2.8" fill="#0f172a"/>
+      <circle class="ccs-blink" cx="38" cy="34" r="2.8" fill="#0f172a"/>
+      <ellipse cx="32" cy="39" rx="3.5" ry="2.2" fill="#0f172a"/>
+      <path d="M28 43 Q32 46 36 43" stroke="#ffffff" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </svg>`,
+  };
+
+  function getCuteCharacterSvg(key) {
+    return CUTE_ANIMATED_CHARACTERS[key] || CUTE_ANIMATED_CHARACTERS.gamer;
+  }
+
+  function initCuteCategoryStickers() {
+    document.querySelectorAll(".cute-char-slot").forEach((slot) => {
+      const k = slot.dataset.char || "gamer";
+      slot.innerHTML = getCuteCharacterSvg(k);
+    });
+  }
+  initCuteCategoryStickers();
+
   function renderFilteredGames() {
     const el = document.getElementById("customGamesGrid");
     if (!el) return;
     const cat = state.gameFilterCat || "all";
     const q = (state.gameSearchQuery || "").toLowerCase().trim();
+
+    // Toggle instant search focus mode on Home view so results appear right under search box
+    const homeView = document.getElementById("view-home");
+    if (homeView) {
+      homeView.classList.toggle("is-searching", q.length > 0);
+    }
 
     const uniqueGames = getUniqueGamesList();
     const countEl = document.getElementById("totalGamesCount");
@@ -2971,8 +3070,9 @@
     // If searching or filtering by a specific category, display standard filtered grid
     if (q || cat !== "all") {
       const filtered = uniqueGames.filter((g) => {
-        const matchCat = cat === "all" || classifyGameCategory(g) === cat;
-        const matchQ = !q || g.title.toLowerCase().includes(q) || (g.description && g.description.toLowerCase().includes(q));
+        const gCat = classifyGameCategory(g);
+        const matchCat = q ? true : (cat === "all" || gCat === cat);
+        const matchQ = !q || g.title.toLowerCase().includes(q) || (g.description && g.description.toLowerCase().includes(q)) || gCat.toLowerCase().includes(q);
         return matchCat && matchQ;
       });
 
@@ -2980,7 +3080,7 @@
         el.className = "custom-games-grid";
         el.innerHTML = `
           <div class="empty-games-hint">
-            No games found matching "${q}". Try another search keyword!
+            No games found matching "${escapeHtml(q)}". Try another search keyword!
           </div>`;
         return;
       }
@@ -2991,37 +3091,37 @@
       // Categorized sections in Arcade view ("different sections of games instead of one list")
       const sections = [
         {
-          icon: "⚡",
+          char: "rocket",
           theme: "featured",
           title: "Featured & High-Stakes",
           matcher: (g) => /aviator|flipster|space race|sheep fight/i.test(g.title)
         },
         {
-          icon: "🚀",
+          char: "arcade",
           theme: "action",
           title: "Action & Endless Adventures",
           matcher: (g) => /chintu|mario|dino|space invaders|snake/i.test(g.title)
         },
         {
-          icon: "⚔️",
+          char: "knight",
           theme: "pvp",
           title: "PvP & Reflex Battles",
           matcher: (g) => /knife|fruit|whack|pong|typer/i.test(g.title)
         },
         {
-          icon: "🧱",
+          char: "sport",
           theme: "tower",
           title: "Tower & Block Physics",
           matcher: (g) => /tower|helix|tetris|breakout|pinball/i.test(g.title)
         },
         {
-          icon: "🧩",
+          char: "puzzle",
           theme: "puzzle",
           title: "Puzzle & Brain Challenge",
           matcher: (g) => /roll the ball|2048|wordle|sudoku|puzzle|flood|memory|simon/i.test(g.title)
         },
         {
-          icon: "🃏",
+          char: "cards",
           theme: "cards",
           title: "Cards & Tabletop Classics",
           matcher: (g) => /uno|connect 4|billiards|checkers|tic-tac-toe|solitaire/i.test(g.title)
@@ -3045,7 +3145,7 @@
               <div class="arcade-section-header">
                 <div class="ash-left">
                   <div class="ash-icon-badge ash-theme-${sec.theme}">
-                    <span class="ash-icon-anim">${sec.icon}</span>
+                    <span class="cute-char-slot">${getCuteCharacterSvg(sec.char)}</span>
                   </div>
                   <span class="ash-title">${sec.title}</span>
                 </div>
@@ -3066,7 +3166,7 @@
             <div class="arcade-section-header">
               <div class="ash-left">
                 <div class="ash-icon-badge ash-theme-arcade">
-                  <span class="ash-icon-anim">🎮</span>
+                  <span class="cute-char-slot">${getCuteCharacterSvg("gamer")}</span>
                 </div>
                 <span class="ash-title">More Arcade Fun</span>
               </div>

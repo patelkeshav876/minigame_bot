@@ -6612,3 +6612,114 @@ body.light-theme .badge-tile {
 body.light-theme .bt-title {
   color: #0f172a;
 }
+
+/* =========================================================
+   INSTANT SEARCH FOCUS MODE
+   ========================================================= */
+#view-home.is-searching .hero-carousel-slider,
+#view-home.is-searching .hub-section:not(#sectionAllGames),
+#view-home.is-searching .tournament-card {
+  display: none !important;
+}
+#view-home.is-searching #sectionAllGames {
+  margin-top: 8px;
+}
+
+/* =========================================================
+   LIGHT MODE: CLEAN LIGHT CARDS (TRENDING, CATEGORIES, SEARCH, ARENA)
+   ========================================================= */
+body.theme-light .trending-game-card,
+body.theme-light .chunky-cat-card,
+body.theme-light .category-card,
+body.theme-light .arena-mode-card,
+body.theme-light .arena-lobby-card {
+  background: #ffffff !important;
+  border: 1.5px solid rgba(15, 23, 42, 0.09) !important;
+  box-shadow: 0 10px 24px -6px rgba(15, 23, 42, 0.08) !important;
+}
+body.theme-light .tgc-thumb,
+body.theme-light .cgc-thumb-wrap,
+body.theme-light .arena-card-thumb-wrap {
+  background: #f1f5f9 !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+body.theme-light .chunky-title,
+body.theme-light .hub-section-title,
+body.theme-light .ash-title,
+body.theme-light .cat-title {
+  color: #0f172a !important;
+}
+body.theme-light .chunky-meta,
+body.theme-light .cat-sub,
+body.theme-light .ash-badge {
+  color: #475569 !important;
+}
+body.theme-light .game-search-box {
+  background: #ffffff !important;
+  border: 1.5px solid rgba(15, 23, 42, 0.14) !important;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+body.theme-light #inputGameSearch {
+  color: #0f172a !important;
+}
+body.theme-light #inputGameSearch::placeholder {
+  color: #64748b !important;
+}
+body.theme-light .btn-clear-search {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* =========================================================
+   CUTE ANIMATED CHARACTER STICKERS (TELEGRAM STYLE)
+   ========================================================= */
+.cute-char-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+}
+.ash-icon-badge .cute-char-slot {
+  width: 32px;
+  height: 32px;
+}
+.cute-char-sticker {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.25));
+  animation: cuteCharBounce 2.2s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+.cute-char-sticker .ccs-blink {
+  animation: cuteCharBlink 3.6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.cute-char-sticker .ccs-wiggle {
+  animation: cuteCharWiggle 1.6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.cute-char-sticker .ccs-float {
+  animation: cuteCharFloat 2.4s ease-in-out infinite;
+}
+
+@keyframes cuteCharBounce {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  45% { transform: translateY(-4px) scale(0.97, 1.04); }
+  75% { transform: translateY(1px) scale(1.03, 0.96); }
+}
+@keyframes cuteCharBlink {
+  0%, 44%, 48%, 100% { transform: scaleY(1); }
+  46% { transform: scaleY(0.12); }
+}
+@keyframes cuteCharWiggle {
+  0%, 100% { transform: rotate(-6deg); }
+  50% { transform: rotate(8deg); }
+}
+@keyframes cuteCharFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
