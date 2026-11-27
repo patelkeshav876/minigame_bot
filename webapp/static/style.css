@@ -7144,3 +7144,48 @@ body.theme-light .force-sub-row {
   background: #ffffff !important;
   border-color: rgba(15, 23, 42, 0.12) !important;
 }
+
+/* Shop 1-Star Admin Trial Banner */
+.shop-admin-trial-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(250, 204, 21, 0.16), rgba(249, 115, 22, 0.16));
+  border: 1.5px solid rgba(250, 204, 21, 0.45);
+  border-radius: 16px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+.shop-admin-trial-banner.hidden {
+  display: none;
+}
+.satb-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+.satb-text {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: #fef08a;
+}
+.satb-text strong {
+  color: #ffffff;
+}
+.satb-sig {
+  font-weight: 800;
+  color: #38bdf8;
+  white-space: nowrap;
+}
+body.theme-light .shop-admin-trial-banner {
+  background: linear-gradient(135deg, #fef9c3, #ffedd5);
+  border-color: rgba(245, 158, 11, 0.45);
+}
+body.theme-light .satb-text {
+  color: #78350f;
+}
+body.theme-light .satb-text strong {
+  color: #0f172a;
+}
+body.theme-light .satb-sig {
+  color: #0284c7;
+}

@@ -10,7 +10,7 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <!-- Lucide Icons Package (Modern Crisp Vector Icons) -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="/static/style.css?v=20261127_5" />
+  <link rel="stylesheet" href="/static/style.css?v=20261127_6" />
   <script>
     if (localStorage.getItem("app_theme") === "light") {
       document.documentElement.classList.add("theme-light");
@@ -1688,6 +1688,12 @@
 
         <!-- TAB 1: TELEGRAM STARS -->
         <div id="tabContentStars" class="store-tab-content active">
+          <div class="shop-admin-trial-banner" id="shopTrialNoticeBanner">
+            <span class="satb-icon">🎁</span>
+            <div class="satb-text">
+              <strong>Trial Period Offer:</strong> Because of our trial period, all coin packs are set to just <strong>1 ⭐ Star</strong> — so enjoy! <span class="satb-sig">— by Admin</span>
+            </div>
+          </div>
           <div class="stars-shop-subtitle">
             Refill your gaming chips instantly using official <strong>Telegram Stars (XTR)</strong>.
           </div>
@@ -1698,8 +1704,8 @@
               <div class="star-pack-icon">🪙</div>
               <div class="star-pack-coins">5,000 Coins</div>
               <div class="star-pack-desc">Standard refill for casual rounds</div>
-              <button class="btn-buy-stars" data-pack="pack_50" data-stars="50" data-coins="5000">
-                <span class="star-sym">⭐</span> 50 XTR
+              <button class="btn-buy-stars" data-pack="pack_50" data-stars="1" data-coins="5000">
+                <span class="star-sym">⭐</span> 1 Star
               </button>
             </div>
 
@@ -1709,8 +1715,8 @@
               <div class="star-pack-icon">🚀</div>
               <div class="star-pack-coins">18,000 Coins</div>
               <div class="star-pack-bonus">+20% Extra Bonus</div>
-              <button class="btn-buy-stars popular-btn" data-pack="pack_150" data-stars="150" data-coins="18000">
-                <span class="star-sym">⭐</span> 150 XTR
+              <button class="btn-buy-stars popular-btn" data-pack="pack_150" data-stars="1" data-coins="18000">
+                <span class="star-sym">⭐</span> 1 Star
               </button>
             </div>
 
@@ -1720,8 +1726,8 @@
               <div class="star-pack-icon">💰</div>
               <div class="star-pack-coins">75,000 Coins</div>
               <div class="star-pack-bonus">+50% High Stakes Stash</div>
-              <button class="btn-buy-stars" data-pack="pack_500" data-stars="500" data-coins="75000">
-                <span class="star-sym">⭐</span> 500 XTR
+              <button class="btn-buy-stars" data-pack="pack_500" data-stars="1" data-coins="75000">
+                <span class="star-sym">⭐</span> 1 Star
               </button>
             </div>
 
@@ -1731,8 +1737,8 @@
               <div class="star-pack-icon">🏆</div>
               <div class="star-pack-coins">200,000 Coins</div>
               <div class="star-pack-bonus">+100% Double Value</div>
-              <button class="btn-buy-stars vip-btn" data-pack="pack_1000" data-stars="1000" data-coins="200000">
-                <span class="star-sym">⭐</span> 1,000 XTR
+              <button class="btn-buy-stars vip-btn" data-pack="pack_1000" data-stars="1" data-coins="200000">
+                <span class="star-sym">⭐</span> 1 Star
               </button>
             </div>
           </div>
@@ -1851,6 +1857,6 @@
     <div id="reactionToastPill" class="reaction-toast-pill hidden"></div>
   </div>
 
-  <script src="/static/app.js?v=20261127_5"></script>
+  <script src="/static/app.js?v=20261127_6"></script>
 </body>
 </html>

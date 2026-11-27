@@ -4141,7 +4141,9 @@
         state.featurePricing = data.feature_pricing;
       }
       if (Array.isArray(data.star_packs)) {
+        let hasOneStar = false;
         data.star_packs.forEach((sp) => {
+          if (Number(sp.stars) === 1) hasOneStar = true;
           const btn = document.querySelector(`.btn-buy-stars[data-pack="${sp.id}"]`);
           if (btn) {
             btn.dataset.stars = sp.stars;
@@ -4149,6 +4151,7 @@
             btn.innerHTML = `<span class="star-sym">⭐</span> ${sp.stars} Star${sp.stars > 1 ? "s" : ""}`;
           }
         });
+        document.getElementById("shopTrialNoticeBanner")?.classList.toggle("hidden", !hasOneStar);
       }
       if (Array.isArray(data.inr_packs)) {
         data.inr_packs.forEach((ip) => {
