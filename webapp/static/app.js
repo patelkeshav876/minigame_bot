@@ -1227,26 +1227,62 @@
     return { active: false, isPremium: false, daysLeft: 0, label: "🔒 Trial Ended" };
   }
 
-  function unlockPremiumStickers() {
+  async function unlockPremiumStickers() {
+    const fp = state.featurePricing || { sticker_premium_stars: 1, sticker_premium_coins: 500 };
+    const starCost = fp.sticker_premium_stars || 1;
+    const coinCost = fp.sticker_premium_coins ?? 500;
+
+    const useStars = confirm(
+      `💎 Unlock All Premium Stickers & VIP Features permanently for just ${starCost} ⭐ Star?\n\n(Click OK to pay ${starCost} ⭐ Star, or Cancel to use ${coinCost} 🪙 Coins)`
+    );
+
+    if (useStars) {
+      try {
+        const res = await fetch("/api/stars/create-invoice", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            pack_id: "pack_sticker_premium",
+            init_data: tg?.initData || "",
+            guest_id: state.userId || "guest",
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data.invoice_link && tg?.openInvoice && !data.mock) {
+          tg.openInvoice(data.invoice_link, (status) => {
+            if (status === "paid") {
+              activatePremiumStickersLocal();
+            }
+          });
+          return true;
+        }
+        // Mock/dev or web browser instant 1-star promo unlock
+        if (res.ok) {
+          activatePremiumStickersLocal();
+          return true;
+        }
+      } catch (_) {}
+    }
+
     const curCoins = parseInt(localStorage.getItem("flipster_coins") || "1250", 10);
-    if (curCoins < 500) {
-      alert("⚠️ Need 500 Coins to unlock Permanent Premium Stickers! Claim Daily Bonus or visit Shop.");
+    if (curCoins < coinCost) {
+      alert(`⚠️ Need ${coinCost} Coins (or ${starCost} ⭐ Star) to unlock Premium Stickers!`);
       return false;
     }
-    if (!confirm("💎 Unlock all Premium Stickers permanently for 500 Coins?")) return false;
-    const nextCoins = curCoins - 500;
+    if (!confirm(`💎 Unlock all Premium Stickers permanently for ${coinCost} Coins?`)) return false;
+    const nextCoins = curCoins - coinCost;
     localStorage.setItem("flipster_coins", String(nextCoins));
-    localStorage.setItem("minigame_sticker_premium", "true");
     const coinValEl = document.getElementById("coinVal");
     if (coinValEl) coinValEl.textContent = nextCoins.toLocaleString();
-    if (state.profile) renderProfileSummary(state.profile);
-    const grid = document.getElementById("stickerCardsGrid");
-    if (grid) {
-      grid.dataset.inited = "";
-      initStickerPicker();
-    }
-    triggerMagicalScreenReaction({ type: "reaction", emoji: "💎", fx: "rain", senderName: "Premium Unlocked", isSelf: true });
+    activatePremiumStickersLocal();
     return true;
+  }
+
+  function activatePremiumStickersLocal() {
+    localStorage.setItem("minigame_sticker_premium", "true");
+    if (state.profile) renderProfileSummary(state.profile);
+    initStickerPicker();
+    triggerMagicalScreenReaction({ type: "reaction", emoji: "💎", fx: "rain", senderName: "Premium Unlocked", isSelf: true });
   }
 
   function triggerMagicalScreenReaction({ type, emoji, sticker_id, fx, senderName, isSelf }) {
@@ -3741,6 +3777,7 @@
 
   // Initial load of sliding window banners
   loadHeroCarouselBanners();
+  loadShopConfig();
 
   document.getElementById("btnPlayQuest")?.addEventListener("click", () => {
     haptic("medium");
@@ -3998,6 +4035,29 @@
       const res = await fetch("/api/shop/config");
       const data = await res.json();
       shopConfig = data;
+      if (data.feature_pricing) {
+        state.featurePricing = data.feature_pricing;
+      }
+      if (Array.isArray(data.star_packs)) {
+        data.star_packs.forEach((sp) => {
+          const btn = document.querySelector(`.btn-buy-stars[data-pack="${sp.id}"]`);
+          if (btn) {
+            btn.dataset.stars = sp.stars;
+            btn.dataset.coins = sp.coins;
+            btn.innerHTML = `<span class="star-sym">⭐</span> ${sp.stars} Star${sp.stars > 1 ? "s" : ""}`;
+          }
+        });
+      }
+      if (Array.isArray(data.inr_packs)) {
+        data.inr_packs.forEach((ip) => {
+          const pill = document.querySelector(`.upi-pack-pill[data-pack="${ip.id}"]`);
+          if (pill) {
+            pill.dataset.inr = ip.price_inr;
+            pill.dataset.coins = ip.coins;
+            pill.textContent = `₹${ip.price_inr} • ${(ip.coins / 1000).toFixed(0)}k`;
+          }
+        });
+      }
       const upiDisplay = document.getElementById("displayUpiId");
       if (upiDisplay) upiDisplay.textContent = shopConfig.upi_id;
       if (data.channel_url && data.channel_url !== "https://t.me/ghost_help_and_support_bot") {
@@ -4235,17 +4295,20 @@
   }
 
   function getAdminSecret() {
+    const fromPricing = document.getElementById("pricingAdminSecret")?.value.trim();
     const fromBanner = document.getElementById("bannerAdminSecret")?.value.trim();
     const fromGame = document.getElementById("inputAdminSecret")?.value.trim();
     const fromStorage = localStorage.getItem("minigame_admin_secret")?.trim();
-    return fromBanner || fromGame || fromStorage || "";
+    return fromPricing || fromBanner || fromGame || fromStorage || "";
   }
 
   function syncAdminSecret(val) {
     if (!val) return;
     localStorage.setItem("minigame_admin_secret", val);
+    const p = document.getElementById("pricingAdminSecret");
     const b = document.getElementById("bannerAdminSecret");
     const g = document.getElementById("inputAdminSecret");
+    if (p && p.value !== val) p.value = val;
     if (b && b.value !== val) b.value = val;
     if (g && g.value !== val) g.value = val;
   }
@@ -4253,13 +4316,17 @@
   function initAdminSecretInputs() {
     const saved = localStorage.getItem("minigame_admin_secret") || "";
     if (saved) {
+      const p = document.getElementById("pricingAdminSecret");
       const b = document.getElementById("bannerAdminSecret");
       const g = document.getElementById("inputAdminSecret");
+      if (p && !p.value) p.value = saved;
       if (b && !b.value) b.value = saved;
       if (g && !g.value) g.value = saved;
     }
+    const p = document.getElementById("pricingAdminSecret");
     const b = document.getElementById("bannerAdminSecret");
     const g = document.getElementById("inputAdminSecret");
+    p?.addEventListener("input", () => syncAdminSecret(p.value.trim()));
     b?.addEventListener("input", () => syncAdminSecret(b.value.trim()));
     g?.addEventListener("input", () => syncAdminSecret(g.value.trim()));
   }
@@ -4384,26 +4451,163 @@
     showView(state.prevView || "home");
   });
 
-  // Studio tabs switching (Add/Manage Games vs Sliding Window Banners)
+  // Studio tabs switching (Add/Manage Games vs Sliding Window Banners vs Pricing)
   const tabBtnAddGame = document.getElementById("tabBtnAddGame");
   const tabBtnPromoBanners = document.getElementById("tabBtnPromoBanners");
+  const tabBtnPricing = document.getElementById("tabBtnPricing");
   const tabContentAddGame = document.getElementById("tabContentAddGame");
   const tabContentPromoBanners = document.getElementById("tabContentPromoBanners");
+  const tabContentPricing = document.getElementById("tabContentPricing");
 
-  tabBtnAddGame?.addEventListener("click", () => {
-    tabBtnAddGame.classList.add("active");
-    tabBtnPromoBanners?.classList.remove("active");
-    tabContentAddGame?.classList.remove("hidden");
-    tabContentPromoBanners?.classList.add("hidden");
+  function switchStudioTab(activeTab) {
+    [tabBtnAddGame, tabBtnPromoBanners, tabBtnPricing].forEach((b) => b?.classList.remove("active"));
+    [tabContentAddGame, tabContentPromoBanners, tabContentPricing].forEach((c) => c?.classList.add("hidden"));
+    if (activeTab === "games") {
+      tabBtnAddGame?.classList.add("active");
+      tabContentAddGame?.classList.remove("hidden");
+    } else if (activeTab === "banners") {
+      tabBtnPromoBanners?.classList.add("active");
+      tabContentPromoBanners?.classList.remove("hidden");
+      loadAdminBannersList();
+      populateBannerGameSelect();
+    } else if (activeTab === "pricing") {
+      tabBtnPricing?.classList.add("active");
+      tabContentPricing?.classList.remove("hidden");
+      loadAdminPricing();
+    }
+  }
+
+  tabBtnAddGame?.addEventListener("click", () => switchStudioTab("games"));
+  tabBtnPromoBanners?.addEventListener("click", () => switchStudioTab("banners"));
+  tabBtnPricing?.addEventListener("click", () => switchStudioTab("pricing"));
+
+  let currentAdminPricing = { star_packs: [], inr_packs: [] };
+
+  async function loadAdminPricing() {
+    initAdminSecretInputs();
+    const starWrap = document.getElementById("adminStarPacksEditor");
+    const inrWrap = document.getElementById("adminInrPacksEditor");
+    if (!starWrap || !inrWrap) return;
+
+    const secret = getAdminSecret();
+    try {
+      const res = await fetch(`/api/admin/pricing?user_id=${encodeURIComponent(state.userId)}&admin_secret=${encodeURIComponent(secret)}`);
+      if (!res.ok) {
+        starWrap.innerHTML = '<div style="color:#ef4444;font-size:0.8rem;">⚠️ Enter Admin Secret below to load/edit pricing.</div>';
+        inrWrap.innerHTML = "";
+        return;
+      }
+      const data = await res.json();
+      currentAdminPricing = data;
+      const fp = data.feature_pricing || {};
+      const elS = document.getElementById("priceStickerStars");
+      const elC = document.getElementById("priceStickerCoins");
+      const elV = document.getElementById("priceVipStars");
+      const elU = document.getElementById("priceUpiId");
+      if (elS) elS.value = fp.sticker_premium_stars ?? 1;
+      if (elC) elC.value = fp.sticker_premium_coins ?? 500;
+      if (elV) elV.value = fp.vip_pass_stars ?? 1;
+      if (elU) elU.value = data.upi_id || "patelkeshav@upi";
+
+      starWrap.innerHTML = (data.star_packs || []).map((p, idx) => `
+        <div class="admin-pack-edit-row" data-sp-idx="${idx}">
+          <div class="aper-head"><span>${p.icon || "🪙"} ${escapeHtml(p.id)}</span><span>${escapeHtml(p.badge || "")}</span></div>
+          <div class="aper-grid">
+            <div class="aper-field"><label>Title</label><input type="text" class="sp-title" value="${escapeHtml(p.title)}" /></div>
+            <div class="aper-field"><label>Stars ⭐</label><input type="number" min="1" class="sp-stars" value="${p.stars}" /></div>
+            <div class="aper-field"><label>Coins 🪙</label><input type="number" min="1" class="sp-coins" value="${p.coins}" /></div>
+          </div>
+        </div>
+      `).join("");
+
+      inrWrap.innerHTML = (data.inr_packs || []).map((p, idx) => `
+        <div class="admin-pack-edit-row" data-ip-idx="${idx}">
+          <div class="aper-head"><span>${p.icon || "🪙"} ${escapeHtml(p.id)}</span><span>${escapeHtml(p.badge || "")}</span></div>
+          <div class="aper-grid">
+            <div class="aper-field"><label>Title</label><input type="text" class="ip-title" value="${escapeHtml(p.title)}" /></div>
+            <div class="aper-field"><label>Price ₹</label><input type="number" min="1" class="ip-inr" value="${p.price_inr}" /></div>
+            <div class="aper-field"><label>Coins 🪙</label><input type="number" min="1" class="ip-coins" value="${p.coins}" /></div>
+          </div>
+        </div>
+      `).join("");
+    } catch (e) {
+      starWrap.innerHTML = `<div style="color:#ef4444;font-size:0.8rem;">Error: ${escapeHtml(e.message)}</div>`;
+    }
+  }
+
+  document.getElementById("btnSetAllOneStar")?.addEventListener("click", () => {
+    const elS = document.getElementById("priceStickerStars");
+    const elV = document.getElementById("priceVipStars");
+    if (elS) elS.value = "1";
+    if (elV) elV.value = "1";
+    document.querySelectorAll("#adminStarPacksEditor .sp-stars").forEach((inp) => {
+      inp.value = "1";
+    });
+    haptic("medium");
   });
 
-  tabBtnPromoBanners?.addEventListener("click", () => {
-    tabBtnPromoBanners.classList.add("active");
-    tabBtnAddGame?.classList.remove("active");
-    tabContentPromoBanners?.classList.remove("hidden");
-    tabContentAddGame?.classList.add("hidden");
-    loadAdminBannersList();
-    populateBannerGameSelect();
+  document.getElementById("formAdminPricing")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    let admin_secret = getAdminSecret();
+    if (!admin_secret && !state.isAdmin) {
+      const prompted = prompt("🔐 Enter Admin Secret passcode to save pricing:");
+      if (prompted && prompted.trim()) {
+        admin_secret = prompted.trim();
+        syncAdminSecret(admin_secret);
+      } else {
+        alert("⚠️ Admin Secret passcode is required.");
+        return;
+      }
+    }
+
+    const updatedStars = (currentAdminPricing.star_packs || []).map((p, idx) => {
+      const row = document.querySelector(`.admin-pack-edit-row[data-sp-idx="${idx}"]`);
+      return {
+        ...p,
+        title: row?.querySelector(".sp-title")?.value.trim() || p.title,
+        stars: parseInt(row?.querySelector(".sp-stars")?.value || p.stars, 10) || 1,
+        coins: parseInt(row?.querySelector(".sp-coins")?.value || p.coins, 10) || 1000,
+      };
+    });
+
+    const updatedInr = (currentAdminPricing.inr_packs || []).map((p, idx) => {
+      const row = document.querySelector(`.admin-pack-edit-row[data-ip-idx="${idx}"]`);
+      return {
+        ...p,
+        title: row?.querySelector(".ip-title")?.value.trim() || p.title,
+        price_inr: parseInt(row?.querySelector(".ip-inr")?.value || p.price_inr, 10) || 49,
+        coins: parseInt(row?.querySelector(".ip-coins")?.value || p.coins, 10) || 5000,
+      };
+    });
+
+    const payload = {
+      star_packs: updatedStars,
+      inr_packs: updatedInr,
+      sticker_premium_stars: parseInt(document.getElementById("priceStickerStars")?.value || "1", 10) || 1,
+      sticker_premium_coins: parseInt(document.getElementById("priceStickerCoins")?.value || "500", 10) || 500,
+      vip_pass_stars: parseInt(document.getElementById("priceVipStars")?.value || "1", 10) || 1,
+      upi_id: document.getElementById("priceUpiId")?.value.trim() || "",
+      user_id: state.userId,
+      admin_secret,
+    };
+
+    try {
+      const res = await fetch("/api/admin/pricing", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.detail || "Failed to save pricing");
+        return;
+      }
+      await loadShopConfig();
+      await loadAdminPricing();
+      alert("✅ Pricing & 1-Star Promo updated successfully!");
+    } catch (err) {
+      alert("Error saving pricing: " + err.message);
+    }
   });
 
   const inputGameLogoFile = document.getElementById("inputGameLogoFile");
@@ -4622,7 +4826,8 @@
       resetAdminGameForm();
       loadAdminGamesList();
       loadCustomGames();
-      loadHeroCarouselBanners(); // Live update home carousel with updated game logo
+      loadHeroCarouselBanners();
+  loadShopConfig(); // Live update home carousel with updated game logo
       populateBannerGameSelect();
       alert(isEdit ? "✅ Game logo & details successfully updated!" : "✅ Game successfully added to Mini App!");
     } else {
@@ -5158,6 +5363,7 @@
       if (res.ok) {
         loadAdminBannersList();
         loadHeroCarouselBanners();
+  loadShopConfig();
         if (typeof showToast === "function") showToast("Banner deleted from sliding window");
       } else {
         const err = await res.json().catch(() => ({}));
@@ -5302,6 +5508,7 @@
       resetBannerForm();
       loadAdminBannersList();
       loadHeroCarouselBanners();
+  loadShopConfig();
       alert(isEdit ? "✅ Sliding banner updated successfully!" : "✅ New promo banner added to home slider!");
     } catch (err) {
       alert("Error saving banner: " + err.message);

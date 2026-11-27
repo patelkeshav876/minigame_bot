@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+import json
 from pathlib import Path
 from typing import Any
 
@@ -154,16 +155,16 @@ STAR_PACKS = {
         "id": "pack_50",
         "title": "Starter Coin Stash",
         "description": "5,000 Coins for Ghost Plays & Aviator rocket rounds",
-        "stars": 50,
+        "stars": 1,
         "coins": 5000,
-        "badge": "STARTER",
+        "badge": "1 STAR PROMO",
         "icon": "🪙",
     },
     "pack_150": {
         "id": "pack_150",
         "title": "Pilot Booster (+20% Bonus)",
         "description": "18,000 Coins (+20% bonus) for longer duel streaks",
-        "stars": 150,
+        "stars": 1,
         "coins": 18000,
         "badge": "MOST POPULAR",
         "icon": "🔥",
@@ -172,7 +173,7 @@ STAR_PACKS = {
         "id": "pack_500",
         "title": "High Roller Vault (+50% Bonus)",
         "description": "75,000 Coins (+50% bonus) for high-stakes tables",
-        "stars": 500,
+        "stars": 1,
         "coins": 75000,
         "badge": "HIGH ROLLER",
         "icon": "💎",
@@ -181,12 +182,55 @@ STAR_PACKS = {
         "id": "pack_1000",
         "title": "VIP Legend Treasury (+100% Bonus)",
         "description": "200,000 Coins (+100% bonus) & exclusive VIP glory",
-        "stars": 1000,
+        "stars": 1,
         "coins": 200000,
         "badge": "VIP LEGEND",
         "icon": "👑",
     },
 }
+
+
+def _get_star_packs() -> dict[str, dict[str, Any]]:
+    raw = storage.get_setting("star_packs_json", "")
+    if raw:
+        try:
+            items = json.loads(raw)
+            if isinstance(items, list) and items:
+                return {str(p["id"]): p for p in items if isinstance(p, dict) and p.get("id")}
+        except Exception:
+            pass
+    return {k: dict(v) for k, v in STAR_PACKS.items()}
+
+
+def _get_inr_packs() -> dict[str, dict[str, Any]]:
+    raw = storage.get_setting("inr_packs_json", "")
+    if raw:
+        try:
+            items = json.loads(raw)
+            if isinstance(items, list) and items:
+                return {str(p["id"]): p for p in items if isinstance(p, dict) and p.get("id")}
+        except Exception:
+            pass
+    return {k: dict(v) for k, v in INR_PACKS.items()}
+
+
+def _get_feature_pricing() -> dict[str, int]:
+    return {
+        "sticker_premium_stars": max(1, int(storage.get_setting("sticker_premium_stars", "1") or 1)),
+        "sticker_premium_coins": max(0, int(storage.get_setting("sticker_premium_coins", "500") or 500)),
+        "vip_pass_stars": max(1, int(storage.get_setting("vip_pass_stars", "1") or 1)),
+    }
+
+
+class PricingUpdateRequest(BaseModel):
+    star_packs: list[dict[str, Any]] = []
+    inr_packs: list[dict[str, Any]] = []
+    sticker_premium_stars: int = 1
+    sticker_premium_coins: int = 500
+    vip_pass_stars: int = 1
+    upi_id: str = ""
+    user_id: str = ""
+    admin_secret: str = ""
 
 
 def _is_admin(user_id: str, admin_secret: str = "") -> bool:
@@ -475,15 +519,16 @@ async def get_room(room_id: str) -> dict[str, Any]:
 
 @app.get("/api/stars/packs")
 async def get_star_packs() -> dict[str, Any]:
-    return {"packs": list(STAR_PACKS.values())}
+    return {"packs": list(_get_star_packs().values())}
 
 
 @app.get("/api/shop/config")
 async def get_shop_config() -> dict[str, Any]:
     configured_upi = storage.get_setting("upi_id", "patelkeshav@upi")
     return {
-        "star_packs": list(STAR_PACKS.values()),
-        "inr_packs": list(INR_PACKS.values()),
+        "star_packs": list(_get_star_packs().values()),
+        "inr_packs": list(_get_inr_packs().values()),
+        "feature_pricing": _get_feature_pricing(),
         "upi_id": configured_upi,
         "upi_name": "Ghost Plays Arena",
         "crypto_contact": "@ghost_help_and_support_bot",
@@ -491,9 +536,77 @@ async def get_shop_config() -> dict[str, Any]:
     }
 
 
+@app.get("/api/admin/pricing")
+async def get_admin_pricing(
+    user_id: str = Query(default=""),
+    admin_secret: str = Query(default=""),
+) -> dict[str, Any]:
+    if not _is_admin(user_id, admin_secret):
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    return {
+        "star_packs": list(_get_star_packs().values()),
+        "inr_packs": list(_get_inr_packs().values()),
+        "feature_pricing": _get_feature_pricing(),
+        "upi_id": storage.get_setting("upi_id", "patelkeshav@upi"),
+    }
+
+
+@app.put("/api/admin/pricing")
+async def update_admin_pricing(req: PricingUpdateRequest) -> dict[str, Any]:
+    if not _is_admin(req.user_id, req.admin_secret):
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+
+    if req.star_packs:
+        cleaned_stars = []
+        for p in req.star_packs:
+            if not isinstance(p, dict) or not p.get("id"):
+                continue
+            cleaned_stars.append({
+                "id": str(p["id"]),
+                "title": str(p.get("title", "Coin Pack"))[:64],
+                "description": str(p.get("description", ""))[:160],
+                "stars": max(1, int(p.get("stars", 1))),
+                "coins": max(1, int(p.get("coins", 1000))),
+                "badge": str(p.get("badge", "PROMO"))[:24],
+                "icon": str(p.get("icon", "🪙"))[:8],
+            })
+        if cleaned_stars:
+            storage.set_setting("star_packs_json", json.dumps(cleaned_stars))
+
+    if req.inr_packs:
+        cleaned_inr = []
+        for p in req.inr_packs:
+            if not isinstance(p, dict) or not p.get("id"):
+                continue
+            cleaned_inr.append({
+                "id": str(p["id"]),
+                "title": str(p.get("title", "INR Pack"))[:64],
+                "price_inr": max(1, int(p.get("price_inr", 49))),
+                "coins": max(1, int(p.get("coins", 5000))),
+                "badge": str(p.get("badge", "POPULAR"))[:24],
+                "icon": str(p.get("icon", "🪙"))[:8],
+            })
+        if cleaned_inr:
+            storage.set_setting("inr_packs_json", json.dumps(cleaned_inr))
+
+    storage.set_setting("sticker_premium_stars", str(max(1, int(req.sticker_premium_stars))))
+    storage.set_setting("sticker_premium_coins", str(max(0, int(req.sticker_premium_coins))))
+    storage.set_setting("vip_pass_stars", str(max(1, int(req.vip_pass_stars))))
+    if req.upi_id.strip():
+        storage.set_setting("upi_id", req.upi_id.strip()[:120])
+
+    return {
+        "status": "updated",
+        "star_packs": list(_get_star_packs().values()),
+        "inr_packs": list(_get_inr_packs().values()),
+        "feature_pricing": _get_feature_pricing(),
+        "upi_id": storage.get_setting("upi_id", "patelkeshav@upi"),
+    }
+
+
 @app.post("/api/shop/submit-upi-deposit")
 async def submit_upi_deposit(req: UpiDepositRequest) -> dict[str, Any]:
-    pack = INR_PACKS.get(req.pack_id)
+    pack = _get_inr_packs().get(req.pack_id)
     if not pack:
         raise HTTPException(status_code=400, detail="Invalid pack selected")
 
@@ -551,7 +664,19 @@ async def submit_upi_deposit(req: UpiDepositRequest) -> dict[str, Any]:
 
 @app.post("/api/stars/create-invoice")
 async def create_stars_invoice(req: StarInvoiceRequest) -> dict[str, Any]:
-    pack = STAR_PACKS.get(req.pack_id)
+    if req.pack_id == "pack_sticker_premium":
+        fp = _get_feature_pricing()
+        pack = {
+            "id": "pack_sticker_premium",
+            "title": "All-Access Premium Stickers & VIP",
+            "description": "Permanent access to all Premium Stickers & VIP features",
+            "stars": fp["sticker_premium_stars"],
+            "coins": 0,
+            "badge": "ALL ACCESS",
+            "icon": "💎",
+        }
+    else:
+        pack = _get_star_packs().get(req.pack_id)
     if not pack:
         raise HTTPException(status_code=400, detail="Invalid star pack ID")
 

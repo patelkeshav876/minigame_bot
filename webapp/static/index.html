@@ -4,10 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Ghost Plays • Gaming Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <!-- Lucide Icons Package (Modern Crisp Vector Icons) -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="/static/style.css?v=20261125_4" />
+  <link rel="stylesheet" href="/static/style.css?v=20261127_1" />
   <script>
     if (localStorage.getItem("app_theme") === "light") {
       document.documentElement.classList.add("theme-light");
@@ -1093,7 +1096,10 @@
           <i data-lucide="plus-circle" class="lucide-xs"></i> ➕ Add & Manage Games
         </button>
         <button class="studio-tab-btn" id="tabBtnPromoBanners" data-tab="tabPromoBanners">
-          <i data-lucide="sparkles" class="lucide-xs"></i> 🎠 Sliding Window / Banners
+          <i data-lucide="sparkles" class="lucide-xs"></i> 🎠 Banners
+        </button>
+        <button class="studio-tab-btn" id="tabBtnPricing" data-tab="tabPricing">
+          <i data-lucide="coins" class="lucide-xs"></i> 💎 Pricing
         </button>
       </div>
 
@@ -1316,6 +1322,56 @@
             <button type="button" id="btnNewBanner" class="btn small primary">+ New Banner</button>
           </div>
           <div id="adminBannersList" class="admin-banners-list">Loading banners...</div>
+        </div>
+      </div>
+
+      <!-- TAB 3: PRICING & STARS EDITOR -->
+      <div class="studio-tab-content hidden" id="tabContentPricing">
+        <div class="card studio-form-card">
+          <div class="studio-section-header">
+            <div>
+              <h3 class="studio-section-title">💎 Admin Pricing &amp; 1-Star Promo</h3>
+              <p class="studio-section-sub">Edit Star Packs, INR Packs, Feature Unlocks &amp; UPI ID</p>
+            </div>
+            <button type="button" id="btnSetAllOneStar" class="btn small primary">⚡ Set All to 1 ⭐</button>
+          </div>
+
+          <form id="formAdminPricing" class="modal-form">
+            <div class="form-row-2">
+              <div>
+                <label>Premium Stickers (Stars ⭐)</label>
+                <input id="priceStickerStars" type="number" min="1" value="1" required />
+              </div>
+              <div>
+                <label>Premium Stickers (Coins 🪙)</label>
+                <input id="priceStickerCoins" type="number" min="0" value="500" required />
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div>
+                <label>VIP All-Access (Stars ⭐)</label>
+                <input id="priceVipStars" type="number" min="1" value="1" required />
+              </div>
+              <div>
+                <label>UPI ID (for INR Deposits)</label>
+                <input id="priceUpiId" type="text" placeholder="patelkeshav@upi" />
+              </div>
+            </div>
+
+            <label style="margin-top:8px;">⭐ Telegram Star Packs</label>
+            <div id="adminStarPacksEditor" class="admin-pricing-list">Loading...</div>
+
+            <label style="margin-top:8px;">₹ INR Coin Packs</label>
+            <div id="adminInrPacksEditor" class="admin-pricing-list">Loading...</div>
+
+            <div style="margin-top:10px;">
+              <label>Admin Secret Passcode *</label>
+              <input id="pricingAdminSecret" type="password" placeholder="admin secret passcode" />
+            </div>
+
+            <button type="submit" id="btnSaveAdminPricing" class="btn primary full" style="margin-top:10px;">💾 Save All Pricing</button>
+          </form>
         </div>
       </div>
     </section>
@@ -1576,6 +1632,6 @@
     <div id="reactionToastPill" class="reaction-toast-pill hidden"></div>
   </div>
 
-  <script src="/static/app.js?v=20261125_4"></script>
+  <script src="/static/app.js?v=20261127_1"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&display=swap');
 
 :root, [data-theme="clay"] {
   --bg: #edf2f8;
@@ -60,7 +60,7 @@
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-family: 'Nunito', ui-rounded, 'SF Pro Rounded', 'Quicksand', system-ui, -apple-system, sans-serif;
   background: var(--bg-gradient);
   color: var(--text);
   min-height: 100vh;
@@ -5630,6 +5630,169 @@ body.theme-light .bubble-char.bubble-near {
   color: #ffffff;
   border-color: #38bdf8;
   box-shadow: 0 2px 10px rgba(56, 189, 248, 0.3);
+}
+
+/* =========================================================
+   ROUNDED TYPOGRAPHY, ROUNDED GAME LOGOS, LIGHT MODE TEXT & PRICING EDITOR
+   ========================================================= */
+button, input, select, textarea {
+  font-family: 'Nunito', ui-rounded, 'SF Pro Rounded', 'Quicksand', system-ui, -apple-system, sans-serif;
+}
+
+/* Rounded Corners on All Game Logos & Thumbnails */
+.cgc-thumb-wrap,
+.cgc-icon,
+.arena-card-thumb-wrap,
+.logo-preview-box {
+  border-radius: 22px !important;
+  overflow: hidden !important;
+}
+.cgc-box-img,
+.cgc-thumb-img,
+.arena-card-thumb {
+  border-radius: 22px !important;
+}
+.tgc-thumb,
+.tgc-thumb-img,
+.admin-banner-art,
+.admin-game-row img {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+}
+
+/* Admin Pricing Editor */
+.admin-pricing-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.admin-pack-edit-row {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.aper-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #38bdf8;
+}
+.aper-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr;
+  gap: 8px;
+}
+.aper-field label {
+  font-size: 0.68rem !important;
+  margin-bottom: 2px !important;
+  display: block;
+  color: #94a3b8;
+}
+.aper-field input {
+  padding: 6px 8px !important;
+  font-size: 0.8rem !important;
+  border-radius: 10px !important;
+}
+
+/* Light Mode: Ensure all recently added text is dark/black and readable */
+body.theme-light .holo-controls-row .holo-ctrl-btn:not(.primary) {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.16);
+}
+body.theme-light .profile-tabs-bar {
+  background: #e2e8f0;
+  border-color: rgba(15, 23, 42, 0.12);
+}
+body.theme-light .prof-tab-btn {
+  color: #334155;
+}
+body.theme-light .prof-tab-btn.active {
+  color: #ffffff;
+}
+body.theme-light .prof-pref-row,
+body.theme-light .badge-tile,
+body.theme-light .rating-box,
+body.theme-light .combat-stat-tile,
+body.theme-light .history-item,
+body.theme-light .admin-pack-edit-row {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #0f172a;
+}
+body.theme-light .ppr-title,
+body.theme-light .bt-title,
+body.theme-light .rb-title,
+body.theme-light .cs-val,
+body.theme-light .hi-opp,
+body.theme-light .prof-player-name,
+body.theme-light .hs-title,
+body.theme-light .studio-page-title,
+body.theme-light .studio-section-title,
+body.theme-light .admin-banner-title,
+body.theme-light .bas-title,
+body.theme-light .bubble-text,
+body.theme-light .bubble-char,
+body.theme-light .modal-form label,
+body.theme-light .card-head h2,
+body.theme-light .card-head h3,
+body.theme-light .comm-card-title,
+body.theme-light .arena-card-title,
+body.theme-light .tgc-title,
+body.theme-light .cgc-card-title {
+  color: #0f172a !important;
+}
+body.theme-light .ppr-sub,
+body.theme-light .bt-desc,
+body.theme-light .rb-record,
+body.theme-light .cs-lbl,
+body.theme-light .hi-game,
+body.theme-light .prof-xp-text,
+body.theme-light .pwa-lbl,
+body.theme-light .hs-desc,
+body.theme-light .hs-status-note,
+body.theme-light .studio-page-subtitle,
+body.theme-light .studio-section-sub,
+body.theme-light .admin-banner-meta,
+body.theme-light .bas-preset-lbl,
+body.theme-light .aper-field label,
+body.theme-light .comm-card-desc,
+body.theme-light .arena-card-sub,
+body.theme-light .tgc-sub,
+body.theme-light .cgc-card-tag {
+  color: #334155 !important;
+}
+body.theme-light .pwa-balance strong {
+  color: #b45309 !important;
+}
+body.theme-light .bt-status {
+  color: #b45309 !important;
+}
+body.theme-light .btn-preset-pill {
+  background: #e2e8f0;
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.16);
+}
+body.theme-light .studio-tab-btn:not(.active) {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+body.theme-light .modal-form input,
+body.theme-light .studio-select {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: rgba(15, 23, 42, 0.2) !important;
+}
+body.theme-light .btn-page-back {
+  background: #e2e8f0;
+  color: #0f172a;
 }
 .sticker-card {
   background: rgba(30, 41, 59, 0.7);
