@@ -3195,6 +3195,7 @@
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
       state.gameSearchQuery = e.target.value;
+      document.getElementById("btnClearSearch")?.classList.toggle("hidden", !e.target.value.trim());
       renderFilteredGames();
     });
   }
@@ -3930,6 +3931,7 @@
     if (sInput) {
       sInput.value = "";
       state.gameSearchQuery = "";
+      btnClearSearch.classList.add("hidden");
       renderFilteredGames();
     }
   });

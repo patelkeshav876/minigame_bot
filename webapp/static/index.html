@@ -10,7 +10,7 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <!-- Lucide Icons Package (Modern Crisp Vector Icons) -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="/static/style.css?v=20261127_6" />
+  <link rel="stylesheet" href="/static/style.css?v=20261127_7" />
   <script>
     if (localStorage.getItem("app_theme") === "light") {
       document.documentElement.classList.add("theme-light");
@@ -98,7 +98,7 @@
         <div class="game-search-box">
           <i data-lucide="search" class="search-icon"></i>
           <input id="inputGameSearch" type="text" placeholder="Search 30+ games (Aviator, Tetris, Snake, Billiards...)" />
-          <button id="btnClearSearch" class="btn-clear-search">✕</button>
+          <button id="btnClearSearch" class="btn-clear-search hidden" title="Clear Search">✕</button>
         </div>
       </div>
 
@@ -1261,11 +1261,11 @@
               <div>
                 <label>Card Color Glow Theme</label>
                 <select id="bannerTheme" class="studio-select">
+                  <option value="slide-gold">Yellow / Gold Theme Glow</option>
                   <option value="slide-aviator">Red High Stakes Glow</option>
                   <option value="slide-speedway">Blue Speedway Glow</option>
                   <option value="slide-invaders">Purple Sci-Fi Glow</option>
                   <option value="slide-tetris">Green Retro Glow</option>
-                  <option value="slide-gold">Gold Tournament Glow</option>
                   <option value="slide-cyan">Cyan Neon Glow</option>
                 </select>
               </div>
@@ -1459,7 +1459,7 @@
               </div>
             </div>
 
-            <div class="form-row-3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+            <div class="form-row-2">
               <div>
                 <label>CTA Label</label>
                 <input id="adCtaInput" type="text" value="Visit Offer" />
@@ -1468,22 +1468,27 @@
                 <label>Skip After (sec)</label>
                 <input id="adSkipSecInput" type="number" min="0" max="120" value="30" />
               </div>
+            </div>
+
+            <div class="form-row-2">
               <div>
-                <label>Reward (Coins)</label>
+                <label>Reward (Coins 🪙)</label>
                 <input id="adRewardCoinsInput" type="number" min="0" value="100" />
+              </div>
+              <div>
+                <label>Admin Secret Passcode *</label>
+                <input id="adsAdminSecret" type="password" placeholder="admin secret" />
               </div>
             </div>
 
-            <label>Admin Secret Passcode *</label>
-            <input id="adsAdminSecret" type="password" placeholder="admin secret passcode" />
-
-            <button type="submit" class="btn primary full" style="margin-top:8px;">➕ Publish Advertisement</button>
+            <button type="submit" class="btn primary full" style="margin-top:8px;">🚀 Publish Advertisement</button>
           </form>
+        </div>
 
-          <div style="margin-top:14px;">
-            <div class="studio-section-title" style="font-size:0.88rem;margin-bottom:8px;">📺 Active &amp; Paused Ads</div>
-            <div id="adminAdsList" class="admin-banners-list">Loading ads...</div>
-          </div>
+        <div class="card studio-list-card">
+          <h3 class="studio-section-title">📺 Active &amp; Paused Ads</h3>
+          <p class="studio-section-sub">Pause, resume, or remove active website advertisements</p>
+          <div id="adminAdsList" class="admin-banners-list">Loading ads...</div>
         </div>
 
         <!-- Channel & Group Subscribe Tasks -->
@@ -1857,6 +1862,6 @@
     <div id="reactionToastPill" class="reaction-toast-pill hidden"></div>
   </div>
 
-  <script src="/static/app.js?v=20261127_6"></script>
+  <script src="/static/app.js?v=20261127_7"></script>
 </body>
 </html>
