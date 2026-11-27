@@ -6723,3 +6723,92 @@ body.theme-light .btn-clear-search {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-3px); }
 }
+
+/* Remove border & background around cute animated stickers */
+.ash-icon-badge,
+.chunky-icon {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+.ash-icon-badge::before {
+  display: none !important;
+}
+
+/* Light Mode: Quick Action Shortcuts, Daily Quests, and Community Cards */
+body.theme-light .hub-shortcut-btn {
+  background: #ffffff !important;
+  border: 1.5px solid rgba(15, 23, 42, 0.1) !important;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06) !important;
+}
+body.theme-light .hub-shortcut-btn .hs-label {
+  color: #0f172a !important;
+}
+
+body.theme-light .quest-card {
+  background: #ffffff !important;
+  border: 1.5px solid rgba(15, 23, 42, 0.1) !important;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.07) !important;
+}
+body.theme-light .quest-game-tag {
+  color: #0284c7 !important;
+}
+body.theme-light .quest-desc {
+  color: #0f172a !important;
+}
+body.theme-light .qr-label {
+  color: #475569 !important;
+}
+body.theme-light .qr-badge {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  border: 1px solid #fde68a !important;
+}
+
+body.theme-light .community-hero-card {
+  background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%) !important;
+  border: 1.5px solid rgba(99, 102, 241, 0.25) !important;
+  box-shadow: 0 8px 22px rgba(99, 102, 241, 0.12) !important;
+}
+body.theme-light .comm-title {
+  color: #0f172a !important;
+}
+body.theme-light .comm-desc {
+  color: #334155 !important;
+}
+body.theme-light .comm-badge {
+  background: rgba(99, 102, 241, 0.14) !important;
+  color: #4338ca !important;
+}
+body.theme-light .channel-card {
+  background: #ffffff !important;
+  border: 1.5px solid rgba(15, 23, 42, 0.09) !important;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05) !important;
+}
+body.theme-light .channel-name {
+  color: #0f172a !important;
+}
+body.theme-light .channel-sub {
+  color: #475569 !important;
+}
+body.theme-light .channel-card .btn.small.secondary {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+body.theme-light .promo-inquiry-card {
+  background: linear-gradient(145deg, #fffbeb 0%, #fef3c7 100%) !important;
+  border: 1.5px solid rgba(245, 158, 11, 0.35) !important;
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.12) !important;
+}
+body.theme-light .promo-inquiry-card h3 {
+  color: #0f172a !important;
+}
+body.theme-light .promo-sub {
+  color: #475569 !important;
+}
+body.theme-light .perk-pill {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+}
