@@ -9,7 +9,7 @@ from telegram.ext import ContextTypes
 from config import ADMIN_USER_IDS, BOT_USERNAME, WEBAPP_URL
 from core.promo import PROMO_GAMES, get_promo_card, list_promo_keys
 from core.storage import storage
-from core.telegram_utils import player_display_name, safe_edit_message
+from core.telegram_utils import player_display_name, safe_edit_message, verify_user_chat_membership
 from handlers.games.chess_game import handle_chess_callback, init_chess_state, render_chess
 from handlers.games.connect4 import handle_connect4_callback, init_connect4_state, render_connect4
 from handlers.games.dots_and_boxes import handle_dots_callback, init_dots_state, render_dots
@@ -114,11 +114,52 @@ def _format_leaderboard() -> str:
     return "\n".join(lines)
 
 
+async def _check_force_subscribe(bot, user_id: int):
+    tasks = [t for t in storage.list_subscribe_tasks(only_active=True) if t.get("is_required")]
+    if not tasks:
+        return True, [], []
+    missing = []
+    joined = []
+    for t in tasks:
+        ok, _ = await verify_user_chat_membership(bot, t["chat_id"], int(user_id))
+        if ok:
+            joined.append(t)
+        else:
+            missing.append(t)
+    return len(missing) == 0, missing, joined
+
+
+def _force_sub_markup(missing_tasks: list[dict]) -> InlineKeyboardMarkup:
+    rows = []
+    for t in missing_tasks:
+        icon = "📢" if t.get("kind") == "channel" else "👥"
+        reward_txt = f" (+{t['reward_coins']} 🪙)" if t.get("reward_coins", 0) > 0 else ""
+        rows.append([InlineKeyboardButton(f"{icon} Join {t['title']}{reward_txt}", url=t["invite_url"])])
+    rows.append([InlineKeyboardButton("✅ I've Joined — Verify", callback_data="menu:verify_sub")])
+    return InlineKeyboardMarkup(rows)
+
+
 async def play_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /start and /play commands."""
     user = update.effective_user
     if user:
         storage.upsert_player(user.id, player_display_name(user), user.username or "")
+
+        # Enforce mandatory channel/group subscription if enabled by Admin
+        if storage.get_setting("force_sub_enabled", "0") == "1" and str(user.id) not in ADMIN_USER_IDS:
+            all_ok, missing, _ = await _check_force_subscribe(context.bot, user.id)
+            if not all_ok:
+                gate_text = (
+                    "🔒 *Subscribe & Join Required*\n\n"
+                    "Please join our official channels & groups below to unlock Ghost Plays and claim your coin rewards!\n\n"
+                    "_Membership is verified automatically — no reward is granted without joining._"
+                )
+                gate_markup = _force_sub_markup(missing)
+                if update.message:
+                    await update.message.reply_text(gate_text, reply_markup=gate_markup, parse_mode="Markdown")
+                elif update.callback_query:
+                    await safe_edit_message(update.callback_query, gate_text, gate_markup, parse_mode="Markdown")
+                return
 
     is_private = bool(update.effective_chat and update.effective_chat.type == "private")
     text = (
@@ -582,6 +623,21 @@ async def handle_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYP
 
     if data == "noop":
         await query.answer()
+        return
+
+    if data == "menu:verify_sub":
+        all_ok, missing, joined = await _check_force_subscribe(context.bot, user.id)
+        if not all_ok:
+            names = ", ".join(t["title"] for t in missing[:3])
+            await query.answer(f"❌ Not joined yet: {names}. Please join first — no reward granted!", show_alert=True)
+            return
+        total_bonus = 0
+        for t in joined:
+            if storage.claim_subscribe_task(str(user.id), t["id"], t.get("reward_coins", 0)):
+                total_bonus += int(t.get("reward_coins", 0))
+        msg = f"✅ Verified! +{total_bonus} 🪙 Coins credited!" if total_bonus > 0 else "✅ Subscription verified! Welcome!"
+        await query.answer(msg, show_alert=True)
+        await play_command(update, context)
         return
 
     # Gamee-style promotional game viewer

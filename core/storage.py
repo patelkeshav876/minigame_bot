@@ -409,6 +409,39 @@ class GameStorage:
                                 is_active INTEGER NOT NULL DEFAULT 1,
                                 created_at REAL NOT NULL
                             );
+
+                            CREATE TABLE IF NOT EXISTS promo_ads (
+                                id SERIAL PRIMARY KEY,
+                                title TEXT NOT NULL,
+                                description TEXT NOT NULL DEFAULT '',
+                                ad_type TEXT NOT NULL DEFAULT 'banner_inline',
+                                media_url TEXT NOT NULL DEFAULT '',
+                                target_url TEXT NOT NULL DEFAULT '',
+                                cta_label TEXT NOT NULL DEFAULT 'Learn More',
+                                skip_seconds INTEGER NOT NULL DEFAULT 30,
+                                reward_coins INTEGER NOT NULL DEFAULT 100,
+                                is_active INTEGER NOT NULL DEFAULT 1,
+                                created_at REAL NOT NULL
+                            );
+
+                            CREATE TABLE IF NOT EXISTS subscribe_tasks (
+                                id SERIAL PRIMARY KEY,
+                                title TEXT NOT NULL,
+                                chat_id TEXT NOT NULL,
+                                invite_url TEXT NOT NULL,
+                                kind TEXT NOT NULL DEFAULT 'channel',
+                                reward_coins INTEGER NOT NULL DEFAULT 200,
+                                is_required INTEGER NOT NULL DEFAULT 1,
+                                is_active INTEGER NOT NULL DEFAULT 1,
+                                created_at REAL NOT NULL
+                            );
+
+                            CREATE TABLE IF NOT EXISTS user_task_claims (
+                                user_id TEXT NOT NULL,
+                                task_id INTEGER NOT NULL,
+                                claimed_at REAL NOT NULL,
+                                PRIMARY KEY (user_id, task_id)
+                            );
                             """
                         )
                         count = conn.execute("SELECT COUNT(*) AS c FROM custom_games").fetchone()["c"]
@@ -539,6 +572,39 @@ class GameStorage:
                     order_idx INTEGER NOT NULL DEFAULT 0,
                     is_active INTEGER NOT NULL DEFAULT 1,
                     created_at REAL NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS promo_ads (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL,
+                    description TEXT NOT NULL DEFAULT '',
+                    ad_type TEXT NOT NULL DEFAULT 'banner_inline',
+                    media_url TEXT NOT NULL DEFAULT '',
+                    target_url TEXT NOT NULL DEFAULT '',
+                    cta_label TEXT NOT NULL DEFAULT 'Learn More',
+                    skip_seconds INTEGER NOT NULL DEFAULT 30,
+                    reward_coins INTEGER NOT NULL DEFAULT 100,
+                    is_active INTEGER NOT NULL DEFAULT 1,
+                    created_at REAL NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS subscribe_tasks (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL,
+                    chat_id TEXT NOT NULL,
+                    invite_url TEXT NOT NULL,
+                    kind TEXT NOT NULL DEFAULT 'channel',
+                    reward_coins INTEGER NOT NULL DEFAULT 200,
+                    is_required INTEGER NOT NULL DEFAULT 1,
+                    is_active INTEGER NOT NULL DEFAULT 1,
+                    created_at REAL NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS user_task_claims (
+                    user_id TEXT NOT NULL,
+                    task_id INTEGER NOT NULL,
+                    claimed_at REAL NOT NULL,
+                    PRIMARY KEY (user_id, task_id)
                 );
                 """
             )
@@ -1332,6 +1398,174 @@ class GameStorage:
         with self._lock, self._connect() as conn:
             row = conn.execute("SELECT * FROM promo_banners WHERE id = ?", (int(banner_id),)).fetchone()
             return dict(row) if row else None
+
+    # --- Advertisements & Promotion Products ---
+    def list_promo_ads(self, only_active: bool = False) -> list[dict[str, Any]]:
+        with self._lock, self._connect() as conn:
+            q = "SELECT * FROM promo_ads WHERE is_active = 1 ORDER BY id DESC" if only_active else "SELECT * FROM promo_ads ORDER BY id DESC"
+            rows = conn.execute(q).fetchall()
+            return [dict(r) for r in rows]
+
+    def add_promo_ad(
+        self,
+        title: str,
+        description: str = "",
+        ad_type: str = "banner_inline",
+        media_url: str = "",
+        target_url: str = "",
+        cta_label: str = "Learn More",
+        skip_seconds: int = 30,
+        reward_coins: int = 100,
+        is_active: int = 1,
+    ) -> dict[str, Any]:
+        now = time.time()
+        with self._lock, self._connect() as conn:
+            cur = conn.execute(
+                """
+                INSERT INTO promo_ads (title, description, ad_type, media_url, target_url, cta_label, skip_seconds, reward_coins, is_active, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    (title or "Sponsored Offer").strip()[:80],
+                    (description or "").strip()[:240],
+                    (ad_type or "banner_inline").strip()[:32],
+                    (media_url or "").strip(),
+                    (target_url or "").strip(),
+                    (cta_label or "Learn More").strip()[:32],
+                    max(0, int(skip_seconds)),
+                    max(0, int(reward_coins)),
+                    int(is_active),
+                    now,
+                ),
+            )
+            conn.commit()
+            row = conn.execute("SELECT * FROM promo_ads WHERE id = ?", (cur.lastrowid,)).fetchone()
+            return dict(row)
+
+    def update_promo_ad(
+        self,
+        ad_id: int | str,
+        is_active: int | None = None,
+        title: str | None = None,
+        description: str | None = None,
+        ad_type: str | None = None,
+        media_url: str | None = None,
+        target_url: str | None = None,
+        cta_label: str | None = None,
+        skip_seconds: int | None = None,
+        reward_coins: int | None = None,
+    ) -> dict[str, Any] | None:
+        with self._lock, self._connect() as conn:
+            row = conn.execute("SELECT * FROM promo_ads WHERE id = ?", (int(ad_id),)).fetchone()
+            if not row:
+                return None
+            cur_d = dict(row)
+            conn.execute(
+                """
+                UPDATE promo_ads
+                SET title = ?, description = ?, ad_type = ?, media_url = ?, target_url = ?, cta_label = ?, skip_seconds = ?, reward_coins = ?, is_active = ?
+                WHERE id = ?
+                """,
+                (
+                    (title if title is not None else cur_d["title"]).strip()[:80],
+                    (description if description is not None else cur_d["description"]).strip()[:240],
+                    (ad_type if ad_type is not None else cur_d["ad_type"]).strip()[:32],
+                    (media_url if media_url is not None else cur_d["media_url"]).strip(),
+                    (target_url if target_url is not None else cur_d["target_url"]).strip(),
+                    (cta_label if cta_label is not None else cur_d["cta_label"]).strip()[:32],
+                    max(0, int(skip_seconds if skip_seconds is not None else cur_d["skip_seconds"])),
+                    max(0, int(reward_coins if reward_coins is not None else cur_d["reward_coins"])),
+                    int(is_active if is_active is not None else cur_d["is_active"]),
+                    int(ad_id),
+                ),
+            )
+            conn.commit()
+            updated = conn.execute("SELECT * FROM promo_ads WHERE id = ?", (int(ad_id),)).fetchone()
+            return dict(updated) if updated else None
+
+    def delete_promo_ad(self, ad_id: int | str) -> bool:
+        with self._lock, self._connect() as conn:
+            cur = conn.execute("DELETE FROM promo_ads WHERE id = ?", (int(ad_id),))
+            conn.commit()
+            return cur.rowcount > 0
+
+    # --- Mandatory / Rewarded Channel & Group Subscribe Tasks ---
+    def list_subscribe_tasks(self, only_active: bool = False) -> list[dict[str, Any]]:
+        with self._lock, self._connect() as conn:
+            q = "SELECT * FROM subscribe_tasks WHERE is_active = 1 ORDER BY is_required DESC, id ASC" if only_active else "SELECT * FROM subscribe_tasks ORDER BY is_required DESC, id ASC"
+            rows = conn.execute(q).fetchall()
+            return [dict(r) for r in rows]
+
+    def add_subscribe_task(
+        self,
+        title: str,
+        chat_id: str,
+        invite_url: str,
+        kind: str = "channel",
+        reward_coins: int = 200,
+        is_required: int = 1,
+    ) -> dict[str, Any]:
+        now = time.time()
+        clean_chat = chat_id.strip()
+        if clean_chat and not clean_chat.startswith("@") and not clean_chat.lstrip("-").isdigit():
+            clean_chat = f"@{clean_chat}"
+        with self._lock, self._connect() as conn:
+            cur = conn.execute(
+                """
+                INSERT INTO subscribe_tasks (title, chat_id, invite_url, kind, reward_coins, is_required, is_active, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, 1, ?)
+                """,
+                (
+                    (title or "Official Channel").strip()[:64],
+                    clean_chat[:64],
+                    invite_url.strip(),
+                    (kind or "channel").strip()[:16],
+                    max(0, int(reward_coins)),
+                    int(is_required),
+                    now,
+                ),
+            )
+            conn.commit()
+            row = conn.execute("SELECT * FROM subscribe_tasks WHERE id = ?", (cur.lastrowid,)).fetchone()
+            return dict(row)
+
+    def delete_subscribe_task(self, task_id: int | str) -> bool:
+        with self._lock, self._connect() as conn:
+            conn.execute("DELETE FROM user_task_claims WHERE task_id = ?", (int(task_id),))
+            cur = conn.execute("DELETE FROM subscribe_tasks WHERE id = ?", (int(task_id),))
+            conn.commit()
+            return cur.rowcount > 0
+
+    def get_user_claimed_task_ids(self, user_id: str) -> set[int]:
+        with self._lock, self._connect() as conn:
+            rows = conn.execute(
+                "SELECT task_id FROM user_task_claims WHERE user_id = ?",
+                (str(user_id),),
+            ).fetchall()
+            return {int(r["task_id"]) for r in rows}
+
+    def claim_subscribe_task(self, user_id: str, task_id: int | str, reward_coins: int = 0) -> bool:
+        uid = str(user_id)
+        tid = int(task_id)
+        now = time.time()
+        with self._lock, self._connect() as conn:
+            existing = conn.execute(
+                "SELECT 1 FROM user_task_claims WHERE user_id = ? AND task_id = ?",
+                (uid, tid),
+            ).fetchone()
+            if existing:
+                return False
+            conn.execute(
+                "INSERT INTO user_task_claims (user_id, task_id, claimed_at) VALUES (?, ?, ?)",
+                (uid, tid, now),
+            )
+            if reward_coins > 0:
+                conn.execute(
+                    "UPDATE players SET coins = coins + ?, updated_at = ? WHERE user_id = ?",
+                    (int(reward_coins), now, uid),
+                )
+            conn.commit()
+            return True
 
 
 storage = GameStorage()

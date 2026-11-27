@@ -14,7 +14,7 @@ from pydantic import BaseModel
 
 from config import ADMIN_SECRET, ADMIN_USER_IDS, BOT_TOKEN, BOT_USERNAME
 from core.storage import storage
-from core.telegram_utils import verify_telegram_init_data
+from core.telegram_utils import verify_telegram_init_data, verify_user_chat_membership
 from webapp.arena_manager import ArenaManager
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -733,6 +733,261 @@ async def get_user_wallet(user_id: str) -> dict[str, Any]:
 async def dev_credit_coins(req: ClaimMockCoinsRequest) -> dict[str, Any]:
     new_bal = storage.add_player_coins(req.user_id, req.coins)
     return {"status": "ok", "user_id": req.user_id, "coins": new_bal}
+
+
+# --- Advertisements & Promotion Products API ---
+class PromoAdRequest(BaseModel):
+    title: str
+    description: str = ""
+    ad_type: str = "banner_inline"
+    media_url: str = ""
+    target_url: str = ""
+    cta_label: str = "Learn More"
+    skip_seconds: int = 30
+    reward_coins: int = 100
+    is_active: int = 1
+    user_id: str = ""
+    admin_secret: str = ""
+
+
+class ToggleSettingRequest(BaseModel):
+    enabled: bool
+    user_id: str = ""
+    admin_secret: str = ""
+
+
+class AdRewardClaimRequest(BaseModel):
+    ad_id: int
+    user_id: str = ""
+    init_data: str = ""
+
+
+class SubscribeTaskRequest(BaseModel):
+    title: str
+    chat_id: str
+    invite_url: str
+    kind: str = "channel"
+    reward_coins: int = 200
+    is_required: int = 1
+    user_id: str = ""
+    admin_secret: str = ""
+
+
+class VerifySubscribeRequest(BaseModel):
+    user_id: str = ""
+    init_data: str = ""
+    task_id: int | None = None
+
+
+@app.get("/api/ads/config")
+async def get_public_ads_config() -> dict[str, Any]:
+    ads_enabled = storage.get_setting("ads_enabled", "1") == "1"
+    ads = storage.list_promo_ads(only_active=True) if ads_enabled else []
+    return {"ads_enabled": ads_enabled, "ads": ads}
+
+
+@app.post("/api/ads/claim-reward")
+async def claim_ad_reward(req: AdRewardClaimRequest) -> dict[str, Any]:
+    if storage.get_setting("ads_enabled", "1") != "1":
+        raise HTTPException(status_code=400, detail="Ads are currently disabled")
+    ads = storage.list_promo_ads(only_active=True)
+    ad = next((a for a in ads if int(a["id"]) == int(req.ad_id)), None)
+    if not ad:
+        raise HTTPException(status_code=404, detail="Active ad not found")
+    user_info = _resolve_user(req.init_data, req.user_id, "Player")
+    uid = str(user_info["profile"]["user_id"])
+    reward = int(ad.get("reward_coins", 100))
+    new_bal = storage.add_player_coins(uid, reward)
+    return {"status": "credited", "coins_added": reward, "coins": new_bal}
+
+
+@app.get("/api/admin/ads")
+async def get_admin_ads(user_id: str = Query(default=""), admin_secret: str = Query(default="")) -> dict[str, Any]:
+    if not _is_admin(user_id, admin_secret):
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    return {
+        "ads_enabled": storage.get_setting("ads_enabled", "1") == "1",
+        "ads": storage.list_promo_ads(only_active=False),
+    }
+
+
+@app.post("/api/admin/ads/toggle")
+async def toggle_admin_ads(req: ToggleSettingRequest) -> dict[str, Any]:
+    if not _is_admin(req.user_id, req.admin_secret):
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    storage.set_setting("ads_enabled", "1" if req.enabled else "0")
+    return {"ads_enabled": req.enabled}
+
+
+@app.post("/api/admin/ads")
+async def create_admin_ad(req: PromoAdRequest) -> dict[str, Any]:
+    if not _is_admin(req.user_id, req.admin_secret):
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    ad = storage.add_promo_ad(
+        title=req.title,
+        description=req.description,
+        ad_type=req.ad_type,
+        media_url=req.media_url,
+        target_url=req.target_url,
+        cta_label=req.cta_label,
+        skip_seconds=req.skip_seconds,
+        reward_coins=req.reward_coins,
+        is_active=req.is_active,
+    )
+    return {"ad": ad}
+
+
+@app.put("/api/admin/ads/{ad_id}")
+async def update_admin_ad(ad_id: int, req: PromoAdRequest) -> dict[str, Any]:
+    if not _is_admin(req.user_id, req.admin_secret):
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    ad = storage.update_promo_ad(
+        ad_id=ad_id,
+        title=req.title,
+        description=req.description,
+        ad_type=req.ad_type,
+        media_url=req.media_url,
+        target_url=req.target_url,
+        cta_label=req.cta_label,
+        skip_seconds=req.skip_seconds,
+        reward_coins=req.reward_coins,
+        is_active=req.is_active,
+    )
+    if not ad:
+        raise HTTPException(status_code=404, detail="Ad not found")
+    return {"ad": ad}
+
+
+@app.delete("/api/admin/ads/{ad_id}")
+async def delete_admin_ad(ad_id: int, user_id: str = Query(default=""), admin_secret: str = Query(default="")) -> dict[str, Any]:
+    if not _is_admin(user_id, admin_secret):
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    if not storage.delete_promo_ad(ad_id):
+        raise HTTPException(status_code=404, detail="Ad not found")
+    return {"status": "deleted", "ad_id": ad_id}
+
+
+# --- Channel & Group Subscribe Tasks Verification API ---
+@app.get("/api/tasks/status")
+async def get_user_tasks_status(user_id: str = Query(default="")) -> dict[str, Any]:
+    force_sub = storage.get_setting("force_sub_enabled", "0") == "1"
+    tasks = storage.list_subscribe_tasks(only_active=True)
+    claimed_ids = storage.get_user_claimed_task_ids(user_id) if user_id else set()
+    enriched = []
+    for t in tasks:
+        item = dict(t)
+        item["claimed"] = int(t["id"]) in claimed_ids
+        enriched.append(item)
+    return {"force_sub_enabled": force_sub, "tasks": enriched}
+
+
+@app.post("/api/tasks/verify")
+async def verify_subscribe_tasks(req: VerifySubscribeRequest) -> dict[str, Any]:
+    tg_user = verify_telegram_init_data(req.init_data, BOT_TOKEN)
+    uid = str(tg_user["id"]) if tg_user else str(req.user_id or "").strip()
+
+    tasks = storage.list_subscribe_tasks(only_active=True)
+    if req.task_id is not None:
+        tasks = [t for t in tasks if int(t["id"]) == int(req.task_id)]
+    else:
+        tasks = [t for t in tasks if t.get("is_required")]
+
+    if not tasks:
+        return {"verified": True, "missing": [], "coins_added": 0, "message": "No tasks to verify."}
+
+    if not BOT_TOKEN:
+        return {
+            "verified": False,
+            "missing": tasks,
+            "coins_added": 0,
+            "message": "Bot token not configured for Telegram channel verification.",
+        }
+
+    if not uid.isdigit():
+        return {
+            "verified": False,
+            "missing": tasks,
+            "coins_added": 0,
+            "message": "Please open inside Telegram to verify your channel/group subscription!",
+        }
+
+    from telegram import Bot
+    bot = Bot(token=BOT_TOKEN)
+    missing = []
+    joined = []
+    for t in tasks:
+        ok, status = await verify_user_chat_membership(bot, t["chat_id"], int(uid))
+        if ok:
+            joined.append(t)
+        else:
+            missing.append({**t, "reason": status})
+
+    if missing:
+        names = ", ".join(m["title"] for m in missing[:3])
+        return {
+            "verified": False,
+            "missing": missing,
+            "coins_added": 0,
+            "message": f"❌ Not subscribed yet: {names}. Please join first — no reward granted!",
+        }
+
+    coins_added = 0
+    claimed_ids = []
+    for t in joined:
+        if storage.claim_subscribe_task(uid, t["id"], t.get("reward_coins", 0)):
+            coins_added += int(t.get("reward_coins", 0))
+            claimed_ids.append(t["id"])
+
+    return {
+        "verified": True,
+        "missing": [],
+        "coins_added": coins_added,
+        "claimed_task_ids": claimed_ids,
+        "coins": storage.get_player_coins(uid),
+        "message": f"✅ Verified! +{coins_added} 🪙 Coins credited!" if coins_added > 0 else "✅ All subscriptions verified!",
+    }
+
+
+@app.get("/api/admin/tasks")
+async def get_admin_tasks(user_id: str = Query(default=""), admin_secret: str = Query(default="")) -> dict[str, Any]:
+    if not _is_admin(user_id, admin_secret):
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    return {
+        "force_sub_enabled": storage.get_setting("force_sub_enabled", "0") == "1",
+        "tasks": storage.list_subscribe_tasks(only_active=False),
+    }
+
+
+@app.post("/api/admin/tasks/toggle")
+async def toggle_admin_tasks(req: ToggleSettingRequest) -> dict[str, Any]:
+    if not _is_admin(req.user_id, req.admin_secret):
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    storage.set_setting("force_sub_enabled", "1" if req.enabled else "0")
+    return {"force_sub_enabled": req.enabled}
+
+
+@app.post("/api/admin/tasks")
+async def create_admin_task(req: SubscribeTaskRequest) -> dict[str, Any]:
+    if not _is_admin(req.user_id, req.admin_secret):
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    task = storage.add_subscribe_task(
+        title=req.title,
+        chat_id=req.chat_id,
+        invite_url=req.invite_url,
+        kind=req.kind,
+        reward_coins=req.reward_coins,
+        is_required=req.is_required,
+    )
+    return {"task": task}
+
+
+@app.delete("/api/admin/tasks/{task_id}")
+async def delete_admin_task(task_id: int, user_id: str = Query(default=""), admin_secret: str = Query(default="")) -> dict[str, Any]:
+    if not _is_admin(user_id, admin_secret):
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    if not storage.delete_subscribe_task(task_id):
+        raise HTTPException(status_code=404, detail="Task not found")
+    return {"status": "deleted", "task_id": task_id}
 
 
 @app.websocket("/ws/{room_id}")

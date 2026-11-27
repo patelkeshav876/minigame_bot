@@ -84,3 +84,18 @@ def verify_telegram_init_data(
         return json.loads(user_raw)
     except json.JSONDecodeError:
         return None
+
+
+async def verify_user_chat_membership(bot: Any, chat_id: str, user_id: int) -> tuple[bool, str]:
+    """Verify via Telegram Bot API get_chat_member whether user_id is subscribed/joined."""
+    try:
+        target: str | int = int(chat_id) if str(chat_id).lstrip("-").isdigit() else str(chat_id).strip()
+        member = await bot.get_chat_member(chat_id=target, user_id=int(user_id))
+        status = getattr(member, "status", "")
+        if status in ("member", "administrator", "creator"):
+            return True, status
+        if status == "restricted" and getattr(member, "is_member", False):
+            return True, status
+        return False, status or "left"
+    except Exception as exc:
+        return False, f"error:{exc}"

@@ -10,7 +10,7 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <!-- Lucide Icons Package (Modern Crisp Vector Icons) -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="/static/style.css?v=20261127_4" />
+  <link rel="stylesheet" href="/static/style.css?v=20261127_5" />
   <script>
     if (localStorage.getItem("app_theme") === "light") {
       document.documentElement.classList.add("theme-light");
@@ -257,6 +257,21 @@
             </div>
           </div>
           <button class="btn-quest-play" id="btnPlayQuest">PLAY</button>
+        </div>
+
+        <!-- Rewarded Video Ad & Sponsored Product Slot (Controlled by Admin ON/OFF) -->
+        <div id="homeAdsSection" class="home-ads-section hidden">
+          <div class="watch-ad-promo-bar" id="btnHomeWatchAd">
+            <div class="wapb-left">
+              <span class="wapb-icon">🎬</span>
+              <div>
+                <div class="wapb-title">Watch Sponsored Video Ad</div>
+                <div class="wapb-sub">Watch 30s &amp; claim free Coins!</div>
+              </div>
+            </div>
+            <span class="wapb-reward">+100 🪙</span>
+          </div>
+          <div id="homeInlineAdSlot" class="home-inline-ad-slot hidden"></div>
         </div>
       </div>
 
@@ -1101,6 +1116,9 @@
         <button class="studio-tab-btn" id="tabBtnPricing" data-tab="tabPricing">
           <i data-lucide="coins" class="lucide-xs"></i> 💎 Pricing
         </button>
+        <button class="studio-tab-btn" id="tabBtnAdsTasks" data-tab="tabAdsTasks">
+          <i data-lucide="megaphone" class="lucide-xs"></i> 📢 Ads &amp; Tasks
+        </button>
       </div>
 
       <!-- TAB 1: ADD & EDIT GAME -->
@@ -1374,7 +1392,208 @@
           </form>
         </div>
       </div>
+
+      <!-- TAB 4: ADVERTISEMENTS & CHANNEL SUBSCRIBE TASKS -->
+      <div class="studio-tab-content hidden" id="tabContentAdsTasks">
+        <!-- Master ON/OFF Switches -->
+        <div class="card studio-form-card">
+          <div class="studio-section-header">
+            <div>
+              <h3 class="studio-section-title">🎛️ Global Ads &amp; Gate Controls</h3>
+              <p class="studio-section-sub">Instantly turn website ads or mandatory channel subscribe ON/OFF</p>
+            </div>
+          </div>
+          <div class="prof-prefs-list">
+            <div class="prof-pref-row">
+              <div>
+                <div class="ppr-title">📢 Website Advertisements</div>
+                <div class="ppr-sub">Show popup promos, inline ads &amp; 30s rewarded video ads</div>
+              </div>
+              <button type="button" id="btnToggleAdsMaster" class="pref-toggle-btn active">ON</button>
+            </div>
+            <div class="prof-pref-row">
+              <div>
+                <div class="ppr-title">🔒 Require Channel/Group Subscribe</div>
+                <div class="ppr-sub">Verify via Telegram getChatMember before continuing bot/app</div>
+              </div>
+              <button type="button" id="btnToggleForceSubMaster" class="pref-toggle-btn">OFF</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Promotion Product / Video Ad -->
+        <div class="card studio-form-card">
+          <div class="studio-section-header">
+            <div>
+              <h3 class="studio-section-title">🎬 Add Promotion Product / Video Ad</h3>
+              <p class="studio-section-sub">Supports 30s skippable rewarded videos, fullscreen popups, and inline promos</p>
+            </div>
+          </div>
+          <form id="formAddPromoAd" class="modal-form">
+            <div class="form-row-2">
+              <div>
+                <label>Ad / Product Title *</label>
+                <input id="adTitleInput" type="text" placeholder="e.g. Ghost VIP Bundle" required />
+              </div>
+              <div>
+                <label>Ad Type</label>
+                <select id="adTypeSelect" class="studio-select">
+                  <option value="video_reward">🎬 Rewarded Video (30s Skip)</option>
+                  <option value="fullscreen_popup">🖼️ Fullscreen Product Popup</option>
+                  <option value="banner_inline">📢 Inline Promo Card</option>
+                </select>
+              </div>
+            </div>
+
+            <label>Description / Offer Copy</label>
+            <input id="adDescInput" type="text" placeholder="Watch 30s or check out this exclusive sponsor offer!" />
+
+            <div class="form-row-2">
+              <div>
+                <label>Media URL (MP4 Video or Image)</label>
+                <input id="adMediaUrlInput" type="text" placeholder="https://.../promo.mp4 or /static/..." />
+              </div>
+              <div>
+                <label>Target Link (Product / Sponsor URL)</label>
+                <input id="adTargetUrlInput" type="text" placeholder="https://..." />
+              </div>
+            </div>
+
+            <div class="form-row-3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+              <div>
+                <label>CTA Label</label>
+                <input id="adCtaInput" type="text" value="Visit Offer" />
+              </div>
+              <div>
+                <label>Skip After (sec)</label>
+                <input id="adSkipSecInput" type="number" min="0" max="120" value="30" />
+              </div>
+              <div>
+                <label>Reward (Coins)</label>
+                <input id="adRewardCoinsInput" type="number" min="0" value="100" />
+              </div>
+            </div>
+
+            <label>Admin Secret Passcode *</label>
+            <input id="adsAdminSecret" type="password" placeholder="admin secret passcode" />
+
+            <button type="submit" class="btn primary full" style="margin-top:8px;">➕ Publish Advertisement</button>
+          </form>
+
+          <div style="margin-top:14px;">
+            <div class="studio-section-title" style="font-size:0.88rem;margin-bottom:8px;">📺 Active &amp; Paused Ads</div>
+            <div id="adminAdsList" class="admin-banners-list">Loading ads...</div>
+          </div>
+        </div>
+
+        <!-- Channel & Group Subscribe Tasks -->
+        <div class="card studio-form-card">
+          <div class="studio-section-header">
+            <div>
+              <h3 class="studio-section-title">📢 Mandatory Channel &amp; Group Subscribe</h3>
+              <p class="studio-section-sub">💡 Add your bot as an Admin in the Channel/Group so Telegram verifies real membership!</p>
+            </div>
+          </div>
+          <form id="formAddSubscribeTask" class="modal-form">
+            <div class="form-row-2">
+              <div>
+                <label>Channel / Group Name *</label>
+                <input id="taskTitleInput" type="text" placeholder="e.g. Ghost Official Channel" required />
+              </div>
+              <div>
+                <label>Type</label>
+                <select id="taskKindSelect" class="studio-select">
+                  <option value="channel">📢 Channel</option>
+                  <option value="group">👥 Group</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div>
+                <label>Chat ID / @Username *</label>
+                <input id="taskChatIdInput" type="text" placeholder="@mychannel or -100123456789" required />
+              </div>
+              <div>
+                <label>Invite / Join URL *</label>
+                <input id="taskUrlInput" type="text" placeholder="https://t.me/mychannel" required />
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div>
+                <label>Reward Coins on Verify</label>
+                <input id="taskRewardInput" type="number" min="0" value="200" />
+              </div>
+              <div>
+                <label>Required to Continue?</label>
+                <select id="taskRequiredSelect" class="studio-select">
+                  <option value="1">🔒 Yes (Mandatory Gate)</option>
+                  <option value="0">🎁 Optional Bonus Task</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="btn primary full" style="margin-top:8px;">➕ Add Subscribe Task</button>
+          </form>
+
+          <div style="margin-top:14px;">
+            <div class="studio-section-title" style="font-size:0.88rem;margin-bottom:8px;">📋 Configured Channels &amp; Groups</div>
+            <div id="adminTasksList" class="admin-banners-list">Loading tasks...</div>
+          </div>
+        </div>
+      </div>
     </section>
+
+    <!-- ==================== REWARDED 30s VIDEO AD MODAL ==================== -->
+    <div id="modalRewardedVideoAd" class="modal hidden" style="z-index:100060;">
+      <div class="modal-card rewarded-video-card">
+        <div class="rvc-top-bar">
+          <span class="rvc-badge">🎬 SPONSORED VIDEO</span>
+          <div class="rvc-timer-pill" id="rvcTimerPill">⏳ Reward in 30s</div>
+        </div>
+        <div class="rvc-media-wrap" id="rvcMediaWrap">
+          <video id="rvcVideoPlayer" playsinline webkit-playsinline muted loop style="width:100%;height:100%;object-fit:cover;display:none;"></video>
+          <div id="rvcFallbackShowcase" class="rvc-fallback-showcase">
+            <div class="rvc-fb-icon">🚀</div>
+            <h3 id="rvcAdTitle">Sponsored Promotion</h3>
+            <p id="rvcAdDesc">Watch until the timer finishes to claim your free coin reward!</p>
+          </div>
+          <button type="button" id="btnRvcMuteToggle" class="rvc-mute-btn" title="Mute / Unmute">🔇</button>
+        </div>
+        <div class="rvc-progress-track"><div id="rvcProgressFill" class="rvc-progress-fill" style="width:0%;"></div></div>
+        <div class="rvc-actions">
+          <a id="rvcCtaLink" href="#" target="_blank" class="btn outline full hidden">🔗 Visit Offer</a>
+          <button type="button" id="btnRvcClaimClose" class="btn primary full" disabled>⏳ Wait 30s to Claim +100 🪙</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== FULLSCREEN PRODUCT / PROMO POPUP AD ==================== -->
+    <div id="modalPopupAd" class="modal hidden" style="z-index:100055;">
+      <div class="modal-card popup-ad-card">
+        <button type="button" id="btnClosePopupAd" class="popup-ad-close">✕</button>
+        <div class="popup-ad-badge">✨ SPONSORED OFFER</div>
+        <img id="popupAdImg" src="/static/banners/welcome_banner.jpg" alt="Promotion" class="popup-ad-img" />
+        <h3 id="popupAdTitle" class="popup-ad-title">Special Offer</h3>
+        <p id="popupAdDesc" class="popup-ad-desc">Check out this exclusive promotion!</p>
+        <div class="popup-ad-btns">
+          <a id="popupAdCta" href="#" target="_blank" class="btn primary full">🚀 Visit Offer</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== FORCE SUBSCRIBE / FOLLOW VERIFICATION MODAL ==================== -->
+    <div id="modalForceSubscribe" class="modal hidden" style="z-index:100070;">
+      <div class="modal-card force-sub-card">
+        <div class="fsc-icon">📢</div>
+        <h3 class="fsc-title">Follow &amp; Subscribe to Continue</h3>
+        <p class="fsc-sub">Join our official channels &amp; groups below, then tap Verify. Membership is checked live with Telegram — no reward is granted without joining!</p>
+        <div id="forceSubTasksList" class="force-sub-list"></div>
+        <div id="forceSubStatusMsg" class="fsc-status-msg hidden"></div>
+        <button type="button" id="btnVerifyForceSub" class="btn primary full" style="margin-top:10px;">✅ I've Joined — Verify &amp; Claim</button>
+      </div>
+    </div>
 
     <!-- ==================== ARENA MATCH OPTIONS POP-UP MODAL ==================== -->
     <div id="modalArenaMatchOptions" class="modal hidden">
@@ -1632,6 +1851,6 @@
     <div id="reactionToastPill" class="reaction-toast-pill hidden"></div>
   </div>
 
-  <script src="/static/app.js?v=20261127_2"></script>
+  <script src="/static/app.js?v=20261127_5"></script>
 </body>
 </html>

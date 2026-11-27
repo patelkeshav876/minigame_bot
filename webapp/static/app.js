@@ -3875,9 +3875,11 @@
     }
   }
 
-  // Initial load of sliding window banners
+  // Initial load of sliding window banners, ads & subscribe gate
   loadHeroCarouselBanners();
   loadShopConfig();
+  loadPublicAds();
+  setTimeout(checkForceSubscribeGate, 700);
 
   document.getElementById("btnPlayQuest")?.addEventListener("click", () => {
     haptic("medium");
@@ -4395,40 +4397,35 @@
   }
 
   function getAdminSecret() {
+    const fromAds = document.getElementById("adsAdminSecret")?.value.trim();
     const fromPricing = document.getElementById("pricingAdminSecret")?.value.trim();
     const fromBanner = document.getElementById("bannerAdminSecret")?.value.trim();
     const fromGame = document.getElementById("inputAdminSecret")?.value.trim();
     const fromStorage = localStorage.getItem("minigame_admin_secret")?.trim();
-    return fromPricing || fromBanner || fromGame || fromStorage || "";
+    return fromAds || fromPricing || fromBanner || fromGame || fromStorage || "";
   }
 
   function syncAdminSecret(val) {
     if (!val) return;
     localStorage.setItem("minigame_admin_secret", val);
-    const p = document.getElementById("pricingAdminSecret");
-    const b = document.getElementById("bannerAdminSecret");
-    const g = document.getElementById("inputAdminSecret");
-    if (p && p.value !== val) p.value = val;
-    if (b && b.value !== val) b.value = val;
-    if (g && g.value !== val) g.value = val;
+    ["adsAdminSecret", "pricingAdminSecret", "bannerAdminSecret", "inputAdminSecret"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el && el.value !== val) el.value = val;
+    });
   }
 
   function initAdminSecretInputs() {
     const saved = localStorage.getItem("minigame_admin_secret") || "";
-    if (saved) {
-      const p = document.getElementById("pricingAdminSecret");
-      const b = document.getElementById("bannerAdminSecret");
-      const g = document.getElementById("inputAdminSecret");
-      if (p && !p.value) p.value = saved;
-      if (b && !b.value) b.value = saved;
-      if (g && !g.value) g.value = saved;
-    }
-    const p = document.getElementById("pricingAdminSecret");
-    const b = document.getElementById("bannerAdminSecret");
-    const g = document.getElementById("inputAdminSecret");
-    p?.addEventListener("input", () => syncAdminSecret(p.value.trim()));
-    b?.addEventListener("input", () => syncAdminSecret(b.value.trim()));
-    g?.addEventListener("input", () => syncAdminSecret(g.value.trim()));
+    ["adsAdminSecret", "pricingAdminSecret", "bannerAdminSecret", "inputAdminSecret"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        if (saved && !el.value) el.value = saved;
+        if (!el.dataset.secWired) {
+          el.dataset.secWired = "true";
+          el.addEventListener("input", () => syncAdminSecret(el.value.trim()));
+        }
+      }
+    });
   }
 
   async function loadAdminGamesList() {
@@ -4551,17 +4548,19 @@
     showView(state.prevView || "home");
   });
 
-  // Studio tabs switching (Add/Manage Games vs Sliding Window Banners vs Pricing)
+  // Studio tabs switching (Add/Manage Games vs Sliding Window Banners vs Pricing vs Ads & Tasks)
   const tabBtnAddGame = document.getElementById("tabBtnAddGame");
   const tabBtnPromoBanners = document.getElementById("tabBtnPromoBanners");
   const tabBtnPricing = document.getElementById("tabBtnPricing");
+  const tabBtnAdsTasks = document.getElementById("tabBtnAdsTasks");
   const tabContentAddGame = document.getElementById("tabContentAddGame");
   const tabContentPromoBanners = document.getElementById("tabContentPromoBanners");
   const tabContentPricing = document.getElementById("tabContentPricing");
+  const tabContentAdsTasks = document.getElementById("tabContentAdsTasks");
 
   function switchStudioTab(activeTab) {
-    [tabBtnAddGame, tabBtnPromoBanners, tabBtnPricing].forEach((b) => b?.classList.remove("active"));
-    [tabContentAddGame, tabContentPromoBanners, tabContentPricing].forEach((c) => c?.classList.add("hidden"));
+    [tabBtnAddGame, tabBtnPromoBanners, tabBtnPricing, tabBtnAdsTasks].forEach((b) => b?.classList.remove("active"));
+    [tabContentAddGame, tabContentPromoBanners, tabContentPricing, tabContentAdsTasks].forEach((c) => c?.classList.add("hidden"));
     if (activeTab === "games") {
       tabBtnAddGame?.classList.add("active");
       tabContentAddGame?.classList.remove("hidden");
@@ -4574,12 +4573,482 @@
       tabBtnPricing?.classList.add("active");
       tabContentPricing?.classList.remove("hidden");
       loadAdminPricing();
+    } else if (activeTab === "adsTasks") {
+      tabBtnAdsTasks?.classList.add("active");
+      tabContentAdsTasks?.classList.remove("hidden");
+      loadAdminAdsAndTasks();
     }
   }
 
   tabBtnAddGame?.addEventListener("click", () => switchStudioTab("games"));
   tabBtnPromoBanners?.addEventListener("click", () => switchStudioTab("banners"));
   tabBtnPricing?.addEventListener("click", () => switchStudioTab("pricing"));
+  tabBtnAdsTasks?.addEventListener("click", () => switchStudioTab("adsTasks"));
+
+  // =========================================================
+  // ADMIN ADS & SUBSCRIBE TASKS ENGINE + PUBLIC 30s VIDEO ADS
+  // =========================================================
+  async function loadAdminAdsAndTasks() {
+    initAdminSecretInputs();
+    const secret = getAdminSecret();
+    const adsList = document.getElementById("adminAdsList");
+    const tasksList = document.getElementById("adminTasksList");
+    const btnAdsMaster = document.getElementById("btnToggleAdsMaster");
+    const btnSubMaster = document.getElementById("btnToggleForceSubMaster");
+
+    try {
+      const [adsRes, tasksRes] = await Promise.all([
+        fetch(`/api/admin/ads?user_id=${encodeURIComponent(state.userId)}&admin_secret=${encodeURIComponent(secret)}`),
+        fetch(`/api/admin/tasks?user_id=${encodeURIComponent(state.userId)}&admin_secret=${encodeURIComponent(secret)}`),
+      ]);
+
+      if (adsRes.ok) {
+        const d = await adsRes.json();
+        if (btnAdsMaster) {
+          btnAdsMaster.classList.toggle("active", Boolean(d.ads_enabled));
+          btnAdsMaster.textContent = d.ads_enabled ? "ON" : "OFF";
+        }
+        if (adsList) {
+          if (!d.ads.length) {
+            adsList.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;">No advertisements created yet.</div>';
+          } else {
+            adsList.innerHTML = "";
+            d.ads.forEach((ad) => {
+              const row = document.createElement("div");
+              row.className = "admin-banner-card";
+              row.innerHTML = `
+                <div class="admin-banner-info">
+                  <div class="admin-banner-title">${escapeHtml(ad.title)} <span style="font-size:0.7rem;color:#38bdf8;">(${escapeHtml(ad.ad_type)})</span></div>
+                  <div class="admin-banner-meta">Reward: +${ad.reward_coins} 🪙 • Skip: ${ad.skip_seconds}s • ${ad.is_active ? "🟢 Active" : "⏸️ Paused"}</div>
+                </div>
+                <div class="admin-banner-actions">
+                  <button type="button" class="btn small toggle-ad-btn">${ad.is_active ? "⏸️" : "▶️"}</button>
+                  <button type="button" class="btn small danger del-ad-btn">🗑️</button>
+                </div>
+              `;
+              row.querySelector(".toggle-ad-btn")?.addEventListener("click", async () => {
+                await fetch(`/api/admin/ads/${ad.id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ ...ad, is_active: ad.is_active ? 0 : 1, user_id: state.userId, admin_secret: getAdminSecret() }),
+                });
+                loadAdminAdsAndTasks();
+                loadPublicAds();
+              });
+              row.querySelector(".del-ad-btn")?.addEventListener("click", async () => {
+                if (!confirm("Delete this ad?")) return;
+                await fetch(`/api/admin/ads/${ad.id}?user_id=${encodeURIComponent(state.userId)}&admin_secret=${encodeURIComponent(getAdminSecret())}`, { method: "DELETE" });
+                loadAdminAdsAndTasks();
+                loadPublicAds();
+              });
+              adsList.appendChild(row);
+            });
+          }
+        }
+      } else if (adsList) {
+        adsList.innerHTML = '<div style="color:#ef4444;font-size:0.82rem;">Enter Admin Secret to manage ads.</div>';
+      }
+
+      if (tasksRes.ok) {
+        const td = await tasksRes.json();
+        if (btnSubMaster) {
+          btnSubMaster.classList.toggle("active", Boolean(td.force_sub_enabled));
+          btnSubMaster.textContent = td.force_sub_enabled ? "ON" : "OFF";
+        }
+        if (tasksList) {
+          if (!td.tasks.length) {
+            tasksList.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;">No channels/groups configured yet.</div>';
+          } else {
+            tasksList.innerHTML = "";
+            td.tasks.forEach((t) => {
+              const row = document.createElement("div");
+              row.className = "admin-banner-card";
+              row.innerHTML = `
+                <div class="admin-banner-info">
+                  <div class="admin-banner-title">${t.kind === "group" ? "👥" : "📢"} ${escapeHtml(t.title)}</div>
+                  <div class="admin-banner-meta">${escapeHtml(t.chat_id)} • +${t.reward_coins} 🪙 • ${t.is_required ? "🔒 Required" : "🎁 Optional"}</div>
+                </div>
+                <div class="admin-banner-actions">
+                  <button type="button" class="btn small danger del-task-btn">🗑️</button>
+                </div>
+              `;
+              row.querySelector(".del-task-btn")?.addEventListener("click", async () => {
+                if (!confirm("Remove this channel/group task?")) return;
+                await fetch(`/api/admin/tasks/${t.id}?user_id=${encodeURIComponent(state.userId)}&admin_secret=${encodeURIComponent(getAdminSecret())}`, { method: "DELETE" });
+                loadAdminAdsAndTasks();
+              });
+              tasksList.appendChild(row);
+            });
+          }
+        }
+      }
+    } catch (e) {
+      if (adsList) adsList.innerHTML = `<div style="color:#ef4444;font-size:0.82rem;">Error: ${escapeHtml(e.message)}</div>`;
+    }
+  }
+
+  document.getElementById("btnToggleAdsMaster")?.addEventListener("click", async () => {
+    const btn = document.getElementById("btnToggleAdsMaster");
+    const next = !btn?.classList.contains("active");
+    const res = await fetch("/api/admin/ads/toggle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled: next, user_id: state.userId, admin_secret: getAdminSecret() }),
+    });
+    if (res.ok) {
+      loadAdminAdsAndTasks();
+      loadPublicAds();
+    } else {
+      alert("Admin secret required to toggle Ads.");
+    }
+  });
+
+  document.getElementById("btnToggleForceSubMaster")?.addEventListener("click", async () => {
+    const btn = document.getElementById("btnToggleForceSubMaster");
+    const next = !btn?.classList.contains("active");
+    const res = await fetch("/api/admin/tasks/toggle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled: next, user_id: state.userId, admin_secret: getAdminSecret() }),
+    });
+    if (res.ok) {
+      loadAdminAdsAndTasks();
+    } else {
+      alert("Admin secret required to toggle Force Subscribe.");
+    }
+  });
+
+  document.getElementById("formAddPromoAd")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const payload = {
+      title: document.getElementById("adTitleInput")?.value.trim() || "Sponsored Offer",
+      ad_type: document.getElementById("adTypeSelect")?.value || "video_reward",
+      description: document.getElementById("adDescInput")?.value.trim() || "",
+      media_url: document.getElementById("adMediaUrlInput")?.value.trim() || "",
+      target_url: document.getElementById("adTargetUrlInput")?.value.trim() || "",
+      cta_label: document.getElementById("adCtaInput")?.value.trim() || "Visit Offer",
+      skip_seconds: parseInt(document.getElementById("adSkipSecInput")?.value || "30", 10) || 30,
+      reward_coins: parseInt(document.getElementById("adRewardCoinsInput")?.value || "100", 10) || 100,
+      is_active: 1,
+      user_id: state.userId,
+      admin_secret: getAdminSecret(),
+    };
+    const res = await fetch("/api/admin/ads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      e.target.reset();
+      document.getElementById("adSkipSecInput").value = "30";
+      document.getElementById("adRewardCoinsInput").value = "100";
+      loadAdminAdsAndTasks();
+      loadPublicAds();
+      alert("✅ Advertisement published!");
+    } else {
+      const err = await res.json().catch(() => ({}));
+      alert(err.detail || "Failed to publish ad");
+    }
+  });
+
+  document.getElementById("formAddSubscribeTask")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const payload = {
+      title: document.getElementById("taskTitleInput")?.value.trim() || "Official Channel",
+      kind: document.getElementById("taskKindSelect")?.value || "channel",
+      chat_id: document.getElementById("taskChatIdInput")?.value.trim() || "",
+      invite_url: document.getElementById("taskUrlInput")?.value.trim() || "",
+      reward_coins: parseInt(document.getElementById("taskRewardInput")?.value || "200", 10) || 0,
+      is_required: parseInt(document.getElementById("taskRequiredSelect")?.value || "1", 10),
+      user_id: state.userId,
+      admin_secret: getAdminSecret(),
+    };
+    const res = await fetch("/api/admin/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      e.target.reset();
+      document.getElementById("taskRewardInput").value = "200";
+      loadAdminAdsAndTasks();
+      alert("✅ Channel/Group subscribe task added!");
+    } else {
+      const err = await res.json().catch(() => ({}));
+      alert(err.detail || "Failed to add task");
+    }
+  });
+
+  // Public Website Ads & 30s Rewarded Video Player
+  let publicAdsState = { ads_enabled: false, ads: [] };
+  let activeVideoAdTimer = null;
+
+  async function loadPublicAds() {
+    const section = document.getElementById("homeAdsSection");
+    const inlineSlot = document.getElementById("homeInlineAdSlot");
+    try {
+      const res = await fetch("/api/ads/config");
+      if (!res.ok) return;
+      const data = await res.json();
+      publicAdsState = data;
+
+      if (!data.ads_enabled) {
+        section?.classList.add("hidden");
+        return;
+      }
+      section?.classList.remove("hidden");
+
+      const videoAds = data.ads.filter((a) => a.ad_type === "video_reward");
+      const watchBar = document.getElementById("btnHomeWatchAd");
+      if (watchBar) {
+        const topReward = videoAds[0]?.reward_coins || 100;
+        const rBadge = watchBar.querySelector(".wapb-reward");
+        if (rBadge) rBadge.textContent = `+${topReward} 🪙`;
+      }
+
+      const inlineAd = data.ads.find((a) => a.ad_type === "banner_inline");
+      if (inlineSlot) {
+        if (inlineAd) {
+          inlineSlot.classList.remove("hidden");
+          inlineSlot.innerHTML = `
+            <div class="hiad-left">
+              <img src="${escapeHtml(inlineAd.media_url || "/static/banners/welcome_banner.jpg")}" class="hiad-img" alt="Promo" onerror="this.src='/static/banners/welcome_banner.jpg'" />
+              <div style="min-width:0;">
+                <div class="hiad-badge">SPONSORED OFFER</div>
+                <div class="hiad-title">${escapeHtml(inlineAd.title)}</div>
+                <div class="hiad-desc">${escapeHtml(inlineAd.description || "")}</div>
+              </div>
+            </div>
+            <a href="${escapeHtml(inlineAd.target_url || "#")}" target="_blank" class="btn small primary" style="flex-shrink:0;">${escapeHtml(inlineAd.cta_label || "Open")}</a>
+          `;
+        } else {
+          inlineSlot.classList.add("hidden");
+        }
+      }
+
+      // Show Fullscreen Product Popup Ad once per session if configured
+      const popupAd = data.ads.find((a) => a.ad_type === "fullscreen_popup");
+      if (popupAd && !sessionStorage.getItem(`popup_shown_${popupAd.id}`)) {
+        sessionStorage.setItem(`popup_shown_${popupAd.id}`, "1");
+        setTimeout(() => openPopupAd(popupAd), 1800);
+      }
+    } catch (_) {}
+  }
+
+  function openPopupAd(ad) {
+    if (!ad) return;
+    const modal = document.getElementById("modalPopupAd");
+    if (!modal) return;
+    const img = document.getElementById("popupAdImg");
+    const title = document.getElementById("popupAdTitle");
+    const desc = document.getElementById("popupAdDesc");
+    const cta = document.getElementById("popupAdCta");
+    if (img) img.src = ad.media_url || "/static/banners/welcome_banner.jpg";
+    if (title) title.textContent = ad.title || "Special Offer";
+    if (desc) desc.textContent = ad.description || "Check out this sponsored promotion!";
+    if (cta) {
+      cta.href = ad.target_url || "#";
+      cta.textContent = `🚀 ${ad.cta_label || "Visit Offer"}`;
+    }
+    modal.classList.remove("hidden");
+  }
+
+  document.getElementById("btnClosePopupAd")?.addEventListener("click", () => {
+    document.getElementById("modalPopupAd")?.classList.add("hidden");
+  });
+
+  function openRewardedVideoAd(ad) {
+    if (!publicAdsState.ads_enabled) return;
+    const videoAd = ad || publicAdsState.ads.find((a) => a.ad_type === "video_reward") || {
+      id: 0,
+      title: "Ghost Plays Sponsored Showcase",
+      description: "Watch for 30 seconds to earn free Bonus Coins!",
+      media_url: "",
+      target_url: "",
+      cta_label: "Visit Sponsor",
+      skip_seconds: 30,
+      reward_coins: 100,
+    };
+
+    const modal = document.getElementById("modalRewardedVideoAd");
+    const vid = document.getElementById("rvcVideoPlayer");
+    const fb = document.getElementById("rvcFallbackShowcase");
+    const titleEl = document.getElementById("rvcAdTitle");
+    const descEl = document.getElementById("rvcAdDesc");
+    const pill = document.getElementById("rvcTimerPill");
+    const fill = document.getElementById("rvcProgressFill");
+    const claimBtn = document.getElementById("btnRvcClaimClose");
+    const ctaLink = document.getElementById("rvcCtaLink");
+    if (!modal) return;
+
+    if (titleEl) titleEl.textContent = videoAd.title || "Sponsored Video";
+    if (descEl) descEl.textContent = videoAd.description || "Watch until the timer ends to claim your reward!";
+    if (ctaLink) {
+      if (videoAd.target_url) {
+        ctaLink.href = videoAd.target_url;
+        ctaLink.textContent = `🔗 ${videoAd.cta_label || "Visit Offer"}`;
+        ctaLink.classList.remove("hidden");
+      } else {
+        ctaLink.classList.add("hidden");
+      }
+    }
+
+    const isVideoUrl = /\.(mp4|webm|ogg)(\?.*)?$/i.test(videoAd.media_url || "");
+    if (vid && fb) {
+      if (isVideoUrl) {
+        vid.src = videoAd.media_url;
+        vid.style.display = "block";
+        fb.style.display = "none";
+        vid.play().catch(() => {});
+      } else {
+        vid.pause();
+        vid.style.display = "none";
+        fb.style.display = "block";
+      }
+    }
+
+    const totalSec = Math.max(5, parseInt(videoAd.skip_seconds ?? 30, 10));
+    const reward = parseInt(videoAd.reward_coins ?? 100, 10);
+    let remaining = totalSec;
+
+    if (activeVideoAdTimer) clearInterval(activeVideoAdTimer);
+    if (claimBtn) {
+      claimBtn.disabled = true;
+      claimBtn.textContent = `⏳ Wait ${remaining}s to Claim +${reward} 🪙`;
+    }
+    if (pill) pill.textContent = `⏳ Skip in ${remaining}s`;
+    if (fill) fill.style.width = "0%";
+
+    modal.classList.remove("hidden");
+
+    activeVideoAdTimer = setInterval(() => {
+      remaining--;
+      const pct = Math.min(100, Math.round(((totalSec - remaining) / totalSec) * 100));
+      if (fill) fill.style.width = `${pct}%`;
+
+      if (remaining <= 0) {
+        clearInterval(activeVideoAdTimer);
+        activeVideoAdTimer = null;
+        if (pill) pill.textContent = "✅ Reward Ready!";
+        if (claimBtn) {
+          claimBtn.disabled = false;
+          claimBtn.textContent = `✅ Skip & Claim +${reward} 🪙`;
+          claimBtn.onclick = async () => {
+            modal.classList.add("hidden");
+            if (vid) vid.pause();
+            if (videoAd.id) {
+              await fetch("/api/ads/claim-reward", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ad_id: videoAd.id, user_id: state.userId, init_data: tg?.initData || "" }),
+              }).catch(() => {});
+            }
+            const curCoins = parseInt(localStorage.getItem("flipster_coins") || "1250", 10);
+            const nextCoins = curCoins + reward;
+            localStorage.setItem("flipster_coins", String(nextCoins));
+            const coinValEl = document.getElementById("coinVal");
+            if (coinValEl) coinValEl.textContent = nextCoins.toLocaleString();
+            if (state.profile) renderProfileSummary(state.profile);
+            triggerMagicalScreenReaction({ type: "reaction", emoji: "🪙", fx: "rain", senderName: `Ad Reward (+${reward})`, isSelf: true });
+          };
+        }
+      } else {
+        if (pill) pill.textContent = `⏳ Skip in ${remaining}s`;
+        if (claimBtn) claimBtn.textContent = `⏳ Wait ${remaining}s to Claim +${reward} 🪙`;
+      }
+    }, 1000);
+  }
+
+  document.getElementById("btnRvcMuteToggle")?.addEventListener("click", () => {
+    const vid = document.getElementById("rvcVideoPlayer");
+    const btn = document.getElementById("btnRvcMuteToggle");
+    if (vid && btn) {
+      vid.muted = !vid.muted;
+      btn.textContent = vid.muted ? "🔇" : "🔊";
+    }
+  });
+
+  document.getElementById("btnHomeWatchAd")?.addEventListener("click", () => {
+    haptic("light");
+    openRewardedVideoAd();
+  });
+
+  // Force Subscribe / Follow Verification Gate
+  async function checkForceSubscribeGate() {
+    if (state.isAdmin) return;
+    try {
+      const res = await fetch(`/api/tasks/status?user_id=${encodeURIComponent(state.userId || "")}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data.force_sub_enabled) return;
+      const pendingRequired = (data.tasks || []).filter((t) => t.is_required && !t.claimed);
+      if (!pendingRequired.length) return;
+
+      const listEl = document.getElementById("forceSubTasksList");
+      if (listEl) {
+        listEl.innerHTML = pendingRequired
+          .map(
+            (t) => `
+          <div class="force-sub-row">
+            <div>
+              <div class="fsr-title">${t.kind === "group" ? "👥" : "📢"} ${escapeHtml(t.title)}</div>
+              <div class="fsr-meta">${t.reward_coins > 0 ? `+${t.reward_coins} 🪙 Reward` : "Required"}</div>
+            </div>
+            <a href="${escapeHtml(t.invite_url)}" target="_blank" class="btn small primary">Join</a>
+          </div>`
+          )
+          .join("");
+      }
+      document.getElementById("modalForceSubscribe")?.classList.remove("hidden");
+    } catch (_) {}
+  }
+
+  document.getElementById("btnVerifyForceSub")?.addEventListener("click", async () => {
+    const btn = document.getElementById("btnVerifyForceSub");
+    const msgEl = document.getElementById("forceSubStatusMsg");
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "⏳ Checking with Telegram...";
+    }
+    try {
+      const res = await fetch("/api/tasks/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: state.userId || "",
+          init_data: tg?.initData || "",
+        }),
+      });
+      const data = await res.json();
+      if (!data.verified) {
+        if (msgEl) {
+          msgEl.textContent = data.message || "❌ Not subscribed yet! Join all channels first — no reward granted.";
+          msgEl.classList.remove("hidden");
+        }
+        haptic("heavy");
+      } else {
+        document.getElementById("modalForceSubscribe")?.classList.add("hidden");
+        if (data.coins_added > 0) {
+          const curCoins = parseInt(localStorage.getItem("flipster_coins") || "1250", 10);
+          localStorage.setItem("flipster_coins", String(curCoins + data.coins_added));
+          if (state.profile) renderProfileSummary(state.profile);
+          triggerMagicalScreenReaction({ type: "reaction", emoji: "🪙", fx: "rain", senderName: `Verified (+${data.coins_added})`, isSelf: true });
+        } else {
+          alert(data.message || "✅ Subscriptions verified!");
+        }
+      }
+    } catch (e) {
+      if (msgEl) {
+        msgEl.textContent = "Verification error: " + e.message;
+        msgEl.classList.remove("hidden");
+      }
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "✅ I've Joined — Verify & Claim";
+      }
+    }
+  });
 
   let currentAdminPricing = { star_packs: [], inr_packs: [] };
 
