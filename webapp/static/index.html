@@ -10,7 +10,7 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <!-- Lucide Icons Package (Modern Crisp Vector Icons) -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="/static/style.css?v=20261127_8" />
+  <link rel="stylesheet" href="/static/style.css?v=20261127_9" />
   <script>
     if (localStorage.getItem("app_theme") === "light") {
       document.documentElement.classList.add("theme-light");
@@ -512,50 +512,8 @@
           </div>
           <span class="tourn-timer-badge">LIVE NOW</span>
         </div>
-        <div class="arena-tournaments-list">
-          <div class="arena-tourn-row">
-            <div class="atr-left">
-              <div class="atr-icon">🚀</div>
-              <div>
-                <div class="atr-title">Aviator Sky High Cup</div>
-                <div class="atr-meta">Prize Pool: 25,000 🪙 • Free Entry • Ends in 4h</div>
-              </div>
-            </div>
-            <button type="button" class="btn small primary btn-arena-tourn-join" data-url="/static/games/aviator/index.html" data-title="Aviator Rocket" data-icon="🚀">JOIN</button>
-          </div>
-
-          <div class="arena-tourn-row">
-            <div class="atr-left">
-              <div class="atr-icon">♟️</div>
-              <div>
-                <div class="atr-title">Grandmaster Chess Blitz</div>
-                <div class="atr-meta">Prize Pool: 15,000 🪙 • 3+2 Ranked • Ends in 12h</div>
-              </div>
-            </div>
-            <button type="button" class="btn small primary btn-arena-tourn-play" data-game="chess">PLAY</button>
-          </div>
-
-          <div class="arena-tourn-row">
-            <div class="atr-left">
-              <div class="atr-icon">🗡️</div>
-              <div>
-                <div class="atr-title">Knife Master Knockout</div>
-                <div class="atr-meta">Prize Pool: 10,000 🪙 • High Score • Daily</div>
-              </div>
-            </div>
-            <button type="button" class="btn small primary btn-arena-tourn-play" data-game="knife_hit">PLAY</button>
-          </div>
-
-          <div class="arena-tourn-row">
-            <div class="atr-left">
-              <div class="atr-icon">👾</div>
-              <div>
-                <div class="atr-title">Virus Breaker Swarm Cup</div>
-                <div class="atr-meta">Prize Pool: 12,000 🪙 • Multi-Cannon • Daily</div>
-              </div>
-            </div>
-            <button type="button" class="btn small primary btn-arena-tourn-play" data-game="virus_breaker">PLAY</button>
-          </div>
+        <div id="arenaTournamentsList" class="arena-tournaments-list">
+          <div style="text-align:center;padding:14px;color:var(--muted);font-size:0.8rem;">Loading tournaments...</div>
         </div>
       </div>
     </section>
@@ -1175,6 +1133,9 @@
         <button class="studio-tab-btn" id="tabBtnAdsTasks" data-tab="tabAdsTasks">
           <i data-lucide="megaphone" class="lucide-xs"></i> 📢 Ads &amp; Tasks
         </button>
+        <button class="studio-tab-btn" id="tabBtnTournaments" data-tab="tabTournaments">
+          <i data-lucide="trophy" class="lucide-xs"></i> 🏆 Tournaments
+        </button>
       </div>
 
       <!-- TAB 1: ADD & EDIT GAME -->
@@ -1604,7 +1565,146 @@
           </div>
         </div>
       </div>
+
+      <!-- TAB 5: TOURNAMENTS STUDIO -->
+      <div class="studio-tab-content" id="tabContentTournaments">
+        <div class="card studio-form-card">
+          <div class="studio-section-header">
+            <div>
+              <h3 class="studio-section-title">🏆 Create Tournament</h3>
+              <p class="studio-section-sub">Launch a coin tournament with Entry Fee, Top 3 Rewards &amp; Live Ranks</p>
+            </div>
+          </div>
+
+          <form id="formAddTournament" class="modal-form">
+            <label>Tournament Title</label>
+            <input id="tournTitleInput" type="text" placeholder="e.g. Weekend Aviator Mega Cup" required />
+
+            <div class="form-row-2">
+              <div>
+                <label>Game</label>
+                <select id="tournGameSelect" class="studio-select" required>
+                  <option value="aviator">🚀 Aviator Rocket</option>
+                  <option value="chess">♟️ Chess Master</option>
+                  <option value="knife">🗡️ Knife Master</option>
+                  <option value="virus">🦠 Virus Breaker</option>
+                  <option value="ludo">🎲 Ludo King</option>
+                  <option value="flappy">🐤 Flappy Bird</option>
+                  <option value="2048">🔢 2048 Classic</option>
+                  <option value="snake">🐍 Neon Snake</option>
+                  <option value="uno">🃏 UNO Classic</option>
+                  <option value="plinko">🎯 Plinko Fortune</option>
+                </select>
+              </div>
+              <div>
+                <label>Badge Label</label>
+                <input id="tournBadgeInput" type="text" value="LIVE" placeholder="LIVE / HOT / DAILY" />
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div>
+                <label>Entry Fee (🪙 Coins, 0 = Free)</label>
+                <input id="tournEntryFeeInput" type="number" min="0" value="0" />
+              </div>
+              <div>
+                <label>Duration (Hours)</label>
+                <input id="tournDurationInput" type="number" min="1" max="720" value="48" />
+              </div>
+            </div>
+
+            <div class="form-row-3" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;">
+              <div>
+                <label>🥇 1st Reward</label>
+                <input id="tournR1Input" type="number" min="0" value="2000" />
+              </div>
+              <div>
+                <label>🥈 2nd Reward</label>
+                <input id="tournR2Input" type="number" min="0" value="1000" />
+              </div>
+              <div>
+                <label>🥉 3rd Reward</label>
+                <input id="tournR3Input" type="number" min="0" value="500" />
+              </div>
+            </div>
+
+            <label>Description / Rules</label>
+            <input id="tournDescInput" type="text" placeholder="Short rules or prize details..." />
+
+            <label>Admin Secret</label>
+            <input id="tournAdminSecret" type="password" placeholder="Enter admin password" />
+
+            <button type="submit" class="btn primary full" style="margin-top:8px;">🏆 Publish Tournament</button>
+          </form>
+
+          <div style="margin-top:16px;">
+            <div class="studio-section-title" style="font-size:0.88rem;margin-bottom:8px;">📋 Active Tournaments</div>
+            <div id="adminTournamentsList" class="admin-banners-list">Loading tournaments...</div>
+          </div>
+        </div>
+      </div>
     </section>
+
+    <!-- ==================== TOURNAMENT DETAILS & CONTESTANT RANKS MODAL ==================== -->
+    <div id="modalTournamentDetails" class="modal hidden" style="z-index:100055;">
+      <div class="modal-card tournament-detail-card">
+        <div class="tourn-detail-head">
+          <div class="tourn-detail-title-row">
+            <span id="tdIcon" class="tourn-detail-icon">🏆</span>
+            <div>
+              <div class="tourn-detail-badge-row">
+                <span id="tdBadge" class="tourn-timer-badge">LIVE</span>
+                <span id="tdGameName" class="td-game-pill">Aviator Rocket</span>
+              </div>
+              <h3 id="tdTitle" style="margin:4px 0 0;font-size:1.05rem;">Tournament</h3>
+            </div>
+          </div>
+          <button type="button" id="btnCloseTournamentModal" class="btn small outline">✕</button>
+        </div>
+
+        <p id="tdDesc" class="td-desc">Compete for top ranks and coin prizes!</p>
+
+        <div class="td-meta-strip">
+          <div class="td-meta-box">
+            <span class="td-meta-lbl">ENTRY PRICE</span>
+            <strong id="tdEntryFee">FREE</strong>
+          </div>
+          <div class="td-meta-box">
+            <span class="td-meta-lbl">PRIZE POOL</span>
+            <strong id="tdPrizePool">0 🪙</strong>
+          </div>
+          <div class="td-meta-box">
+            <span class="td-meta-lbl">CONTESTANTS</span>
+            <strong id="tdPlayersCount">0</strong>
+          </div>
+        </div>
+
+        <div class="td-section-label">🏅 TOP 3 REWARDS</div>
+        <div class="tourn-podium-grid">
+          <div class="tourn-podium-card gold">
+            <div class="tp-rank">🥇 1st</div>
+            <div id="tdR1" class="tp-prize">0 🪙</div>
+          </div>
+          <div class="tourn-podium-card silver">
+            <div class="tp-rank">🥈 2nd</div>
+            <div id="tdR2" class="tp-prize">0 🪙</div>
+          </div>
+          <div class="tourn-podium-card bronze">
+            <div class="tp-rank">🥉 3rd</div>
+            <div id="tdR3" class="tp-prize">0 🪙</div>
+          </div>
+        </div>
+
+        <div class="td-section-label">📊 CONTESTANT RANKS</div>
+        <div id="tournContestantsList" class="tourn-contestants-list">
+          <div class="td-empty">No contestants yet — be the first to join!</div>
+        </div>
+
+        <button type="button" id="btnJoinOrPlayTournament" class="btn primary full" style="margin-top:12px;">
+          🚀 JOIN TOURNAMENT
+        </button>
+      </div>
+    </div>
 
     <!-- ==================== REWARDED 30s VIDEO AD MODAL ==================== -->
     <div id="modalRewardedVideoAd" class="modal hidden" style="z-index:100060;">
@@ -1918,6 +2018,6 @@
     <div id="reactionToastPill" class="reaction-toast-pill hidden"></div>
   </div>
 
-  <script src="/static/app.js?v=20261127_8"></script>
+  <script src="/static/app.js?v=20261127_9"></script>
 </body>
 </html>

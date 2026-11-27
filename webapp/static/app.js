@@ -3883,6 +3883,7 @@
   loadHeroCarouselBanners();
   loadShopConfig();
   loadPublicAds();
+  loadPublicTournaments();
   setTimeout(checkForceSubscribeGate, 700);
 
   document.getElementById("btnPlayQuest")?.addEventListener("click", () => {
@@ -3890,25 +3891,17 @@
     launchWebGame("Aviator Rocket", "/static/games/aviator/index.html", "🚀");
   });
 
-  document.getElementById("btnJoinTournament")?.addEventListener("click", () => {
+  document.getElementById("btnJoinTournament")?.addEventListener("click", async () => {
     haptic("heavy");
-    launchWebGame("Aviator Rocket", "/static/games/aviator/index.html", "🚀");
-  });
-
-  document.querySelectorAll(".btn-arena-tourn-join").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      haptic("heavy");
-      launchWebGame(btn.dataset.title || "Tournament", btn.dataset.url || "/static/games/aviator/index.html", btn.dataset.icon || "🚀");
-    });
-  });
-
-  document.querySelectorAll(".btn-arena-tourn-play").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      haptic("medium");
-      const g = btn.dataset.game;
-      const card = document.querySelector(`.arena-mode-card[data-game="${g}"]`);
-      if (card) card.click();
-    });
+    if (!window.__publicTournaments?.length) {
+      await loadPublicTournaments();
+    }
+    const first = window.__publicTournaments?.[0];
+    if (first) {
+      openTournamentModal(first.id);
+    } else {
+      launchWebGame("Aviator Rocket", "/static/games/aviator/index.html", "🚀");
+    }
   });
 
   // Hub shortcuts navigation
@@ -4421,18 +4414,19 @@
   }
 
   function getAdminSecret() {
+    const fromTourn = document.getElementById("tournAdminSecret")?.value.trim();
     const fromAds = document.getElementById("adsAdminSecret")?.value.trim();
     const fromPricing = document.getElementById("pricingAdminSecret")?.value.trim();
     const fromBanner = document.getElementById("bannerAdminSecret")?.value.trim();
     const fromGame = document.getElementById("inputAdminSecret")?.value.trim();
     const fromStorage = localStorage.getItem("minigame_admin_secret")?.trim();
-    return fromAds || fromPricing || fromBanner || fromGame || fromStorage || "";
+    return fromTourn || fromAds || fromPricing || fromBanner || fromGame || fromStorage || "";
   }
 
   function syncAdminSecret(val) {
     if (!val) return;
     localStorage.setItem("minigame_admin_secret", val);
-    ["adsAdminSecret", "pricingAdminSecret", "bannerAdminSecret", "inputAdminSecret"].forEach((id) => {
+    ["tournAdminSecret", "adsAdminSecret", "pricingAdminSecret", "bannerAdminSecret", "inputAdminSecret"].forEach((id) => {
       const el = document.getElementById(id);
       if (el && el.value !== val) el.value = val;
     });
@@ -4440,7 +4434,7 @@
 
   function initAdminSecretInputs() {
     const saved = localStorage.getItem("minigame_admin_secret") || "";
-    ["adsAdminSecret", "pricingAdminSecret", "bannerAdminSecret", "inputAdminSecret"].forEach((id) => {
+    ["tournAdminSecret", "adsAdminSecret", "pricingAdminSecret", "bannerAdminSecret", "inputAdminSecret"].forEach((id) => {
       const el = document.getElementById(id);
       if (el) {
         if (saved && !el.value) el.value = saved;
@@ -4577,14 +4571,16 @@
   const tabBtnPromoBanners = document.getElementById("tabBtnPromoBanners");
   const tabBtnPricing = document.getElementById("tabBtnPricing");
   const tabBtnAdsTasks = document.getElementById("tabBtnAdsTasks");
+  const tabBtnTournaments = document.getElementById("tabBtnTournaments");
   const tabContentAddGame = document.getElementById("tabContentAddGame");
   const tabContentPromoBanners = document.getElementById("tabContentPromoBanners");
   const tabContentPricing = document.getElementById("tabContentPricing");
   const tabContentAdsTasks = document.getElementById("tabContentAdsTasks");
+  const tabContentTournaments = document.getElementById("tabContentTournaments");
 
   function switchStudioTab(activeTab) {
-    [tabBtnAddGame, tabBtnPromoBanners, tabBtnPricing, tabBtnAdsTasks].forEach((b) => b?.classList.remove("active"));
-    [tabContentAddGame, tabContentPromoBanners, tabContentPricing, tabContentAdsTasks].forEach((c) => c?.classList.add("hidden"));
+    [tabBtnAddGame, tabBtnPromoBanners, tabBtnPricing, tabBtnAdsTasks, tabBtnTournaments].forEach((b) => b?.classList.remove("active"));
+    [tabContentAddGame, tabContentPromoBanners, tabContentPricing, tabContentAdsTasks, tabContentTournaments].forEach((c) => c?.classList.add("hidden"));
     if (activeTab === "games") {
       tabBtnAddGame?.classList.add("active");
       tabContentAddGame?.classList.remove("hidden");
@@ -4601,6 +4597,10 @@
       tabBtnAdsTasks?.classList.add("active");
       tabContentAdsTasks?.classList.remove("hidden");
       loadAdminAdsAndTasks();
+    } else if (activeTab === "tournaments") {
+      tabBtnTournaments?.classList.add("active");
+      tabContentTournaments?.classList.remove("hidden");
+      loadAdminTournaments();
     }
   }
 
@@ -4608,6 +4608,7 @@
   tabBtnPromoBanners?.addEventListener("click", () => switchStudioTab("banners"));
   tabBtnPricing?.addEventListener("click", () => switchStudioTab("pricing"));
   tabBtnAdsTasks?.addEventListener("click", () => switchStudioTab("adsTasks"));
+  tabBtnTournaments?.addEventListener("click", () => switchStudioTab("tournaments"));
 
   // =========================================================
   // ADMIN ADS & SUBSCRIBE TASKS ENGINE + PUBLIC 30s VIDEO ADS
@@ -6256,6 +6257,282 @@
       }, { passive: true });
     });
   }
+
+  // =========================================================
+  // TOURNAMENTS ENGINE (DETAILS, ENTRY FEE, TOP 3 REWARDS, RANKS & ADMIN)
+  // =========================================================
+  const TOURN_GAME_LAUNCH = {
+    aviator: { title: "Aviator Rocket", url: "/static/games/aviator/index.html", icon: "🚀" },
+    knife: { title: "Knife Master", url: "/static/games/knife/index.html", icon: "🗡️" },
+    virus: { title: "Virus Breaker", url: "/static/games/virus/index.html", icon: "🦠" },
+    ludo: { title: "Ludo King", url: "/static/games/ludo/index.html", icon: "🎲" },
+    flappy: { title: "Flappy Bird", url: "/static/games/flappy/index.html", icon: "🐤" },
+    "2048": { title: "2048 Classic", url: "/static/games/2048/index.html", icon: "🔢" },
+    snake: { title: "Neon Snake", url: "/static/games/snake/index.html", icon: "🐍" },
+    uno: { title: "UNO Classic", url: "/static/games/uno/index.html", icon: "🃏" },
+    plinko: { title: "Plinko Fortune", url: "/static/games/plinko/index.html", icon: "🎯" },
+  };
+
+  function launchTournamentGame(t) {
+    const gKey = (t.game_key || "").toLowerCase();
+    const mapped = TOURN_GAME_LAUNCH[gKey];
+    if (mapped) {
+      launchWebGame(mapped.title, mapped.url, mapped.icon);
+      return;
+    }
+    const arenaCard = document.querySelector(`.arena-mode-card[data-game="${gKey}"]`);
+    if (arenaCard) {
+      arenaCard.click();
+      return;
+    }
+    launchWebGame(t.game_title || t.title, "/static/games/aviator/index.html", t.icon || "🏆");
+  }
+
+  async function loadPublicTournaments() {
+    const listEl = document.getElementById("arenaTournamentsList");
+    try {
+      const res = await fetch("/api/tournaments");
+      const data = await res.json();
+      const tournaments = data.tournaments || [];
+      window.__publicTournaments = tournaments;
+      if (!listEl) return;
+      if (!tournaments.length) {
+        listEl.innerHTML = `<div style="text-align:center;padding:14px;color:var(--muted);font-size:0.8rem;">No active tournaments right now. Check back soon!</div>`;
+        return;
+      }
+      listEl.innerHTML = tournaments
+        .map((t) => {
+          const pool = (t.reward_1st || 0) + (t.reward_2nd || 0) + (t.reward_3rd || 0);
+          const feeLabel = t.entry_fee > 0 ? `${t.entry_fee} 🪙 Entry` : "Free Entry";
+          return `
+            <div class="arena-tourn-row">
+              <div class="atr-left">
+                <div class="atr-icon">${t.icon || "🏆"}</div>
+                <div>
+                  <div class="atr-title">${t.title}</div>
+                  <div class="atr-meta">Prize Pool: ${pool.toLocaleString()} 🪙 • ${feeLabel} • ${t.entries_count || 0} Joined</div>
+                </div>
+              </div>
+              <button type="button" class="btn small primary btn-open-tourn" data-tid="${t.id}">JOIN</button>
+            </div>
+          `;
+        })
+        .join("");
+
+      listEl.querySelectorAll(".btn-open-tourn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          haptic("medium");
+          openTournamentModal(btn.dataset.tid);
+        });
+      });
+    } catch {
+      if (listEl) listEl.innerHTML = `<div style="text-align:center;padding:12px;color:#f87171;font-size:0.8rem;">Could not load tournaments.</div>`;
+    }
+  }
+
+  function renderTournamentModal(t) {
+    window.__activeTournament = t;
+    const pool = (t.reward_1st || 0) + (t.reward_2nd || 0) + (t.reward_3rd || 0);
+    const feeText = t.entry_fee > 0 ? `${t.entry_fee.toLocaleString()} 🪙` : "FREE";
+
+    document.getElementById("tdIcon").textContent = t.icon || "🏆";
+    document.getElementById("tdBadge").textContent = t.badge || "LIVE";
+    document.getElementById("tdGameName").textContent = t.game_title || t.game_key;
+    document.getElementById("tdTitle").textContent = t.title;
+    document.getElementById("tdDesc").textContent = t.description || "Compete for top ranks and coin prizes!";
+    document.getElementById("tdEntryFee").textContent = feeText;
+    document.getElementById("tdPrizePool").textContent = `${pool.toLocaleString()} 🪙`;
+    document.getElementById("tdPlayersCount").textContent = String(t.entries_count || 0);
+
+    document.getElementById("tdR1").textContent = `${(t.reward_1st || 0).toLocaleString()} 🪙`;
+    document.getElementById("tdR2").textContent = `${(t.reward_2nd || 0).toLocaleString()} 🪙`;
+    document.getElementById("tdR3").textContent = `${(t.reward_3rd || 0).toLocaleString()} 🪙`;
+
+    const entries = t.entries || [];
+    const listEl = document.getElementById("tournContestantsList");
+    const myEntry = entries.find((e) => String(e.user_id) === String(state.userId));
+
+    if (!entries.length) {
+      listEl.innerHTML = `<div class="td-empty">No contestants yet — be the first to join!</div>`;
+    } else {
+      listEl.innerHTML = entries
+        .map((e) => {
+          const isMe = String(e.user_id) === String(state.userId);
+          const medal = e.rank === 1 ? "🥇" : e.rank === 2 ? "🥈" : e.rank === 3 ? "🥉" : `#${e.rank}`;
+          return `
+            <div class="tourn-contestant-row ${isMe ? "me" : ""}">
+              <div class="tcr-left">
+                <span class="tcr-rank">${medal}</span>
+                <span class="tcr-name">${e.display_name}${isMe ? " (You)" : ""}</span>
+              </div>
+              <span class="tcr-score">${(e.best_score || 0).toLocaleString()} pts</span>
+            </div>
+          `;
+        })
+        .join("");
+    }
+
+    const actionBtn = document.getElementById("btnJoinOrPlayTournament");
+    if (myEntry) {
+      actionBtn.textContent = "🎮 PLAY TOURNAMENT NOW";
+    } else {
+      actionBtn.textContent = t.entry_fee > 0 ? `🚀 JOIN (${t.entry_fee} 🪙)` : "🚀 JOIN FOR FREE";
+    }
+  }
+
+  async function openTournamentModal(tournamentId) {
+    const modal = document.getElementById("modalTournamentDetails");
+    if (!modal) return;
+    modal.classList.remove("hidden");
+    try {
+      const res = await fetch(`/api/tournaments/${tournamentId}`);
+      if (!res.ok) throw new Error("Not found");
+      const data = await res.json();
+      renderTournamentModal(data.tournament);
+    } catch {
+      alert("Could not load tournament details.");
+      modal.classList.add("hidden");
+    }
+  }
+
+  document.getElementById("btnCloseTournamentModal")?.addEventListener("click", () => {
+    document.getElementById("modalTournamentDetails")?.classList.add("hidden");
+  });
+
+  document.getElementById("btnJoinOrPlayTournament")?.addEventListener("click", async () => {
+    const t = window.__activeTournament;
+    if (!t) return;
+    haptic("heavy");
+    const entries = t.entries || [];
+    const already = entries.some((e) => String(e.user_id) === String(state.userId));
+    if (already) {
+      document.getElementById("modalTournamentDetails")?.classList.add("hidden");
+      launchTournamentGame(t);
+      return;
+    }
+    const btn = document.getElementById("btnJoinOrPlayTournament");
+    const prevText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "⏳ Joining...";
+    try {
+      const res = await fetch(`/api/tournaments/${t.id}/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: state.userId, display_name: state.name || "Player" }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.detail || "Could not join tournament");
+        return;
+      }
+      if (typeof data.coins === "number") {
+        localStorage.setItem("flipster_coins", String(data.coins));
+        const coinValEl = document.getElementById("coinVal");
+        if (coinValEl) coinValEl.textContent = data.coins.toLocaleString();
+      }
+      renderTournamentModal(data.tournament);
+      loadPublicTournaments();
+      triggerMagicalScreenReaction({ type: "reaction", emoji: "🏆", fx: "confetti", senderName: "Joined Tournament!", isSelf: true });
+    } catch (err) {
+      alert("Network error: " + err.message);
+    } finally {
+      btn.disabled = false;
+      if (btn.textContent === "⏳ Joining...") btn.textContent = prevText;
+    }
+  });
+
+  async function loadAdminTournaments() {
+    initAdminSecretInputs();
+    const listEl = document.getElementById("adminTournamentsList");
+    if (!listEl) return;
+    const secret = getAdminSecret();
+    try {
+      const res = await fetch(`/api/admin/tournaments?user_id=${encodeURIComponent(state.userId)}&admin_secret=${encodeURIComponent(secret)}`);
+      if (!res.ok) {
+        listEl.innerHTML = `<div style="font-size:0.8rem;color:var(--muted);">Enter admin secret to manage tournaments.</div>`;
+        return;
+      }
+      const data = await res.json();
+      const tournaments = data.tournaments || [];
+      if (!tournaments.length) {
+        listEl.innerHTML = `<div style="font-size:0.8rem;color:var(--muted);">No tournaments created yet.</div>`;
+        return;
+      }
+      listEl.innerHTML = tournaments
+        .map((t) => {
+          const pool = (t.reward_1st || 0) + (t.reward_2nd || 0) + (t.reward_3rd || 0);
+          return `
+            <div class="admin-banner-row">
+              <div>
+                <div class="admin-banner-title">${t.icon || "🏆"} ${t.title}</div>
+                <div class="admin-banner-meta">${t.game_title || t.game_key} • Entry: ${t.entry_fee} 🪙 • Pool: ${pool} 🪙 • ${t.entries_count || 0} Players</div>
+              </div>
+              <button type="button" class="btn small danger btn-del-tourn" data-id="${t.id}">🗑️</button>
+            </div>
+          `;
+        })
+        .join("");
+      listEl.querySelectorAll(".btn-del-tourn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          if (!confirm("Delete this tournament?")) return;
+          const sec = getAdminSecret();
+          const delRes = await fetch(`/api/admin/tournaments/${btn.dataset.id}?user_id=${encodeURIComponent(state.userId)}&admin_secret=${encodeURIComponent(sec)}`, {
+            method: "DELETE",
+          });
+          if (delRes.ok) {
+            loadAdminTournaments();
+            loadPublicTournaments();
+          } else {
+            alert("Failed to delete tournament.");
+          }
+        });
+      });
+    } catch {
+      listEl.innerHTML = `<div style="font-size:0.8rem;color:#f87171;">Error loading tournaments.</div>`;
+    }
+  }
+
+  document.getElementById("formAddTournament")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const secret = getAdminSecret();
+    syncAdminSecret(secret);
+    const sel = document.getElementById("tournGameSelect");
+    const gameKey = sel.value;
+    const optText = sel.options[sel.selectedIndex]?.text || gameKey;
+    const icon = optText.split(" ")[0] || "🏆";
+    const gameTitle = optText.replace(icon, "").trim();
+
+    const payload = {
+      user_id: state.userId,
+      admin_secret: secret,
+      title: document.getElementById("tournTitleInput").value.trim(),
+      game_key: gameKey,
+      game_title: gameTitle,
+      icon,
+      badge: document.getElementById("tournBadgeInput").value.trim() || "LIVE",
+      entry_fee: parseInt(document.getElementById("tournEntryFeeInput").value || "0", 10),
+      duration_hours: parseInt(document.getElementById("tournDurationInput").value || "48", 10),
+      reward_1st: parseInt(document.getElementById("tournR1Input").value || "0", 10),
+      reward_2nd: parseInt(document.getElementById("tournR2Input").value || "0", 10),
+      reward_3rd: parseInt(document.getElementById("tournR3Input").value || "0", 10),
+      description: document.getElementById("tournDescInput").value.trim(),
+    };
+
+    const res = await fetch("/api/admin/tournaments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert(err.detail || "Failed to publish tournament (check Admin Secret).");
+      return;
+    }
+    e.target.reset();
+    loadAdminTournaments();
+    loadPublicTournaments();
+    alert("🏆 Tournament published!");
+  });
 
   initAceternity3DCards();
   initBubbleText();

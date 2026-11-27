@@ -990,6 +990,107 @@ async def delete_admin_task(task_id: int, user_id: str = Query(default=""), admi
     return {"status": "deleted", "task_id": task_id}
 
 
+# ── Tournaments ──
+
+
+class JoinTournamentRequest(BaseModel):
+    user_id: str = Field(..., min_length=1, max_length=64)
+    display_name: str = Field(default="Player", max_length=60)
+
+
+class SubmitTournamentScoreRequest(BaseModel):
+    user_id: str = Field(..., min_length=1, max_length=64)
+    score: int = Field(..., ge=0)
+
+
+class CreateTournamentRequest(BaseModel):
+    user_id: str = Field(default="")
+    admin_secret: str = Field(default="")
+    title: str = Field(..., min_length=2, max_length=80)
+    game_key: str = Field(..., min_length=1, max_length=80)
+    game_title: str = Field(default="", max_length=80)
+    icon: str = Field(default="🏆", max_length=10)
+    badge: str = Field(default="LIVE", max_length=20)
+    entry_fee: int = Field(default=0, ge=0)
+    reward_1st: int = Field(default=1000, ge=0)
+    reward_2nd: int = Field(default=500, ge=0)
+    reward_3rd: int = Field(default=250, ge=0)
+    description: str = Field(default="", max_length=300)
+    duration_hours: int = Field(default=48, ge=1, le=720)
+
+
+@app.get("/api/tournaments")
+async def get_public_tournaments() -> dict[str, Any]:
+    return {"tournaments": storage.list_tournaments(only_active=True)}
+
+
+@app.get("/api/tournaments/{tournament_id}")
+async def get_tournament_detail(tournament_id: int) -> dict[str, Any]:
+    t = storage.get_tournament_details(tournament_id)
+    if not t:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    return {"tournament": t}
+
+
+@app.post("/api/tournaments/{tournament_id}/join")
+async def join_tournament_api(tournament_id: int, req: JoinTournamentRequest) -> dict[str, Any]:
+    storage.ensure_player(req.user_id, req.display_name)
+    res = storage.join_tournament(tournament_id, req.user_id, req.display_name)
+    if not res.get("ok"):
+        raise HTTPException(status_code=400, detail=res.get("error", "Could not join tournament"))
+    details = storage.get_tournament_details(tournament_id)
+    return {
+        "ok": True,
+        "already_joined": bool(res.get("already_joined")),
+        "coins": res.get("coins"),
+        "tournament": details,
+    }
+
+
+@app.post("/api/tournaments/{tournament_id}/score")
+async def submit_tournament_score_api(tournament_id: int, req: SubmitTournamentScoreRequest) -> dict[str, Any]:
+    ok = storage.submit_tournament_score(tournament_id, req.user_id, req.score)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Not joined in this tournament")
+    return {"ok": True}
+
+
+@app.get("/api/admin/tournaments")
+async def get_admin_tournaments(user_id: str = Query(default=""), admin_secret: str = Query(default="")) -> dict[str, Any]:
+    if not _is_admin(user_id, admin_secret):
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    return {"tournaments": storage.list_tournaments(only_active=False)}
+
+
+@app.post("/api/admin/tournaments")
+async def create_admin_tournament(req: CreateTournamentRequest) -> dict[str, Any]:
+    if not _is_admin(req.user_id, req.admin_secret):
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    t = storage.create_tournament(
+        title=req.title,
+        game_key=req.game_key,
+        game_title=req.game_title,
+        icon=req.icon,
+        badge=req.badge,
+        entry_fee=req.entry_fee,
+        reward_1st=req.reward_1st,
+        reward_2nd=req.reward_2nd,
+        reward_3rd=req.reward_3rd,
+        description=req.description,
+        duration_hours=req.duration_hours,
+    )
+    return {"tournament": t}
+
+
+@app.delete("/api/admin/tournaments/{tournament_id}")
+async def delete_admin_tournament(tournament_id: int, user_id: str = Query(default=""), admin_secret: str = Query(default="")) -> dict[str, Any]:
+    if not _is_admin(user_id, admin_secret):
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    if not storage.delete_tournament(tournament_id):
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    return {"status": "deleted", "tournament_id": tournament_id}
+
+
 @app.websocket("/ws/{room_id}")
 async def room_websocket(websocket: WebSocket, room_id: str, user_id: str, name: str = "Player"):
     room = await arena.connect_ws(room_id, user_id, name, websocket)

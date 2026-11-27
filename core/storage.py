@@ -442,6 +442,31 @@ class GameStorage:
                                 claimed_at REAL NOT NULL,
                                 PRIMARY KEY (user_id, task_id)
                             );
+                            CREATE TABLE IF NOT EXISTS tournaments (
+                                id SERIAL PRIMARY KEY,
+                                title TEXT NOT NULL,
+                                game_key TEXT NOT NULL,
+                                game_title TEXT NOT NULL DEFAULT '',
+                                icon TEXT NOT NULL DEFAULT '🏆',
+                                badge TEXT NOT NULL DEFAULT 'LIVE',
+                                entry_fee INTEGER NOT NULL DEFAULT 0,
+                                reward_1st INTEGER NOT NULL DEFAULT 1000,
+                                reward_2nd INTEGER NOT NULL DEFAULT 500,
+                                reward_3rd INTEGER NOT NULL DEFAULT 250,
+                                description TEXT NOT NULL DEFAULT '',
+                                ends_at REAL NOT NULL DEFAULT 0,
+                                active INTEGER NOT NULL DEFAULT 1,
+                                created_at REAL NOT NULL
+                            );
+                            CREATE TABLE IF NOT EXISTS tournament_entries (
+                                tournament_id INTEGER NOT NULL,
+                                user_id TEXT NOT NULL,
+                                display_name TEXT NOT NULL DEFAULT 'Player',
+                                best_score INTEGER NOT NULL DEFAULT 0,
+                                joined_at REAL NOT NULL,
+                                updated_at REAL NOT NULL,
+                                PRIMARY KEY (tournament_id, user_id)
+                            );
                             """
                         )
                         count = conn.execute("SELECT COUNT(*) AS c FROM custom_games").fetchone()["c"]
@@ -453,6 +478,10 @@ class GameStorage:
                         pb_count = conn.execute("SELECT COUNT(*) AS c FROM promo_banners").fetchone()["c"]
                         if pb_count == 0:
                             self._seed_default_promo_banners(conn)
+
+                        t_count = conn.execute("SELECT COUNT(*) AS c FROM tournaments").fetchone()["c"]
+                        if t_count == 0:
+                            self._seed_default_tournaments(conn)
                         conn.commit()
                         return
                 except Exception as e:
@@ -606,6 +635,31 @@ class GameStorage:
                     claimed_at REAL NOT NULL,
                     PRIMARY KEY (user_id, task_id)
                 );
+                CREATE TABLE IF NOT EXISTS tournaments (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL,
+                    game_key TEXT NOT NULL,
+                    game_title TEXT NOT NULL DEFAULT '',
+                    icon TEXT NOT NULL DEFAULT '🏆',
+                    badge TEXT NOT NULL DEFAULT 'LIVE',
+                    entry_fee INTEGER NOT NULL DEFAULT 0,
+                    reward_1st INTEGER NOT NULL DEFAULT 1000,
+                    reward_2nd INTEGER NOT NULL DEFAULT 500,
+                    reward_3rd INTEGER NOT NULL DEFAULT 250,
+                    description TEXT NOT NULL DEFAULT '',
+                    ends_at REAL NOT NULL DEFAULT 0,
+                    active INTEGER NOT NULL DEFAULT 1,
+                    created_at REAL NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS tournament_entries (
+                    tournament_id INTEGER NOT NULL,
+                    user_id TEXT NOT NULL,
+                    display_name TEXT NOT NULL DEFAULT 'Player',
+                    best_score INTEGER NOT NULL DEFAULT 0,
+                    joined_at REAL NOT NULL,
+                    updated_at REAL NOT NULL,
+                    PRIMARY KEY (tournament_id, user_id)
+                );
                 """
             )
             cols = {
@@ -633,6 +687,10 @@ class GameStorage:
             pb_count = conn.execute("SELECT COUNT(*) AS c FROM promo_banners").fetchone()["c"]
             if pb_count == 0:
                 self._seed_default_promo_banners(conn)
+
+            t_count = conn.execute("SELECT COUNT(*) AS c FROM tournaments").fetchone()["c"]
+            if t_count == 0:
+                self._seed_default_tournaments(conn)
 
             conn.commit()
 
@@ -1564,6 +1622,245 @@ class GameStorage:
                     "UPDATE players SET coins = coins + ?, updated_at = ? WHERE user_id = ?",
                     (int(reward_coins), now, uid),
                 )
+            conn.commit()
+            return True
+
+    # ── Tournaments ──
+
+    def _seed_default_tournaments(self, conn: Any) -> None:
+        now = time.time()
+        defaults = [
+            (
+                "Aviator Sky High Cup",
+                "aviator",
+                "Aviator Rocket",
+                "🚀",
+                "LIVE",
+                0,
+                2500,
+                1250,
+                750,
+                "Cash out at the highest multiplier before the rocket flies away!",
+                now + 72 * 3600,
+            ),
+            (
+                "Grandmaster Chess Blitz",
+                "chess",
+                "Chess Master",
+                "♟️",
+                "DAILY",
+                50,
+                1500,
+                750,
+                400,
+                "Outsmart the AI or opponents in fast-paced blitz chess.",
+                now + 24 * 3600,
+            ),
+            (
+                "Knife Master Knockout",
+                "knife",
+                "Knife Master",
+                "🗡️",
+                "HOT",
+                25,
+                1000,
+                500,
+                250,
+                "Hit every target without colliding with existing blades.",
+                now + 48 * 3600,
+            ),
+            (
+                "Virus Breaker Swarm Cup",
+                "virus",
+                "Virus Breaker",
+                "🦠",
+                "OPEN",
+                0,
+                1200,
+                600,
+                300,
+                "Eliminate waves of viruses and climb to the top of the leaderboard.",
+                now + 96 * 3600,
+            ),
+        ]
+        for title, gkey, gtitle, icon, badge, fee, r1, r2, r3, desc, ends_at in defaults:
+            conn.execute(
+                """
+                INSERT INTO tournaments (
+                    title, game_key, game_title, icon, badge, entry_fee,
+                    reward_1st, reward_2nd, reward_3rd, description, ends_at, active, created_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+                """,
+                (title, gkey, gtitle, icon, badge, fee, r1, r2, r3, desc, ends_at, now),
+            )
+
+    def list_tournaments(self, only_active: bool = True) -> list[dict[str, Any]]:
+        with self._lock, self._connect() as conn:
+            if only_active:
+                rows = conn.execute(
+                    """
+                    SELECT t.*,
+                           (SELECT COUNT(*) FROM tournament_entries e WHERE e.tournament_id = t.id) AS entries_count
+                    FROM tournaments t
+                    WHERE t.active = 1
+                    ORDER BY t.id DESC
+                    """
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    """
+                    SELECT t.*,
+                           (SELECT COUNT(*) FROM tournament_entries e WHERE e.tournament_id = t.id) AS entries_count
+                    FROM tournaments t
+                    ORDER BY t.id DESC
+                    """
+                ).fetchall()
+            return [dict(r) for r in rows]
+
+    def get_tournament_details(self, tournament_id: int | str) -> dict[str, Any] | None:
+        tid = int(tournament_id)
+        with self._lock, self._connect() as conn:
+            t_row = conn.execute("SELECT * FROM tournaments WHERE id = ?", (tid,)).fetchone()
+            if not t_row:
+                return None
+            entries = conn.execute(
+                """
+                SELECT user_id, display_name, best_score, joined_at, updated_at
+                FROM tournament_entries
+                WHERE tournament_id = ?
+                ORDER BY best_score DESC, joined_at ASC
+                """,
+                (tid,),
+            ).fetchall()
+            data = dict(t_row)
+            ranked = []
+            for idx, r in enumerate(entries, start=1):
+                entry = dict(r)
+                entry["rank"] = idx
+                ranked.append(entry)
+            data["entries"] = ranked
+            data["entries_count"] = len(ranked)
+            return data
+
+    def create_tournament(
+        self,
+        *,
+        title: str,
+        game_key: str,
+        game_title: str = "",
+        icon: str = "🏆",
+        badge: str = "LIVE",
+        entry_fee: int = 0,
+        reward_1st: int = 1000,
+        reward_2nd: int = 500,
+        reward_3rd: int = 250,
+        description: str = "",
+        duration_hours: int = 48,
+    ) -> dict[str, Any]:
+        now = time.time()
+        ends_at = now + max(1, int(duration_hours)) * 3600
+        with self._lock, self._connect() as conn:
+            cur = conn.execute(
+                """
+                INSERT INTO tournaments (
+                    title, game_key, game_title, icon, badge, entry_fee,
+                    reward_1st, reward_2nd, reward_3rd, description, ends_at, active, created_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+                """,
+                (
+                    title.strip()[:80],
+                    game_key.strip()[:80],
+                    (game_title or game_key).strip()[:80],
+                    (icon or "🏆").strip()[:10],
+                    (badge or "LIVE").strip()[:20],
+                    max(0, int(entry_fee)),
+                    max(0, int(reward_1st)),
+                    max(0, int(reward_2nd)),
+                    max(0, int(reward_3rd)),
+                    description.strip()[:300],
+                    ends_at,
+                    now,
+                ),
+            )
+            conn.commit()
+            row = conn.execute("SELECT * FROM tournaments WHERE id = ?", (cur.lastrowid,)).fetchone()
+            data = dict(row) if row else {}
+            data["entries_count"] = 0
+            return data
+
+    def delete_tournament(self, tournament_id: int | str) -> bool:
+        tid = int(tournament_id)
+        with self._lock, self._connect() as conn:
+            conn.execute("DELETE FROM tournament_entries WHERE tournament_id = ?", (tid,))
+            cur = conn.execute("DELETE FROM tournaments WHERE id = ?", (tid,))
+            conn.commit()
+            return cur.rowcount > 0
+
+    def join_tournament(
+        self,
+        tournament_id: int | str,
+        user_id: str,
+        display_name: str = "Player",
+    ) -> dict[str, Any]:
+        tid = int(tournament_id)
+        uid = str(user_id)
+        now = time.time()
+        with self._lock, self._connect() as conn:
+            t_row = conn.execute("SELECT * FROM tournaments WHERE id = ? AND active = 1", (tid,)).fetchone()
+            if not t_row:
+                return {"ok": False, "error": "Tournament not found"}
+            existing = conn.execute(
+                "SELECT * FROM tournament_entries WHERE tournament_id = ? AND user_id = ?",
+                (tid, uid),
+            ).fetchone()
+            if existing:
+                return {"ok": True, "already_joined": True, "entry": dict(existing)}
+            fee = int(t_row["entry_fee"] or 0)
+            if fee > 0:
+                p_row = conn.execute("SELECT coins FROM players WHERE user_id = ?", (uid,)).fetchone()
+                current_coins = int(p_row["coins"]) if p_row else 0
+                if current_coins < fee:
+                    return {
+                        "ok": False,
+                        "error": f"Insufficient coins ({current_coins} / {fee} required)",
+                    }
+                conn.execute(
+                    "UPDATE players SET coins = coins - ?, updated_at = ? WHERE user_id = ?",
+                    (fee, now, uid),
+                )
+            conn.execute(
+                """
+                INSERT INTO tournament_entries (tournament_id, user_id, display_name, best_score, joined_at, updated_at)
+                VALUES (?, ?, ?, 0, ?, ?)
+                """,
+                (tid, uid, (display_name or "Player").strip()[:60], now, now),
+            )
+            conn.commit()
+            p_after = conn.execute("SELECT coins FROM players WHERE user_id = ?", (uid,)).fetchone()
+            return {
+                "ok": True,
+                "already_joined": False,
+                "coins": int(p_after["coins"]) if p_after else 0,
+            }
+
+    def submit_tournament_score(self, tournament_id: int | str, user_id: str, score: int) -> bool:
+        tid = int(tournament_id)
+        uid = str(user_id)
+        now = time.time()
+        with self._lock, self._connect() as conn:
+            row = conn.execute(
+                "SELECT best_score FROM tournament_entries WHERE tournament_id = ? AND user_id = ?",
+                (tid, uid),
+            ).fetchone()
+            if not row:
+                return False
+            new_score = max(int(row["best_score"] or 0), int(score))
+            conn.execute(
+                "UPDATE tournament_entries SET best_score = ?, updated_at = ? WHERE tournament_id = ? AND user_id = ?",
+                (new_score, now, tid, uid),
+            )
             conn.commit()
             return True
 
