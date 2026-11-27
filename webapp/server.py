@@ -10,7 +10,7 @@ from typing import Any
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from config import ADMIN_SECRET, ADMIN_USER_IDS, BOT_TOKEN, BOT_USERNAME
 from core.storage import storage
