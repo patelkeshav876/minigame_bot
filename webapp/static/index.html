@@ -10,7 +10,7 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <!-- Lucide Icons Package (Modern Crisp Vector Icons) -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="/static/style.css?v=20261127_7" />
+  <link rel="stylesheet" href="/static/style.css?v=20261127_8" />
   <script>
     if (localStorage.getItem("app_theme") === "light") {
       document.documentElement.classList.add("theme-light");
@@ -499,6 +499,62 @@
               </div>
               <div class="arena-card-meta">Hago style 1v1 blaster duel • Pop floating viruses • Upgrade cannons</div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALL TOURNAMENTS IN ARENA -->
+      <div class="card arena-tournaments-card">
+        <div class="card-head">
+          <div>
+            <h3>🏆 All Arena Tournaments</h3>
+            <p style="font-size:0.74rem;color:var(--muted);margin:2px 0 0;">Compete for huge coin prize pools &amp; seasonal trophies</p>
+          </div>
+          <span class="tourn-timer-badge">LIVE NOW</span>
+        </div>
+        <div class="arena-tournaments-list">
+          <div class="arena-tourn-row">
+            <div class="atr-left">
+              <div class="atr-icon">🚀</div>
+              <div>
+                <div class="atr-title">Aviator Sky High Cup</div>
+                <div class="atr-meta">Prize Pool: 25,000 🪙 • Free Entry • Ends in 4h</div>
+              </div>
+            </div>
+            <button type="button" class="btn small primary btn-arena-tourn-join" data-url="/static/games/aviator/index.html" data-title="Aviator Rocket" data-icon="🚀">JOIN</button>
+          </div>
+
+          <div class="arena-tourn-row">
+            <div class="atr-left">
+              <div class="atr-icon">♟️</div>
+              <div>
+                <div class="atr-title">Grandmaster Chess Blitz</div>
+                <div class="atr-meta">Prize Pool: 15,000 🪙 • 3+2 Ranked • Ends in 12h</div>
+              </div>
+            </div>
+            <button type="button" class="btn small primary btn-arena-tourn-play" data-game="chess">PLAY</button>
+          </div>
+
+          <div class="arena-tourn-row">
+            <div class="atr-left">
+              <div class="atr-icon">🗡️</div>
+              <div>
+                <div class="atr-title">Knife Master Knockout</div>
+                <div class="atr-meta">Prize Pool: 10,000 🪙 • High Score • Daily</div>
+              </div>
+            </div>
+            <button type="button" class="btn small primary btn-arena-tourn-play" data-game="knife_hit">PLAY</button>
+          </div>
+
+          <div class="arena-tourn-row">
+            <div class="atr-left">
+              <div class="atr-icon">👾</div>
+              <div>
+                <div class="atr-title">Virus Breaker Swarm Cup</div>
+                <div class="atr-meta">Prize Pool: 12,000 🪙 • Multi-Cannon • Daily</div>
+              </div>
+            </div>
+            <button type="button" class="btn small primary btn-arena-tourn-play" data-game="virus_breaker">PLAY</button>
           </div>
         </div>
       </div>
@@ -1679,7 +1735,7 @@
             <span>⭐</span> Stars
           </button>
           <button class="store-tab-btn" data-tab="upi">
-            <span>🇮🇳</span> UPI / PhonePe
+            <span>🇮🇳</span> UPI (For Indians)
           </button>
           <button class="store-tab-btn" data-tab="crypto">
             <span>💎</span> Crypto
@@ -1752,7 +1808,7 @@
         <!-- TAB 2: INDIAN UPI / PHONEPE / GPAY -->
         <div id="tabContentUpi" class="store-tab-content">
           <div class="stars-shop-subtitle">
-            Pay with <strong>PhonePe, Google Pay, Paytm, or BHIM</strong> (Indian & International UPI supported).
+            <strong>For Indians 🇮🇳:</strong> Pay with <strong>PhonePe, Google Pay, Paytm, or BHIM UPI</strong>.
           </div>
 
           <!-- UPI Pack Selection -->
@@ -1862,6 +1918,6 @@
     <div id="reactionToastPill" class="reaction-toast-pill hidden"></div>
   </div>
 
-  <script src="/static/app.js?v=20261127_7"></script>
+  <script src="/static/app.js?v=20261127_8"></script>
 </body>
 </html>

@@ -82,30 +82,33 @@
     bubble.style.left = `${x}px`;
     bubble.style.top = `${y}px`;
     if (newTheme === "light") {
-      bubble.style.background = "radial-gradient(circle, #ffffff 0%, #e2e8f0 100%)";
+      bubble.style.background = "radial-gradient(circle, #ffffff 0%, #fef3c7 55%, #e2e8f0 100%)";
     } else {
-      bubble.style.background = "radial-gradient(circle, #0b1120 0%, #060911 100%)";
+      bubble.style.background = "radial-gradient(circle, #0f172a 0%, #0b1120 60%, #060911 100%)";
     }
     document.body.appendChild(bubble);
 
-    // Force reflow
-    void bubble.offsetWidth;
-    bubble.classList.add("active");
+    // Double rAF guarantees mobile WebViews paint scale(1) before expanding
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        bubble.classList.add("active");
+      });
+    });
 
     setTimeout(() => {
       applyTheme(newTheme);
-    }, 180);
+    }, 450);
 
     setTimeout(() => {
       bubble.classList.add("fade-out");
-      setTimeout(() => bubble.remove(), 400);
-    }, 450);
+      setTimeout(() => bubble.remove(), 480);
+    }, 880);
   }
 
   themeToggleBtn?.addEventListener("click", (e) => {
     const rect = themeToggleBtn.getBoundingClientRect();
-    const x = e.clientX || (rect.left + rect.width / 2);
-    const y = e.clientY || (rect.top + rect.height / 2);
+    const x = (e.clientX && e.clientX > 0) ? e.clientX : (rect.left + rect.width / 2);
+    const y = (e.clientY && e.clientY > 0) ? e.clientY : (rect.top + rect.height / 2);
     const isCurrentlyLight = document.body.classList.contains("theme-light");
     const newTheme = isCurrentlyLight ? "dark" : "light";
     triggerThemeBubbleTransition(x, y, newTheme);
@@ -3890,6 +3893,22 @@
   document.getElementById("btnJoinTournament")?.addEventListener("click", () => {
     haptic("heavy");
     launchWebGame("Aviator Rocket", "/static/games/aviator/index.html", "🚀");
+  });
+
+  document.querySelectorAll(".btn-arena-tourn-join").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      haptic("heavy");
+      launchWebGame(btn.dataset.title || "Tournament", btn.dataset.url || "/static/games/aviator/index.html", btn.dataset.icon || "🚀");
+    });
+  });
+
+  document.querySelectorAll(".btn-arena-tourn-play").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      haptic("medium");
+      const g = btn.dataset.game;
+      const card = document.querySelector(`.arena-mode-card[data-game="${g}"]`);
+      if (card) card.click();
+    });
   });
 
   // Hub shortcuts navigation
